@@ -1,0 +1,293 @@
+{
+  "status": "PRE_START",
+  "currentSequence": {
+    "event": "Warning",
+    "flags": [
+      "CLASS"
+    ]
+  },
+  "prepFlag": "P",
+  "sequenceTimeRemaining": 300,
+  "startTime": null,
+  "wind": {
+    "direction": 0,
+    "speed": 14
+  },
+  "course": {
+    "marks": [
+      {
+        "id": "nfbb4gowc-1",
+        "type": "START",
+        "pairId": "nfbb4gowc",
+        "name": "Start 1 L",
+        "pos": {
+          "lat": 59.29786452991626,
+          "lon": 18.316998481750492
+        },
+        "design": "POLE",
+        "color": "red"
+      },
+      {
+        "id": "nfbb4gowc-2",
+        "type": "START",
+        "pairId": "nfbb4gowc",
+        "name": "Start 1 R",
+        "pos": {
+          "lat": 59.29779879535161,
+          "lon": 18.321762084804543
+        },
+        "design": "POLE",
+        "color": "red"
+      },
+      {
+        "id": "t0tiyob0z-1",
+        "type": "GATE",
+        "pairId": "t0tiyob0z",
+        "name": "Gate 1 L",
+        "pos": {
+          "lat": 59.309190889813685,
+          "lon": 18.319187163837498
+        },
+        "design": "TUBE",
+        "color": "yellow",
+        "gateDirection": "UPWIND"
+      },
+      {
+        "id": "t0tiyob0z-2",
+        "type": "GATE",
+        "pairId": "t0tiyob0z",
+        "name": "Gate 1 R",
+        "pos": {
+          "lat": 59.309190889813685,
+          "lon": 18.32296371350497
+        },
+        "design": "TUBE",
+        "color": "yellow",
+        "gateDirection": "UPWIND"
+      },
+      {
+        "id": "cs6hzjgvz-1",
+        "type": "GATE",
+        "pairId": "cs6hzjgvz",
+        "name": "Gate 2 L",
+        "pos": {
+          "lat": 59.30077863465994,
+          "lon": 18.318515634913155
+        },
+        "design": "TUBE",
+        "color": "yellow",
+        "gateDirection": "DOWNWIND"
+      },
+      {
+        "id": "cs6hzjgvz-2",
+        "type": "GATE",
+        "pairId": "cs6hzjgvz",
+        "name": "Gate 2 R",
+        "pos": {
+          "lat": 59.3009100921475,
+          "lon": 18.322620391845707
+        },
+        "design": "TUBE",
+        "color": "yellow",
+        "gateDirection": "DOWNWIND"
+      },
+      {
+        "id": "xjr12j8u6-1",
+        "type": "FINISH",
+        "pairId": "xjr12j8u6",
+        "name": "Finish 1 L",
+        "pos": {
+          "lat": 59.31142504538042,
+          "lon": 18.318629265457044
+        },
+        "design": "POLE",
+        "color": "blue",
+        "gateDirection": "UPWIND"
+      },
+      {
+        "id": "xjr12j8u6-2",
+        "type": "FINISH",
+        "pairId": "xjr12j8u6",
+        "name": "Finish 1 R",
+        "pos": {
+          "lat": 59.31142504538042,
+          "lon": 18.321504591879044
+        },
+        "design": "POLE",
+        "color": "blue",
+        "gateDirection": "UPWIND"
+      }
+    ],
+    "startLine": null,
+    "finishLine": null,
+    "courseBoundary": [
+      {
+        "lat": 59.29039188778995,
+        "lon": 18.330946144553767
+      },
+      {
+        "lat": 59.2912246974858,
+        "lon": 18.30948851152923
+      },
+      {
+        "lat": 59.29915728387802,
+        "lon": 18.303308713218193
+      },
+      {
+        "lat": 59.31260777419851,
+        "lon": 18.305626137584838
+      },
+      {
+        "lat": 59.31602431525982,
+        "lon": 18.3160974625008
+      },
+      {
+        "lat": 59.31768865961574,
+        "lon": 18.331375297214255
+      },
+      {
+        "lat": 59.3151045110542,
+        "lon": 18.341846622130213
+      },
+      {
+        "lat": 59.309234698196406,
+        "lon": 18.343906554900578
+      },
+      {
+        "lat": 59.29762350255827,
+        "lon": 18.34013001148826
+      },
+      {
+        "lat": 59.29350386191481,
+        "lon": 18.339185875635163
+      }
+    ]
+  },
+  "currentProcedure": {
+    "id": "custom-1771163741701",
+    "nodes": [
+      {
+        "id": "1",
+        "type": "state",
+        "position": {
+          "x": 250,
+          "y": 50
+        },
+        "data": {
+          "label": "Warning",
+          "flags": [
+            "CLASS"
+          ],
+          "duration": 60,
+          "isActive": true
+        }
+      },
+      {
+        "id": "2",
+        "type": "state",
+        "position": {
+          "x": 250,
+          "y": 200
+        },
+        "data": {
+          "label": "Preparatory",
+          "flags": [
+            "CLASS",
+            "P"
+          ],
+          "duration": 180,
+          "isActive": false
+        }
+      },
+      {
+        "id": "3",
+        "type": "state",
+        "position": {
+          "x": 250,
+          "y": 350
+        },
+        "data": {
+          "label": "One Minute",
+          "flags": [
+            "CLASS"
+          ],
+          "duration": 60,
+          "isActive": false
+        }
+      },
+      {
+        "id": "4",
+        "type": "state",
+        "position": {
+          "x": 250,
+          "y": 500
+        },
+        "data": {
+          "label": "Start",
+          "flags": [],
+          "duration": 0,
+          "isActive": false
+        }
+      },
+      {
+        "id": "5",
+        "type": "state",
+        "position": {
+          "x": 12.893265171096743,
+          "y": 359.4219082096994
+        },
+        "data": {
+          "label": "AP Signal",
+          "flags": [
+            "AP"
+          ],
+          "duration": 60,
+          "isActive": false
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1-2",
+        "source": "1",
+        "target": "2"
+      },
+      {
+        "id": "e2-3",
+        "source": "2",
+        "target": "3"
+      },
+      {
+        "id": "e3-4",
+        "source": "3",
+        "target": "4"
+      },
+      {
+        "id": "reactflow__edge-3out-new-5in-new",
+        "source": "3",
+        "target": "5"
+      },
+      {
+        "id": "reactflow__edge-2out-new-5in-new",
+        "source": "2",
+        "target": "5"
+      },
+      {
+        "id": "reactflow__edge-1out-new-5in-new",
+        "source": "1",
+        "target": "5"
+      },
+      {
+        "id": "reactflow__edge-5out-new-1in-new",
+        "source": "5",
+        "target": "1"
+      }
+    ]
+  },
+  "defaultLocation": {
+    "lat": 59.3293,
+    "lon": 18.0686,
+    "zoom": 14
+  },
+  "penalties": []
+}
