@@ -477,12 +477,14 @@ export default function App() {
         })))
 
         s.on('kill-simulation', (id) => {
-            console.log('Received kill-simulation command for:', id);
+            console.log('[FRONTEND] Received kill-simulation command for:', id);
             setRaceState(prev => {
                 const newBoats = { ...prev.boats };
                 if (id === 'all') {
+                    console.log('[FRONTEND] Clearing all boats from state');
                     return { ...prev, boats: {} };
                 }
+                console.log(`[FRONTEND] Removing boat ${id} from state`);
                 delete newBoats[id];
                 return { ...prev, boats: newBoats };
             });
@@ -1005,7 +1007,7 @@ export default function App() {
 
                         <GlassPanel title="Fleet Telemetry" icon={Users} className="pointer-events-auto flex-1 min-h-0">
                             <div className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
-                                {Object.entries(raceState.boats).map(([id, boat]: any) => (
+                                {Object.entries(raceState.boats).map(([id, boat]: [string, any]) => (
                                     <div key={id} className="p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-accent-blue/40 transition-all group backdrop-blur-sm cursor-pointer">
                                         <div className="flex justify-between items-start mb-5">
                                             <div className="flex items-center gap-4">
@@ -1044,8 +1046,12 @@ export default function App() {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    console.log('Emitting kill-tracker for:', id);
-                                                    socket?.emit('kill-tracker', id);
+                                                    console.log('[UI] Sending kill simulation for:', id);
+                                                    if (socket) {
+                                                        socket.emit('kill-tracker', id);
+                                                    } else {
+                                                        console.error('[UI] Socket connection not found');
+                                                    }
                                                 }}
                                                 className="py-2 bg-accent-red/10 hover:bg-accent-red/20 border border-accent-red/30 text-accent-red rounded-lg text-[8px] font-black uppercase tracking-widest transition-all"
                                             >
@@ -1065,9 +1071,13 @@ export default function App() {
                                 {Object.keys(raceState.boats).length > 0 && (
                                     <button
                                         onClick={() => {
-                                            if (confirm('Clear all trackers?')) {
-                                                console.log('Emitting clear-fleet');
-                                                socket?.emit('clear-fleet');
+                                            if (confirm('Definitively clear the entire fleet?')) {
+                                                console.log('[UI] Requesting fleet-wide clear');
+                                                if (socket) {
+                                                    socket.emit('clear-fleet');
+                                                } else {
+                                                    console.error('[UI] Socket connection not found');
+                                                }
                                             }
                                         }}
                                         className="w-full sticky bottom-0 py-4 bg-accent-red/10 hover:bg-accent-red/20 border border-accent-red/20 hover:border-accent-red/40 text-accent-red rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl backdrop-blur-md"
@@ -1117,7 +1127,7 @@ export default function App() {
                         </motion.div>
                     )}
                 </AnimatePresence>
-            </div>
+            </div >
         </div >
     )
 }

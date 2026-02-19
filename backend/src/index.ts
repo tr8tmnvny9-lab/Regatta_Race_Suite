@@ -443,28 +443,37 @@ io.on('connection', (socket) => {
 
     // Administrative Controls
     socket.on('kill-tracker', (id) => {
-        console.log(`[BACKEND] kill-tracker request for ${id}. Sender type: ${socket.data.type}`);
+        console.log(`[BACKEND] kill-tracker request for "${id}". Sender type: ${socket.data.type}`);
         if (socket.data.type === 'management') {
             console.log(`Management command: Killing tracker ${id}`);
-            io.emit('kill-simulation', id); // Broadcast to all clients (for UI status)
 
-            // Add to blacklist to prevent ghosts
+            // 1. Broadcast to all clients to update UI state immediately
+            io.emit('kill-simulation', id);
+
+            // 2. Add to blacklist to prevent ghosts (handle before disconnect)
             deadBoats.add(id);
-            setTimeout(() => deadBoats.delete(id), 60000); // Keep for 1 min
+            setTimeout(() => deadBoats.delete(id), 30000); // 30s is enough
 
-            // Find and disconnect the specific tracker socket
+            // 3. Find and disconnect the specific tracker socket
             const sockets = Array.from(io.sockets.sockets.values());
+            let found = 0;
             sockets.forEach((s) => {
-                if (s.data.boatId === id) {
-                    console.log(`Force disconnecting socket for boat ${id}`);
+                if (s.data.boatId === id || (s.data.type === 'tracker' && s.data.boatId === id)) {
+                    console.log(`Force disconnecting socket ${s.id} for boat ${id}`);
                     s.disconnect(true);
+                    found++;
                 }
             });
+            console.log(`Disconnected ${found} sockets for boat ${id}`);
 
-            delete raceState.boats[id];
-            // Explicitly broadcast full state to ensure UI removal
-            io.emit('state-update', raceState);
+            // 4. Update local state and broadcast full sync
+            if (raceState.boats[id]) {
+                delete raceState.boats[id];
+                io.emit('state-update', raceState);
+            }
             saveState();
+        } else {
+            console.warn(`[BACKEND] Unauthorized kill-tracker request from ${socket.id} (${socket.data.type})`);
         }
     });
 
@@ -472,25 +481,34 @@ io.on('connection', (socket) => {
         console.log(`[BACKEND] clear-fleet request. Sender type: ${socket.data.type}`);
         if (socket.data.type === 'management') {
             console.log('Management command: Clearing entire fleet');
-            io.emit('kill-simulation', 'all'); // Special signal for all trackers
 
-            // Blacklist all current boats to prevent immediate ghost re-entry
-            Object.keys(raceState.boats).forEach(id => {
+            // 1. Broadcast stop signal
+            io.emit('kill-simulation', 'all');
+
+            // 2. Blacklist all current boats
+            const boatIds = Object.keys(raceState.boats);
+            boatIds.forEach(id => {
                 deadBoats.add(id);
-                setTimeout(() => deadBoats.delete(id), 60000);
+                setTimeout(() => deadBoats.delete(id), 30000);
             });
 
-            // Disconnect all trackers
+            // 3. Disconnect all trackers
             const sockets = Array.from(io.sockets.sockets.values());
+            let count = 0;
             sockets.forEach((s) => {
                 if (s.data.type === 'tracker') {
                     s.disconnect(true);
+                    count++;
                 }
             });
+            console.log(`Disconnected ${count} tracker sockets`);
 
+            // 4. Clear state and sync
             raceState.boats = {};
             io.emit('state-update', raceState);
             saveState();
+        } else {
+            console.warn(`[BACKEND] Unauthorized clear-fleet request from ${socket.id} (${socket.data.type})`);
         }
     });
 

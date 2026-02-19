@@ -164,7 +164,7 @@
     ]
   },
   "currentProcedure": {
-    "id": "custom-1771163741701",
+    "id": "custom-1771173339413",
     "nodes": [
       {
         "id": "1",
@@ -179,7 +179,7 @@
             "CLASS"
           ],
           "duration": 60,
-          "isActive": true
+          "isActive": false
         }
       },
       {
