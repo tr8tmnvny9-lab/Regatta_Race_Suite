@@ -51,7 +51,7 @@ const TacticalMap = ({
 }: TacticalMapProps) => {
     const map = useMapEvents({
         moveend: () => {
-            if (activeTab === 'designer' || activeTab === 'fleet') {
+            if (activeTab === 'DESIGNER' || activeTab === 'OVERVIEW') {
                 const center = map.getCenter();
                 const currentZoom = map.getZoom();
                 socket?.emit('update-default-location', { lat: center.lat, lon: center.lng, zoom: currentZoom });
@@ -139,7 +139,7 @@ const TacticalMap = ({
                 <Marker
                     key={mark.id}
                     position={[mark.pos.lat, mark.pos.lon]}
-                    draggable={activeTab === 'designer' && !selectedTool}
+                    draggable={activeTab === 'DESIGNER' && !selectedTool}
                     eventHandlers={{
                         dragstart: () => {
                             draggingMarkId.current = mark.id;
@@ -164,6 +164,10 @@ const TacticalMap = ({
                             setTimeout(() => {
                                 draggingMarkId.current = null;
                             }, 50);
+                        },
+                        click: (e) => {
+                            // Explicitly open popup on click to ensure reliability
+                            e.target.openPopup();
                         }
                     }}
                     icon={renderBuoyIcon(mark, size, autoOrient)}
@@ -180,7 +184,19 @@ const TacticalMap = ({
                                     }}
                                     className="bg-black/40 border border-white/10 rounded px-2 py-1 text-xs font-bold uppercase tracking-widest text-accent-blue outline-none"
                                 />
-                                <div className="flex gap-1 justify-center py-1">
+                                <label className="flex items-center gap-2 cursor-pointer group/toggle mt-1">
+                                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest group-hover/toggle:text-gray-300 transition-colors">Show Laylines</span>
+                                    <input
+                                        type="checkbox"
+                                        checked={!mark.disableLaylines}
+                                        onChange={(e) => {
+                                            const updated = localMarks.map((m: any) => m.id === mark.id ? { ...m, disableLaylines: !e.target.checked } : m);
+                                            socket?.emit('update-course', { ...raceState.course, marks: updated });
+                                        }}
+                                        className="w-3.5 h-3.5 rounded bg-black/40 border border-white/10 checked:bg-accent-blue transition-all"
+                                    />
+                                </label>
+                                <div className="flex gap-1 justify-center py-1 mt-1">
                                     {['yellow', 'orange', 'red', 'green', 'blue'].map(c => (
                                         <div
                                             key={c}

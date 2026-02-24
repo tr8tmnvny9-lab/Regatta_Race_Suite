@@ -1,0 +1,538 @@
+{
+  "status": "IDLE",
+  "prepFlag": "P",
+  "wind": {
+    "direction": 77.0,
+    "speed": 17.0
+  },
+  "course": {
+    "marks": [
+      {
+        "id": "jk8v4zzvs-1",
+        "type": "START",
+        "name": "Start 1 L",
+        "pos": {
+          "lat": 59.32426859164722,
+          "lon": 18.043835891391808
+        },
+        "color": "red",
+        "pairId": "jk8v4zzvs",
+        "design": "POLE",
+        "disableLaylines": false
+      },
+      {
+        "id": "jk8v4zzvs-2",
+        "type": "START",
+        "name": "Start 1 R",
+        "pos": {
+          "lat": 59.32350227574873,
+          "lon": 18.043971063270337
+        },
+        "color": "red",
+        "pairId": "jk8v4zzvs",
+        "design": "POLE",
+        "disableLaylines": false
+      },
+      {
+        "id": "lowngq0bm-1",
+        "type": "FINISH",
+        "name": "Finish 1 L",
+        "pos": {
+          "lat": 59.32495826118314,
+          "lon": 18.058019391590538
+        },
+        "color": "blue",
+        "pairId": "lowngq0bm",
+        "gateDirection": "UPWIND",
+        "design": "POLE",
+        "disableLaylines": false
+      },
+      {
+        "id": "lowngq0bm-2",
+        "type": "FINISH",
+        "name": "Finish 1 R",
+        "pos": {
+          "lat": 59.32415911900527,
+          "lon": 18.058197499807147
+        },
+        "color": "blue",
+        "pairId": "lowngq0bm",
+        "gateDirection": "UPWIND",
+        "design": "POLE",
+        "disableLaylines": false
+      },
+      {
+        "id": "kzlyv07ec-1",
+        "type": "GATE",
+        "name": "Gate 1 L",
+        "pos": {
+          "lat": 59.325012996261165,
+          "lon": 18.055365084780824
+        },
+        "color": "orange",
+        "pairId": "kzlyv07ec",
+        "gateDirection": "UPWIND",
+        "design": "TUBE",
+        "disableLaylines": false
+      },
+      {
+        "id": "kzlyv07ec-2",
+        "type": "GATE",
+        "name": "Gate 1 R",
+        "pos": {
+          "lat": 59.32367743519167,
+          "lon": 18.055751322800795
+        },
+        "color": "orange",
+        "pairId": "kzlyv07ec",
+        "gateDirection": "UPWIND",
+        "design": "TUBE",
+        "disableLaylines": false
+      },
+      {
+        "id": "warie3vx8-1",
+        "type": "GATE",
+        "name": "Gate 2 L",
+        "pos": {
+          "lat": 59.32456416601916,
+          "lon": 18.046288492641096
+        },
+        "color": "yellow",
+        "pairId": "warie3vx8",
+        "gateDirection": "DOWNWIND",
+        "design": "TUBE",
+        "disableLaylines": false
+      },
+      {
+        "id": "warie3vx8-2",
+        "type": "GATE",
+        "name": "Gate 2 R",
+        "pos": {
+          "lat": 59.323305220296376,
+          "lon": 18.0464601543308
+        },
+        "color": "yellow",
+        "pairId": "warie3vx8",
+        "gateDirection": "DOWNWIND",
+        "design": "TUBE",
+        "disableLaylines": false
+      }
+    ],
+    "courseBoundary": [
+      {
+        "lat": 59.32119227614691,
+        "lon": 18.04040930706468
+      },
+      {
+        "lat": 59.3217615797259,
+        "lon": 18.061952770621296
+      },
+      {
+        "lat": 59.32679731152607,
+        "lon": 18.05989283785094
+      },
+      {
+        "lat": 59.32605294599475,
+        "lon": 18.04002291227528
+      }
+    ]
+  },
+  "currentProcedure": {
+    "id": "custom-1771923253430",
+    "nodes": [
+      {
+        "id": "0",
+        "type": "state",
+        "data": {
+          "label": "Idle",
+          "flags": [],
+          "duration": 0.0
+        },
+        "position": {
+          "x": 250.7401453957997,
+          "y": 50
+        }
+      },
+      {
+        "id": "1",
+        "type": "state",
+        "data": {
+          "label": "Warning Signal",
+          "flags": [
+            "CLASS"
+          ],
+          "duration": 60.0
+        },
+        "position": {
+          "x": 250,
+          "y": 200
+        }
+      },
+      {
+        "id": "2",
+        "type": "state",
+        "data": {
+          "label": "Preparatory Signal",
+          "flags": [
+            "CLASS",
+            "P"
+          ],
+          "duration": 180.0
+        },
+        "position": {
+          "x": 250,
+          "y": 350
+        }
+      },
+      {
+        "id": "3",
+        "type": "state",
+        "data": {
+          "label": "One-Minute",
+          "flags": [
+            "CLASS"
+          ],
+          "duration": 60.0
+        },
+        "position": {
+          "x": 250,
+          "y": 500
+        }
+      },
+      {
+        "id": "4",
+        "type": "state",
+        "data": {
+          "label": "Start",
+          "flags": [],
+          "duration": 0.0
+        },
+        "position": {
+          "x": 250,
+          "y": 650
+        }
+      },
+      {
+        "id": "5",
+        "type": "state",
+        "data": {
+          "label": "Racing",
+          "flags": [],
+          "duration": 3600.0
+        },
+        "position": {
+          "x": 250,
+          "y": 800
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e0-1",
+        "source": "0",
+        "target": "1"
+      },
+      {
+        "id": "e1-2",
+        "source": "1",
+        "target": "2"
+      },
+      {
+        "id": "e2-3",
+        "source": "2",
+        "target": "3"
+      },
+      {
+        "id": "e3-4",
+        "source": "3",
+        "target": "4"
+      },
+      {
+        "id": "e4-5",
+        "source": "4",
+        "target": "5"
+      }
+    ]
+  },
+  "defaultLocation": {
+    "lat": 59.323994909381206,
+    "lon": 18.050987720489506,
+    "zoom": 16.0
+  },
+  "boats": {},
+  "penalties": [],
+  "logs": [
+    {
+      "id": "log-1771922901297",
+      "timestamp": 1771922901297,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771922901298",
+      "timestamp": 1771922901298,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771922901300",
+      "timestamp": 1771922901300,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771922901301",
+      "timestamp": 1771922901301,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923052797",
+      "timestamp": 1771923052797,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923054246",
+      "timestamp": 1771923054246,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923055779",
+      "timestamp": 1771923055779,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923057613",
+      "timestamp": 1771923057613,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923078797",
+      "timestamp": 1771923078797,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923086115",
+      "timestamp": 1771923086115,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923089363",
+      "timestamp": 1771923089363,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923091431",
+      "timestamp": 1771923091431,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923101299",
+      "timestamp": 1771923101299,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923108649",
+      "timestamp": 1771923108649,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923122131",
+      "timestamp": 1771923122131,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923126281",
+      "timestamp": 1771923126281,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923129047",
+      "timestamp": 1771923129047,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923131616",
+      "timestamp": 1771923131616,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923133682",
+      "timestamp": 1771923133682,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923137982",
+      "timestamp": 1771923137982,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923143865",
+      "timestamp": 1771923143865,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923146247",
+      "timestamp": 1771923146247,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923149582",
+      "timestamp": 1771923149582,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923151998",
+      "timestamp": 1771923151998,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923158882",
+      "timestamp": 1771923158882,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923160699",
+      "timestamp": 1771923160699,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923164198",
+      "timestamp": 1771923164198,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923165383",
+      "timestamp": 1771923165383,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923174448",
+      "timestamp": 1771923174448,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923178281",
+      "timestamp": 1771923178281,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923181715",
+      "timestamp": 1771923181715,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923192915",
+      "timestamp": 1771923192915,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923198582",
+      "timestamp": 1771923198582,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    },
+    {
+      "id": "log-1771923201883",
+      "timestamp": 1771923201883,
+      "category": "COURSE",
+      "source": "Director",
+      "message": "Course layout updated",
+      "isActive": false
+    }
+  ]
+}

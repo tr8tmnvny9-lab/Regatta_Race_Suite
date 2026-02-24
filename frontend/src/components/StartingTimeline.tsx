@@ -22,6 +22,15 @@ interface TimelineStep {
 
 const STANDARD_SEQUENCE: TimelineStep[] = [
     {
+        id: 'idle',
+        time: '-5:00',
+        seconds: 300,
+        label: 'IDLE',
+        description: 'Waiting for warning signal',
+        flagsUp: [],
+        flagsDown: [],
+    },
+    {
         id: 'warning',
         time: '-5:00',
         seconds: 300,
@@ -535,8 +544,36 @@ export default function StartingTimeline({
                                         <span className="text-accent-red">Abandon</span>
                                     </button>
 
+                                    {/* AP Down / N Down Special Logic */}
+                                    <div className="col-span-2 grid grid-cols-2 gap-2">
+                                        {currentProcedure?.nodes?.some((n: any) => n.id === 'ap_down') && (
+                                            <button
+                                                onClick={() => socket?.emit('trigger-node', 'ap_down')}
+                                                className="py-3 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 rounded-xl text-[9px] font-black uppercase text-amber-500 transition-all flex flex-col items-center gap-1"
+                                            >
+                                                <div className="flex items-center gap-1">
+                                                    <FlagIcon flag="AP" size={20} />
+                                                    <span className="text-sm">▼</span>
+                                                </div>
+                                                AP DOWN (1 MIN)
+                                            </button>
+                                        )}
+                                        {currentProcedure?.nodes?.some((n: any) => n.id === 'n_down') && (
+                                            <button
+                                                onClick={() => socket?.emit('trigger-node', 'n_down')}
+                                                className="py-3 bg-accent-red/10 border border-accent-red/30 hover:bg-accent-red/20 rounded-xl text-[9px] font-black uppercase text-accent-red transition-all flex flex-col items-center gap-1"
+                                            >
+                                                <div className="flex items-center gap-1">
+                                                    <FlagIcon flag="N" size={20} />
+                                                    <span className="text-sm">▼</span>
+                                                </div>
+                                                N DOWN (1 MIN)
+                                            </button>
+                                        )}
+                                    </div>
+
                                     {/* Dynamic Special Nodes from Logic Editor */}
-                                    {specialNodes.map((node: any) => (
+                                    {specialNodes.filter((n: any) => n.id !== 'ap_down' && n.id !== 'n_down').map((node: any) => (
                                         <button
                                             key={node.id}
                                             onClick={() => socket?.emit('trigger-node', node.id)}

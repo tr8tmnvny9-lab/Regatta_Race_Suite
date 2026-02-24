@@ -23,7 +23,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # IDE settings
-.vscode/
+.vscode/*
+!.vscode/settings.json
 .idea/
 *.swp
 *.swo
@@ -33,3 +34,6 @@ backend/node_modules/
 frontend/node_modules/
 backend/dist/
 frontend/dist/
+backend-rust/target/
+backend-rust/.gitignore
+**/Cargo.lock

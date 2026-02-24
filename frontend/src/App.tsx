@@ -19,6 +19,7 @@ import StartingTimeline from './components/StartingTimeline'
 import ErrorBoundary from './components/ErrorBoundary'
 import ProcedureDesigner from './components/procedure-designer/ProcedureDesigner'
 import TacticalMap from './components/TacticalMap'
+import LogView, { LogEntry } from './components/LogView'
 
 // --- Types ---
 interface Buoy {
@@ -31,6 +32,7 @@ interface Buoy {
     pairId?: string;
     gateDirection?: 'UPWIND' | 'DOWNWIND';
     design?: 'POLE' | 'BUOY' | 'TUBE' | 'MARKSETBOT';
+    disableLaylines?: boolean;
 }
 
 interface RaceState {
@@ -52,6 +54,7 @@ interface RaceState {
     currentEvent: string | null;
     currentProcedure: any | null;
     currentNodeId: string | null;
+    logs: LogEntry[];
 }
 
 // --- Icons ---
@@ -293,7 +296,7 @@ const LaylineLayer = ({ marks, windDir, boundary }: { marks: Buoy[], windDir: nu
 
     return (
         <>
-            {marks.filter(m => m.type === 'MARK' || m.type === 'GATE' || m.type === 'START' || m.type === 'FINISH').map(m => {
+            {marks.filter(m => (m.type === 'MARK' || m.type === 'GATE' || m.type === 'START' || m.type === 'FINISH') && !m.disableLaylines).map(m => {
                 const shift = m.gateDirection === 'UPWIND' ? 180 : 0;
                 const TACK_ANGLE = 45;
                 const portBearing = (windDir + TACK_ANGLE + shift + 360) % 360;
@@ -378,7 +381,7 @@ const CourseBoundaryDrawing = ({
 
 export default function App() {
     const [view, setView] = useState<'management' | 'tracker' | 'jury' | 'media'>('management')
-    const [activeTab, setActiveTab] = useState<'overview' | 'designer' | 'procedure' | 'procedure-editor' | 'boats' | 'tracking' | 'settings'>('overview')
+    const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'DESIGNER' | 'PROCEDURE' | 'ARCHITECT' | 'LOGS' | 'SETTINGS'>('OVERVIEW')
     const [socket, setSocket] = useState<Socket | null>(null)
     const [mapInstance, setMapInstance] = useState<L.Map | null>(null)
     const [zoom, setZoom] = useState(14)
@@ -391,18 +394,23 @@ export default function App() {
         currentSequence: null,
         sequenceTimeRemaining: null,
         startTime: null,
-        wind: { direction: 0, speed: 0 },
-        course: { marks: [], startLine: null, finishLine: null, courseBoundary: null },
+        wind: { direction: 180, speed: 12 },
+        course: {
+            marks: [],
+            startLine: null,
+            finishLine: null,
+            courseBoundary: null
+        },
         boats: {},
         prepFlag: 'P',
         currentFlags: [],
         currentEvent: null,
         currentProcedure: null,
         currentNodeId: null,
+        logs: []
     })
 
     // Local UI State
-    const [_isDesignerActive, setIsDesignerActive] = useState(false)
     const [drawingMode, setDrawingMode] = useState(false)
     const [autoOrient, setAutoOrient] = useState(false)
 
@@ -438,6 +446,7 @@ export default function App() {
                 prepFlag: state.prepFlag || 'P', // Default to P if missing
                 currentProcedure: state.currentProcedure || null,
                 currentNodeId: state.currentNodeId || null,
+                logs: state.logs || []
             })
         })
         s.on('boat-update', (data) => {
@@ -467,14 +476,24 @@ export default function App() {
             prepFlag: data.prepFlag || prev.prepFlag,
             currentNodeId: data.currentNodeId || prev.currentNodeId,
         })))
-        s.on('race-started', (data) => setRaceState(prev => ({
-            ...prev,
-            status: 'RACING',
-            startTime: data.startTime,
-            sequenceTimeRemaining: 0,
-            currentFlags: [],
-            currentEvent: 'STARTED',
-        })))
+        s.on('new-log', (log: any) => {
+            console.log('[LOG] New entry received:', log);
+            setRaceState(prev => ({
+                ...prev,
+                logs: [log, ...prev.logs].slice(0, 100)
+            }))
+        })
+
+        s.on('race-started', (data: { startTime: number }) => {
+            setRaceState(prev => ({
+                ...prev,
+                status: 'RACING',
+                startTime: data.startTime,
+                sequenceTimeRemaining: 0,
+                currentFlags: [],
+                currentEvent: 'STARTED',
+            }))
+        })
 
         s.on('kill-simulation', (id) => {
             console.log('[FRONTEND] Received kill-simulation command for:', id);
@@ -614,24 +633,25 @@ export default function App() {
                 <div className="w-14 h-14 bg-accent-blue rounded-2xl flex items-center justify-center shadow-[0_0_40px_rgba(59,130,246,0.6)] mb-6 hover:scale-105 transition-transform duration-500">
                     <Navigation className="text-white fill-current" size={28} />
                 </div>
-                <div className="flex flex-col gap-6 w-full px-4">
-                    <NavIcon icon={Layout} active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} />
-                    <NavIcon icon={MapIcon} active={activeTab === 'designer'} onClick={() => { setActiveTab('designer'); setIsDesignerActive(true) }} />
-                    <NavIcon icon={Flag} active={activeTab === 'procedure'} onClick={() => setActiveTab('procedure')} />
-                    <NavIcon icon={FileCog} active={activeTab === 'procedure-editor'} onClick={() => setActiveTab('procedure-editor')} />
-                    <div className="h-px w-8 bg-white/10 my-2" />
-                    <NavIcon icon={Settings} active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+                <div className="flex flex-col gap-6 w-full px-4 text-center">
+                    <NavIcon icon={Layout} active={activeTab === 'OVERVIEW'} onClick={() => setActiveTab('OVERVIEW')} />
+                    <NavIcon icon={MapIcon} active={activeTab === 'DESIGNER'} onClick={() => setActiveTab('DESIGNER')} />
+                    <NavIcon icon={Activity} active={activeTab === 'LOGS'} onClick={() => setActiveTab('LOGS')} />
+                    <NavIcon icon={Flag} active={activeTab === 'PROCEDURE'} onClick={() => setActiveTab('PROCEDURE')} />
+                    <NavIcon icon={FileCog} active={activeTab === 'ARCHITECT'} onClick={() => setActiveTab('ARCHITECT')} />
+                    <div className="h-px w-8 bg-white/10 mx-auto my-2" />
+                    <NavIcon icon={Settings} active={activeTab === 'SETTINGS'} onClick={() => setActiveTab('SETTINGS')} />
                 </div>
-                <div className="mt-auto flex flex-col gap-6 w-full px-4">
+                <div className="mt-auto flex flex-col gap-6 w-full px-4 text-center">
                     <NavIcon icon={Monitor} onClick={() => setView('media')} />
                 </div>
             </nav>
 
             {/* Main Experience Container */}
-            <div className="flex-1 flex flex-col relative bg-gradient-to-br from-regatta-dark to-black">
+            < div className="flex-1 flex flex-col relative bg-gradient-to-br from-regatta-dark to-black" >
 
                 {/* Top Cinematic Header (Floating) */}
-                <header className="absolute top-0 left-0 right-0 h-28 px-12 flex items-center justify-between z-40 bg-gradient-to-b from-black/90 via-black/50 to-transparent pointer-events-none">
+                < header className="absolute top-0 left-0 right-0 h-28 px-12 flex items-center justify-between z-40 bg-gradient-to-b from-black/90 via-black/50 to-transparent pointer-events-none" >
                     <div className="flex items-center gap-10 pointer-events-auto">
                         <div>
                             <h1 className="text-4xl font-black italic tracking-tighter uppercase leading-none text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-white drop-shadow-[0_0_20px_rgba(59,130,246,0.5)]">
@@ -687,10 +707,10 @@ export default function App() {
                             <Navigation size={14} className={autoOrient ? 'animate-pulse' : ''} /> {autoOrient ? 'Orient: Wind' : 'Orient: North'}
                         </button>
                     </div>
-                </header>
+                </header >
 
                 {/* Tactical Map Layer */}
-                <div className="absolute inset-0 z-0 bg-regatta-dark">
+                < div className="absolute inset-0 z-0 bg-regatta-dark" >
                     <MapContainer
                         center={[59.3293, 18.0686]}
                         zoom={14}
@@ -719,7 +739,7 @@ export default function App() {
                         />
 
                         <CourseDesignerEvents
-                            isEditing={activeTab === 'designer'}
+                            isEditing={activeTab === 'DESIGNER'}
                             selectedTool={selectedTool}
                             drawingMode={drawingMode}
                             onAddMark={handleAddMark}
@@ -729,280 +749,309 @@ export default function App() {
 
                     {/* Vignette Overlay for Focus */}
                     <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_20%,rgba(15,23,42,0.6)_100%)]" />
-                </div>
+                </div >
 
                 {/* Floating HUD Container (Anchored below header) */}
-                <div className="absolute top-32 bottom-0 left-0 right-0 z-10 p-12 flex gap-10 pointer-events-none">
+                < div className="absolute top-32 bottom-0 left-0 right-0 z-10 p-12 flex gap-10 pointer-events-none" >
 
                     {/* Left Wing Panels */}
                     <AnimatePresence>
-                        {activeTab === 'overview' && (
-                            <motion.div
-                                key="overview"
-                                initial={{ x: -20, opacity: 0 }}
-                                animate={{ x: 0, opacity: 1 }}
-                                exit={{ x: -20, opacity: 0 }}
-                                className="w-96 h-full flex flex-col"
-                            >
-                                <GlassPanel title="Race Control Center" icon={Layout} className="pointer-events-auto h-full">
-                                    <div className="flex-1 overflow-y-auto pr-2 space-y-6">
-                                        {/* Wind Card */}
-                                        <div className="p-5 rounded-2xl bg-gradient-to-br from-accent-blue/20 to-transparent border border-white/10">
-                                            <div className="text-[10px] font-black text-accent-blue uppercase tracking-widest mb-4">Tactical Wind Environment</div>
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <div className="text-3xl font-black italic tracking-tighter text-white">{raceState.wind.speed.toFixed(1)}<span className="text-xs font-normal not-italic text-gray-500 ml-1 uppercase">kts</span></div>
-                                                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Steady Breeze</div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <div className="text-3xl font-black italic tracking-tighter text-accent-cyan">{raceState.wind.direction}°</div>
-                                                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Direction (TWA)</div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Race Progress Card */}
-                                        <div className="p-5 rounded-2xl bg-white/5 border border-white/5">
-                                            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Live Race Intelligence</div>
-                                            <div className="space-y-4">
+                        {
+                            activeTab === 'OVERVIEW' && (
+                                <motion.div
+                                    key="overview"
+                                    initial={{ x: -20, opacity: 0 }}
+                                    animate={{ x: 0, opacity: 1 }}
+                                    exit={{ x: -20, opacity: 0 }}
+                                    className="w-96 h-full flex flex-col"
+                                >
+                                    <GlassPanel title="Race Control Center" icon={Layout} className="pointer-events-auto h-full">
+                                        <div className="flex-1 overflow-y-auto pr-2 space-y-6">
+                                            {/* Wind Card */}
+                                            <div className="p-5 rounded-2xl bg-gradient-to-br from-accent-blue/20 to-transparent border border-white/10">
+                                                <div className="text-[10px] font-black text-accent-blue uppercase tracking-widest mb-4">Tactical Wind Environment</div>
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-[10px] font-bold text-gray-500 uppercase">Status</span>
-                                                    <span className="text-[10px] font-black uppercase text-accent-green">{raceState.status}</span>
-                                                </div>
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-[10px] font-bold text-gray-500 uppercase">Active Marks</span>
-                                                    <span className="text-[10px] font-black uppercase text-white">{raceState.course.marks.length} deployed</span>
-                                                </div>
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-[10px] font-bold text-gray-500 uppercase">Fleet Size</span>
-                                                    <span className="text-[10px] font-black uppercase text-white">{Object.keys(raceState.boats).length} tracked</span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Quick Actions */}
-                                        <div className="space-y-3">
-                                            <button
-                                                onClick={() => setActiveTab('procedure')}
-                                                className="w-full py-4 bg-accent-blue hover:bg-blue-600 text-white rounded-xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 transition-all"
-                                            >
-                                                Launch Procedure
-                                            </button>
-                                            <button
-                                                onClick={() => setActiveTab('procedure-editor')}
-                                                className="w-full py-4 bg-accent-cyan/10 hover:bg-accent-cyan/20 border border-accent-cyan/30 text-accent-cyan rounded-xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 transition-all"
-                                            >
-                                                Procedure Editor
-                                            </button>
-                                            <button
-                                                onClick={() => setActiveTab('designer')}
-                                                className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 transition-all"
-                                            >
-                                                Course Designer
-                                            </button>
-                                        </div>
-                                    </div>
-                                </GlassPanel>
-                            </motion.div>
-                        )}
-
-                        {activeTab === 'designer' && (
-                            <motion.div
-                                key="designer"
-                                initial={{ x: -20, opacity: 0 }}
-                                animate={{ x: 0, opacity: 1 }}
-                                exit={{ x: -20, opacity: 0 }}
-                                className="w-96 h-full flex flex-col"
-                            >
-                                <GlassPanel title="Course Designer" icon={MapIcon} className="pointer-events-auto h-full">
-                                    <div className="flex-1 overflow-y-auto pr-2 space-y-4">
-                                        <div className="grid grid-cols-2 gap-3 mb-6">
-                                            <DesignerTool
-                                                label="Single Mark"
-                                                active={selectedTool === 'MARK'}
-                                                onClick={() => {
-                                                    if (!raceState.course.courseBoundary) return;
-                                                    setSelectedTool(selectedTool === 'MARK' ? null : 'MARK');
-                                                    setDrawingMode(false);
-                                                }}
-                                            />
-                                            <DesignerTool
-                                                label="Gate"
-                                                active={selectedTool === 'GATE'}
-                                                onClick={() => {
-                                                    if (!raceState.course.courseBoundary) return;
-                                                    setSelectedTool(selectedTool === 'GATE' ? null : 'GATE');
-                                                    setDrawingMode(false);
-                                                }}
-                                            />
-                                            <DesignerTool
-                                                label="Start Line"
-                                                active={selectedTool === 'START'}
-                                                onClick={() => {
-                                                    if (!raceState.course.courseBoundary) return;
-                                                    setSelectedTool(selectedTool === 'START' ? null : 'START');
-                                                    setDrawingMode(false);
-                                                }}
-                                            />
-                                            <DesignerTool
-                                                label="Finish Line"
-                                                active={selectedTool === 'FINISH'}
-                                                onClick={() => {
-                                                    if (!raceState.course.courseBoundary) return;
-                                                    setSelectedTool(selectedTool === 'FINISH' ? null : 'FINISH');
-                                                    setDrawingMode(false);
-                                                }}
-                                            />
-                                        </div>
-
-                                        {!raceState.course.courseBoundary && (
-                                            <div className="p-4 rounded-xl bg-accent-red/10 border border-accent-red/20 mb-4">
-                                                <p className="text-[10px] text-accent-red font-bold uppercase leading-relaxed text-center">
-                                                    You must set the Course Boundary before adding marks.
-                                                </p>
-                                            </div>
-                                        )}
-
-                                        <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4 border-b border-white/5 pb-2">Active Buoys ({raceState.course.marks.length})</div>
-
-                                        {raceState.course.marks.map((m) => (
-                                            <div key={m.id} className="p-4 rounded-xl bg-white/5 flex items-center justify-between group hover:bg-white/10 transition-all border border-white/5 hover:border-accent-blue/30 cursor-pointer">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-10 h-10 rounded-lg bg-accent-blue/10 flex items-center justify-center text-accent-blue font-black italic shadow-inner">
-                                                        {m.name.charAt(0)}
-                                                    </div>
                                                     <div>
-                                                        <div className="text-xs font-bold uppercase tracking-tight text-gray-200">{m.name}</div>
-                                                        <div className="text-[9px] text-gray-500 font-mono mt-0.5">{m.pos.lat.toFixed(4)}, {m.pos.lon.toFixed(4)}</div>
+                                                        <div className="text-3xl font-black italic tracking-tighter text-white">{raceState.wind.speed.toFixed(1)}<span className="text-xs font-normal not-italic text-gray-500 ml-1 uppercase">kts</span></div>
+                                                        <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Steady Breeze</div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="text-3xl font-black italic tracking-tighter text-accent-cyan">{raceState.wind.direction}°</div>
+                                                        <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Direction (TWA)</div>
                                                     </div>
                                                 </div>
-                                                <Trash2
-                                                    size={14}
-                                                    className="text-gray-600 hover:text-accent-red transition-colors"
-                                                    onClick={(e) => { e.stopPropagation(); handleDeleteMark(m.id); }}
+                                            </div>
+
+                                            {/* Race Progress Card */}
+                                            <div className="p-5 rounded-2xl bg-white/5 border border-white/5">
+                                                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Live Race Intelligence</div>
+                                                <div className="space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-bold text-gray-500 uppercase">Status</span>
+                                                        <span className="text-[10px] font-black uppercase text-accent-green">{raceState.status}</span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-bold text-gray-500 uppercase">Active Marks</span>
+                                                        <span className="text-[10px] font-black uppercase text-white">{raceState.course.marks.length} deployed</span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-bold text-gray-500 uppercase">Fleet Size</span>
+                                                        <span className="text-[10px] font-black uppercase text-white">{Object.keys(raceState.boats).length} tracked</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Quick Actions */}
+                                            <div className="space-y-3">
+                                                <button
+                                                    onClick={() => setActiveTab('PROCEDURE')}
+                                                    className="w-full py-4 bg-accent-blue hover:bg-blue-600 text-white rounded-xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 transition-all"
+                                                >
+                                                    Launch Procedure
+                                                </button>
+                                                <button
+                                                    onClick={() => setActiveTab('ARCHITECT')}
+                                                    className="w-full py-4 bg-accent-cyan/10 hover:bg-accent-cyan/20 border border-accent-cyan/30 text-accent-cyan rounded-xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 transition-all"
+                                                >
+                                                    Procedure Editor
+                                                </button>
+                                                <button
+                                                    onClick={() => setActiveTab('DESIGNER')}
+                                                    className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 transition-all"
+                                                >
+                                                    Course Designer
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </GlassPanel>
+                                </motion.div>
+                            )
+                        }
+
+                        {
+                            activeTab === 'DESIGNER' && (
+                                <motion.div
+                                    key="designer"
+                                    initial={{ x: -20, opacity: 0 }}
+                                    animate={{ x: 0, opacity: 1 }}
+                                    exit={{ x: -20, opacity: 0 }}
+                                    className="w-96 h-full flex flex-col"
+                                >
+                                    <GlassPanel title="Course Designer" icon={MapIcon} className="pointer-events-auto h-full">
+                                        <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+                                            <div className="grid grid-cols-2 gap-3 mb-6">
+                                                <DesignerTool
+                                                    label="Single Mark"
+                                                    active={selectedTool === 'MARK'}
+                                                    onClick={() => {
+                                                        if (!raceState.course.courseBoundary) return;
+                                                        setSelectedTool(selectedTool === 'MARK' ? null : 'MARK');
+                                                        setDrawingMode(false);
+                                                    }}
+                                                />
+                                                <DesignerTool
+                                                    label="Gate"
+                                                    active={selectedTool === 'GATE'}
+                                                    onClick={() => {
+                                                        if (!raceState.course.courseBoundary) return;
+                                                        setSelectedTool(selectedTool === 'GATE' ? null : 'GATE');
+                                                        setDrawingMode(false);
+                                                    }}
+                                                />
+                                                <DesignerTool
+                                                    label="Start Line"
+                                                    active={selectedTool === 'START'}
+                                                    onClick={() => {
+                                                        if (!raceState.course.courseBoundary) return;
+                                                        setSelectedTool(selectedTool === 'START' ? null : 'START');
+                                                        setDrawingMode(false);
+                                                    }}
+                                                />
+                                                <DesignerTool
+                                                    label="Finish Line"
+                                                    active={selectedTool === 'FINISH'}
+                                                    onClick={() => {
+                                                        if (!raceState.course.courseBoundary) return;
+                                                        setSelectedTool(selectedTool === 'FINISH' ? null : 'FINISH');
+                                                        setDrawingMode(false);
+                                                    }}
                                                 />
                                             </div>
-                                        ))}
 
-                                        {raceState.course.marks.length === 0 && (
-                                            <div className="flex flex-col items-center justify-center py-20 text-center opacity-40 border-2 border-dashed border-white/10 rounded-2xl">
-                                                <Plus className="mb-4 text-accent-blue" size={32} />
-                                                <span className="text-[10px] font-bold uppercase tracking-widest">Click Intelligence Map<br />to Deploy Marks</span>
+                                            {!raceState.course.courseBoundary && (
+                                                <div className="p-4 rounded-xl bg-accent-red/10 border border-accent-red/20 mb-4">
+                                                    <p className="text-[10px] text-accent-red font-bold uppercase leading-relaxed text-center">
+                                                        You must set the Course Boundary before adding marks.
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4 border-b border-white/5 pb-2">Active Buoys ({raceState.course.marks.length})</div>
+
+                                            {raceState.course.marks.map((m) => (
+                                                <div key={m.id} className="p-4 rounded-xl bg-white/5 border border-white/5 hover:border-accent-blue/30 transition-all group">
+                                                    <div className="flex items-center justify-between pointer-events-auto">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden">
+                                                                <div
+                                                                    className="w-3 h-3 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.2)]"
+                                                                    style={{ backgroundColor: m.color === 'yellow' ? '#fbbf24' : m.color === 'orange' ? '#f97316' : m.color === 'red' ? '#ef4444' : m.color === 'green' ? '#22c55e' : '#3b82f6' }}
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <div className="text-[10px] font-black uppercase tracking-widest text-white">{m.name}</div>
+                                                                <div className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">{m.type}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-4">
+                                                            <button
+                                                                onClick={() => handleDeleteMark(m.id)}
+                                                                className="p-2 hover:bg-accent-red/10 border border-transparent hover:border-accent-red/30 text-gray-500 hover:text-accent-red rounded-lg transition-all"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            {raceState.course.marks.length === 0 && (
+                                                <div className="flex flex-col items-center justify-center py-20 text-center opacity-40 border-2 border-dashed border-white/10 rounded-2xl">
+                                                    <Plus className="mb-4 text-accent-blue" size={32} />
+                                                    <span className="text-[10px] font-bold uppercase tracking-widest">Click Intelligence Map<br />to Deploy Marks</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="mt-6 pt-6 border-t border-white/10 flex flex-col gap-3">
+                                            {!drawingMode ? (
+                                                <button
+                                                    onClick={() => {
+                                                        setDrawingMode(true);
+                                                        setSelectedTool(null);
+                                                    }}
+                                                    className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.25em] transition-all"
+                                                >
+                                                    {raceState.course.courseBoundary ? 'Edit Boundary' : 'Add Course Boundary'}
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => setDrawingMode(false)}
+                                                    className="w-full py-4 bg-accent-green text-white rounded-xl text-[10px] font-black uppercase tracking-[0.25em] shadow-lg shadow-accent-green/20 hover:shadow-accent-green/40 transition-all"
+                                                >
+                                                    Finish Drawing
+                                                </button>
+                                            )}
+
+                                            {raceState.course.courseBoundary && !drawingMode && (
+                                                <button
+                                                    onClick={() => handleUpdateBoundary(null)}
+                                                    className="w-full py-3 text-accent-red hover:bg-accent-red/10 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all"
+                                                >
+                                                    Clear Boundary
+                                                </button>
+                                            )}
+
+                                            <button className="w-full py-4 bg-accent-blue text-white rounded-xl text-[10px] font-black uppercase tracking-[0.25em] shadow-lg shadow-accent-blue/20 hover:shadow-accent-blue/40 transition-all">
+                                                Sync Course Data
+                                            </button>
+                                        </div>
+                                    </GlassPanel>
+                                </motion.div>
+                            )
+                        }
+
+                        {
+                            activeTab === 'PROCEDURE' && (
+                                <motion.div
+                                    key="procedure"
+                                    initial={{ x: -20, opacity: 0 }}
+                                    animate={{ x: 0, opacity: 1 }}
+                                    exit={{ x: -20, opacity: 0 }}
+                                    className="w-[420px] h-full flex flex-col"
+                                >
+                                    <GlassPanel title="Starting Procedure (RRS 26)" icon={Flag} className="pointer-events-auto h-full">
+                                        <ErrorBoundary>
+                                            <StartingTimeline
+                                                socket={socket}
+                                                raceStatus={raceState.status}
+                                                sequenceTimeRemaining={raceState.sequenceTimeRemaining}
+                                                currentFlags={raceState.currentFlags}
+                                                currentEvent={raceState.currentEvent}
+                                                prepFlag={raceState.prepFlag}
+                                                currentProcedure={raceState.currentProcedure}
+                                                currentNodeId={raceState.currentNodeId}
+                                            />
+                                        </ErrorBoundary>
+                                    </GlassPanel>
+                                </motion.div>
+                            )
+                        }
+
+                        {
+                            activeTab === 'SETTINGS' && (
+                                <motion.div
+                                    key="settings"
+                                    initial={{ x: -20, opacity: 0 }}
+                                    animate={{ x: 0, opacity: 1 }}
+                                    exit={{ x: -20, opacity: 0 }}
+                                    className="w-96 h-full flex flex-col"
+                                >
+                                    <GlassPanel title="System Settings" icon={Settings} className="pointer-events-auto h-full">
+                                        <div className="space-y-6">
+                                            <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
+                                                <div className="text-[10px] font-black text-accent-blue uppercase tracking-widest mb-4">Map Configuration</div>
+                                                <p className="text-xs text-gray-400 mb-6 leading-relaxed">
+                                                    Set the current view as the default starting position for all users when no course is defined.
+                                                </p>
+                                                <button
+                                                    onClick={() => {
+                                                        if (!mapInstance) return;
+                                                        const center = mapInstance.getCenter();
+                                                        const z = mapInstance.getZoom();
+                                                        socket?.emit('update-default-location', { lat: center.lat, lon: center.lng, zoom: z });
+                                                        setShowSaveSuccess(true);
+                                                        setTimeout(() => setShowSaveSuccess(false), 2000);
+                                                    }}
+                                                    className={`w-full py-4 border rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${showSaveSuccess ? 'bg-accent-green/20 border-accent-green text-accent-green' : 'bg-accent-blue/10 hover:bg-accent-blue/20 border-accent-blue/50 text-accent-blue'}`}
+                                                >
+                                                    {showSaveSuccess ? 'Location Locked!' : 'Lock Current Map Location'}
+                                                </button>
                                             </div>
-                                        )}
-                                    </div>
-                                    <div className="mt-6 pt-6 border-t border-white/10 flex flex-col gap-3">
-                                        {!drawingMode ? (
-                                            <button
-                                                onClick={() => {
-                                                    setDrawingMode(true);
-                                                    setSelectedTool(null);
-                                                }}
-                                                className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.25em] transition-all"
-                                            >
-                                                {raceState.course.courseBoundary ? 'Edit Boundary' : 'Add Course Boundary'}
-                                            </button>
-                                        ) : (
-                                            <button
-                                                onClick={() => setDrawingMode(false)}
-                                                className="w-full py-4 bg-accent-green text-white rounded-xl text-[10px] font-black uppercase tracking-[0.25em] shadow-lg shadow-accent-green/20 hover:shadow-accent-green/40 transition-all"
-                                            >
-                                                Finish Drawing
-                                            </button>
-                                        )}
 
-                                        {raceState.course.courseBoundary && !drawingMode && (
-                                            <button
-                                                onClick={() => handleUpdateBoundary(null)}
-                                                className="w-full py-3 text-accent-red hover:bg-accent-red/10 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all"
-                                            >
-                                                Clear Boundary
-                                            </button>
-                                        )}
-
-                                        <button className="w-full py-4 bg-accent-blue text-white rounded-xl text-[10px] font-black uppercase tracking-[0.25em] shadow-lg shadow-accent-blue/20 hover:shadow-accent-blue/40 transition-all">
-                                            Sync Course Data
-                                        </button>
-                                    </div>
-                                </GlassPanel>
-                            </motion.div>
-                        )}
-
-                        {activeTab === 'procedure' && (
-                            <motion.div
-                                key="procedure"
-                                initial={{ x: -20, opacity: 0 }}
-                                animate={{ x: 0, opacity: 1 }}
-                                exit={{ x: -20, opacity: 0 }}
-                                className="w-[420px] h-full flex flex-col"
-                            >
-                                <GlassPanel title="Starting Procedure (RRS 26)" icon={Flag} className="pointer-events-auto h-full">
-                                    <ErrorBoundary>
-                                        <StartingTimeline
-                                            socket={socket}
-                                            raceStatus={raceState.status}
-                                            sequenceTimeRemaining={raceState.sequenceTimeRemaining}
-                                            currentFlags={raceState.currentFlags}
-                                            currentEvent={raceState.currentEvent}
-                                            prepFlag={raceState.prepFlag}
-                                            currentProcedure={raceState.currentProcedure}
-                                            currentNodeId={raceState.currentNodeId}
-                                        />
-                                    </ErrorBoundary>
-                                </GlassPanel>
-                            </motion.div>
-                        )}
-
-                        {activeTab === 'settings' && (
-                            <motion.div
-                                key="settings"
-                                initial={{ x: -20, opacity: 0 }}
-                                animate={{ x: 0, opacity: 1 }}
-                                exit={{ x: -20, opacity: 0 }}
-                                className="w-96 h-full flex flex-col"
-                            >
-                                <GlassPanel title="System Settings" icon={Settings} className="pointer-events-auto h-full">
-                                    <div className="space-y-6">
-                                        <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
-                                            <div className="text-[10px] font-black text-accent-blue uppercase tracking-widest mb-4">Map Configuration</div>
-                                            <p className="text-xs text-gray-400 mb-6 leading-relaxed">
-                                                Set the current view as the default starting position for all users when no course is defined.
-                                            </p>
-                                            <button
-                                                onClick={() => {
-                                                    if (!mapInstance) return;
-                                                    const center = mapInstance.getCenter();
-                                                    const z = mapInstance.getZoom();
-                                                    socket?.emit('update-default-location', { lat: center.lat, lon: center.lng, zoom: z });
-                                                    setShowSaveSuccess(true);
-                                                    setTimeout(() => setShowSaveSuccess(false), 2000);
-                                                }}
-                                                className={`w-full py-4 border rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${showSaveSuccess ? 'bg-accent-green/20 border-accent-green text-accent-green' : 'bg-accent-blue/10 hover:bg-accent-blue/20 border-accent-blue/50 text-accent-blue'}`}
-                                            >
-                                                {showSaveSuccess ? 'Location Locked!' : 'Lock Current Map Location'}
-                                            </button>
+                                            <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
+                                                <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Reset Tools</div>
+                                                <button
+                                                    onClick={handleClearAll}
+                                                    className="w-full py-4 bg-accent-red/10 hover:bg-accent-red/20 border border-accent-red/50 text-accent-red rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"
+                                                >
+                                                    Wipe All Course Data
+                                                </button>
+                                            </div>
                                         </div>
-
-                                        <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
-                                            <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Reset Tools</div>
-                                            <button
-                                                onClick={handleClearAll}
-                                                className="w-full py-4 bg-accent-red/10 hover:bg-accent-red/20 border border-accent-red/50 text-accent-red rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"
-                                            >
-                                                Wipe All Course Data
-                                            </button>
-                                        </div>
-                                    </div>
-                                </GlassPanel>
-                            </motion.div>
-                        )}
+                                    </GlassPanel>
+                                </motion.div>
+                            )
+                        }
+                        {
+                            activeTab === 'LOGS' && (
+                                <motion.div
+                                    key="logs"
+                                    initial={{ x: -20, opacity: 0 }}
+                                    animate={{ x: 0, opacity: 1 }}
+                                    exit={{ x: -20, opacity: 0 }}
+                                    className="flex-1 h-full flex flex-col pointer-events-auto min-w-[1000px]"
+                                >
+                                    <LogView logs={raceState.logs} />
+                                </motion.div>
+                            )
+                        }
                     </AnimatePresence>
 
                     {/* Spacer */}
-                    <div className="flex-1" />
+                    < div className="flex-1" />
 
                     {/* Right Wing (Always Visible) */}
-                    <div className="w-96 flex flex-col gap-6">
+                    < div className="w-96 flex flex-col gap-6" >
                         <WindControl wind={raceState.wind} onChange={handleUpdateWind} />
 
                         <GlassPanel title="Fleet Telemetry" icon={Users} className="pointer-events-auto flex-1 min-h-0">
@@ -1087,46 +1136,48 @@ export default function App() {
                                 )}
                             </div>
                         </GlassPanel>
-                    </div>
+                    </div >
 
-                </div>
+                </div >
 
                 {/* Procedure Editor Overlay (Outside regular HUD flow) */}
                 <AnimatePresence>
-                    {activeTab === 'procedure-editor' && (
-                        <motion.div
-                            key="procedure-editor"
-                            initial={{ opacity: 0, scale: 0.98 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 1.02 }}
-                            className="absolute inset-0 z-[100] bg-regatta-dark/95 backdrop-blur-2xl flex flex-col pointer-events-auto"
-                        >
-                            <div className="h-20 px-12 flex items-center justify-between border-b border-white/10 bg-black/40">
-                                <div className="flex items-center gap-6">
-                                    <div className="p-3 bg-accent-blue/20 rounded-xl text-accent-blue">
-                                        <FileCog size={24} />
+                    {
+                        activeTab === 'ARCHITECT' && (
+                            <motion.div
+                                key="procedure-editor"
+                                initial={{ opacity: 0, scale: 0.98 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 1.02 }}
+                                className="absolute inset-0 z-[100] bg-regatta-dark/95 backdrop-blur-2xl flex flex-col pointer-events-auto"
+                            >
+                                <div className="h-20 px-12 flex items-center justify-between border-b border-white/10 bg-black/40">
+                                    <div className="flex items-center gap-6">
+                                        <div className="p-3 bg-accent-blue/20 rounded-xl text-accent-blue">
+                                            <FileCog size={24} />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-xl font-black italic tracking-tighter uppercase text-white">Start Logic Architect</h2>
+                                            <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Procedural Sequence Engine</div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h2 className="text-xl font-black italic tracking-tighter uppercase text-white">Start Logic Architect</h2>
-                                        <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Procedural Sequence Engine</div>
-                                    </div>
+                                    <button
+                                        onClick={() => setActiveTab('PROCEDURE')}
+                                        className="px-8 py-3 bg-white/5 hover:bg-accent-red/20 border border-white/10 hover:border-accent-red/50 text-white hover:text-accent-red rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg"
+                                    >
+                                        Close Architect
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => setActiveTab('procedure')}
-                                    className="px-8 py-3 bg-white/5 hover:bg-accent-red/20 border border-white/10 hover:border-accent-red/50 text-white hover:text-accent-red rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg"
-                                >
-                                    Close Architect
-                                </button>
-                            </div>
-                            <div className="flex-1 relative border-t border-white/5 bg-slate-900/50">
-                                <div className="absolute top-2 left-6 z-[110] text-[8px] font-black text-white/20 uppercase tracking-[0.5em] pointer-events-none">Logic Canvas Active</div>
-                                <ErrorBoundary>
-                                    <ProcedureDesigner currentProcedure={raceState.currentProcedure} />
-                                </ErrorBoundary>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                                <div className="flex-1 relative border-t border-white/5 bg-slate-900/50">
+                                    <div className="absolute top-2 left-6 z-[110] text-[8px] font-black text-white/20 uppercase tracking-[0.5em] pointer-events-none">Logic Canvas Active</div>
+                                    <ErrorBoundary>
+                                        <ProcedureDesigner currentProcedure={raceState.currentProcedure} />
+                                    </ErrorBoundary>
+                                </div>
+                            </motion.div>
+                        )
+                    }
+                </AnimatePresence >
             </div >
         </div >
     )

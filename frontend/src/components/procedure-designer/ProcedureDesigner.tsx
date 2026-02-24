@@ -26,6 +26,12 @@ const nodeTypes = {
 
 const initialNodes: Node[] = [
     {
+        id: '0',
+        type: 'state',
+        position: { x: 250, y: -100 },
+        data: { label: 'Idle', flags: [], duration: 0 }
+    },
+    {
         id: '1',
         type: 'state',
         position: { x: 250, y: 50 },
@@ -53,11 +59,28 @@ const initialNodes: Node[] = [
         id: '5',
         type: 'state',
         position: { x: 250, y: 650 },
-        data: { label: 'Ongoing Comp', flags: [], duration: 3600 }
+        data: { label: 'Racing', flags: [], duration: 3600 }
+    },
+    // Special Nodes (Floating)
+    {
+        id: 'ap_down',
+        type: 'state',
+        position: { x: 600, y: 200 },
+        data: { label: 'AP Down', flags: [], duration: 60, description: '1 minute to Warning Signal' }
+    },
+    {
+        id: 'n_down',
+        type: 'state',
+        position: { x: 600, y: 350 },
+        data: { label: 'N Down', flags: [], duration: 60, description: '1 minute to Warning Signal' }
     },
 ];
 
 const initialEdges: Edge[] = [
+    {
+        id: 'e0-1', source: '0', target: '1', sourceHandle: 'out-0', targetHandle: 'in-0', animated: true,
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#06b6d4' }
+    },
     {
         id: 'e1-2', source: '1', target: '2', sourceHandle: 'out-0', targetHandle: 'in-0', animated: true,
         markerEnd: { type: MarkerType.ArrowClosed, color: '#06b6d4' }
@@ -74,14 +97,26 @@ const initialEdges: Edge[] = [
         id: 'e4-5', source: '4', target: '5', sourceHandle: 'out-0', targetHandle: 'in-0', animated: true,
         markerEnd: { type: MarkerType.ArrowClosed, color: '#06b6d4' }
     },
+    // Suggested recovery paths from special signals
+    {
+        id: 'e_ap-1', source: 'ap_down', target: '1', sourceHandle: 'out-0', targetHandle: 'in-0',
+        style: { stroke: '#94a3b8', strokeWidth: 2, strokeDasharray: '5,5' },
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' }
+    },
+    {
+        id: 'e_n-1', source: 'n_down', target: '1', sourceHandle: 'out-0', targetHandle: 'in-0',
+        style: { stroke: '#94a3b8', strokeWidth: 2, strokeDasharray: '5,5' },
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' }
+    },
 ];
 
 const STANDARD_STEPS = [
+    'Idle',
     'Warning Signal',
     'Preparatory Signal',
     'One-Minute',
     'Start',
-    'Ongoing Comp'
+    'Racing'
 ];
 
 const getEdgeStyle = (sourceNode: Node | undefined, targetNode: Node | undefined) => {
@@ -293,7 +328,7 @@ function DesignerInner({ currentProcedure }: { currentProcedure: any }) {
         setSelectedNodeId(id);
     }, [nodes, setNodes]);
 
-    const saveProcedure = useCallback(() => {
+    const saveProcedure = useCallback((deploy: boolean = false) => {
         if (!socket) return;
 
         const procedure = {
@@ -308,7 +343,8 @@ function DesignerInner({ currentProcedure }: { currentProcedure: any }) {
                 id: e.id,
                 source: e.source,
                 target: e.target
-            }))
+            })),
+            deploy // Add the deploy flag
         };
 
         socket.emit('save-procedure', procedure);
@@ -361,14 +397,14 @@ function DesignerInner({ currentProcedure }: { currentProcedure: any }) {
                     </button>
                     <div className="w-[1px] h-10 bg-white/5" />
                     <button
-                        onClick={saveProcedure}
+                        onClick={() => saveProcedure(false)}
                         className="flex items-center gap-2 pr-6 pl-4 py-3 bg-accent-blue/10 hover:bg-accent-blue/20 text-accent-blue rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border border-accent-blue/20 shadow-[0_0_20px_rgba(59,130,246,0.1)]"
                     >
                         <Save size={14} />
                         Save Procedure
                     </button>
                     <button
-                        onClick={saveProcedure}
+                        onClick={() => saveProcedure(true)}
                         className="flex items-center gap-2 pr-8 pl-6 py-3 bg-accent-blue text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-[0_0_30px_rgba(59,130,246,0.3)] hover:scale-105"
                     >
                         <Play fill="currentColor" size={14} />
