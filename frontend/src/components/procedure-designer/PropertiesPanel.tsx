@@ -1,5 +1,5 @@
 import { Node } from 'reactflow';
-import { Settings, Clock, Type, Flag, X } from 'lucide-react';
+import { Settings, Clock, Type, Flag, X, Hand } from 'lucide-react';
 import { FlagIcon } from '../FlagIcons';
 
 interface PropertiesPanelProps {
@@ -68,6 +68,85 @@ export default function PropertiesPanel({ selectedNode, onUpdate, onClose }: Pro
                             onChange={(e) => handleChange('duration', parseInt(e.target.value) || 0)}
                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-accent-blue/50 transition-all font-mono"
                         />
+                    </div>
+
+                    {/* Wait for User Trigger Config */}
+                    <div className="space-y-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                        <label className="flex items-center justify-between text-[10px] font-black text-gray-500 uppercase tracking-widest cursor-pointer">
+                            <span className="flex items-center gap-2">
+                                <Hand size={12} /> Halt for User Input
+                            </span>
+                            <input
+                                type="checkbox"
+                                checked={data.waitForUserTrigger || false}
+                                onChange={(e) => handleChange('waitForUserTrigger', e.target.checked)}
+                                className="w-4 h-4 rounded border-gray-600 accent-accent-blue"
+                            />
+                        </label>
+
+                        {data.waitForUserTrigger && (
+                            <div className="space-y-4 mt-3 pt-3 border-t border-white/10">
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                                        <Type size={12} /> Action Button Label
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={data.actionLabel || ''}
+                                        onChange={(e) => handleChange('actionLabel', e.target.value)}
+                                        className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-accent-blue/50 transition-all font-bold"
+                                        placeholder="e.g., TAKE AP DOWN"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                                        <Clock size={12} /> Post-Trigger Duration
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={data.postTriggerDuration || 0}
+                                        onChange={(e) => handleChange('postTriggerDuration', parseInt(e.target.value) || 0)}
+                                        className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-accent-blue/50 transition-all font-mono"
+                                        title="Seconds this block should countdown AFTER trigger is pressed before advancing"
+                                    />
+                                    <p className="text-[9px] text-gray-500 mt-1 leading-tight">Time to countdown internally after triggering before transitioning to next node.</p>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 text-[10px] font-black text-gray-500 uppercase tracking-widest space-x-2">
+                                        <Flag size={12} /> Post-Trigger Flags
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="Add flag (e.g. AP)"
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && e.currentTarget.value) {
+                                                    const newFlags = [...(data.postTriggerFlags || []), e.currentTarget.value];
+                                                    handleChange('postTriggerFlags', newFlags);
+                                                    e.currentTarget.value = '';
+                                                }
+                                            }}
+                                            className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-accent-blue/50 transition-all font-bold"
+                                        />
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                        {(data.postTriggerFlags || []).map((flag: string, i: number) => (
+                                            <div key={i} className="bg-white/10 px-2 py-1 rounded text-[10px] font-bold text-white flex items-center gap-1 group">
+                                                {flag}
+                                                <button
+                                                    onClick={() => handleChange('postTriggerFlags', data.postTriggerFlags.filter((_: any, idx: number) => idx !== i))}
+                                                    className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-opacity"
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 

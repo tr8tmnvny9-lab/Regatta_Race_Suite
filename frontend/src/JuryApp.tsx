@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { io, Socket } from 'socket.io-client'
-import { Gavel, AlertTriangle, Crosshair, Users, ChevronRight, ShieldAlert } from 'lucide-react'
+import { Gavel, Crosshair, Users, ChevronRight, ShieldAlert } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import MiniTimeline from './components/MiniTimeline'
 
 export default function JuryApp() {
     const [socket, setSocket] = useState<Socket | null>(null)
@@ -158,37 +159,20 @@ export default function JuryApp() {
                         )}
                     </AnimatePresence>
 
-                    {/* Persistent Procedural HUD */}
-                    <GlassPanel className="h-28 flex flex-row items-center gap-8 px-10 border-orange-600/20 bg-orange-600/5">
-                        <div className="flex items-center gap-4 py-4 px-6 bg-orange-600/10 rounded-2xl border border-orange-500/20 glow-active">
-                            <AlertTriangle className="text-orange-500" size={24} />
-                        </div>
-                        <div className="flex-1">
-                            <div className="text-[10px] text-orange-500 font-black uppercase tracking-[0.3em] mb-1 opacity-60">Immediate Procedural Alert</div>
-                            <div className="text-xl font-black italic tracking-tighter text-white uppercase whitespace-nowrap overflow-hidden text-ellipsis">
-                                {raceState?.sequence?.event || 'WAITING FOR RACE COMMITTEE COMMANDS'}
-                            </div>
-                        </div>
-                        {raceState?.sequence?.time && (
-                            <div className="text-right">
-                                <div className="text-[10px] text-gray-500 font-black uppercase tracking-widest opacity-60">Signal T-Minus</div>
-                                <div className="text-3xl font-black italic tracking-tighter tabular-nums text-white">
-                                    {Math.floor(raceState.sequence.time / 60)}:{(raceState.sequence.time % 60).toString().padStart(2, '0')}
-                                </div>
-                            </div>
-                        )}
-                    </GlassPanel>
+                    {/* Persistent Procedural HUD (Mini Timeline) */}
+                    <div className="absolute top-8 left-1/2 -translate-x-1/2 z-50">
+                        <MiniTimeline
+                            raceStatus={raceState?.status || 'IDLE'}
+                            currentSequence={raceState?.sequence?.currentSequence?.event || null}
+                            sequenceTimeRemaining={raceState?.sequence?.sequenceTimeRemaining ?? null}
+                            currentFlags={raceState?.sequence?.currentSequence?.flags || []}
+                        />
+                    </div>
                 </div>
             </main>
         </div>
     )
 }
-
-const GlassPanel = ({ children, className }: any) => (
-    <div className={`glass rounded-[32px] border border-white/5 px-8 flex items-center gap-8 ${className}`}>
-        {children}
-    </div>
-)
 
 const PenaltyAction = ({ label, type, onClick }: any) => (
     <button

@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { MapContainer, useMapEvents, Polyline, Marker, Polygon, CircleMarker } from 'react-leaflet'
+import { MapContainer } from 'react-leaflet'
 import React from 'react'
 import { io, Socket } from 'socket.io-client'
 import {
-    Layout, Flag, Wind, Navigation, Users, Settings, Activity,
+    Layout, Flag, Navigation, Users, Settings, Activity,
     Map as MapIcon, Plus, Trash2,
-    MoreHorizontal,
     Monitor,
     FileCog
 } from 'lucide-react'
@@ -20,9 +19,11 @@ import ErrorBoundary from './components/ErrorBoundary'
 import ProcedureDesigner from './components/procedure-designer/ProcedureDesigner'
 import TacticalMap from './components/TacticalMap'
 import LogView, { LogEntry } from './components/LogView'
+import { GlassPanel, NavIcon, DesignerTool, WindControl } from './components/UIHelperComponents'
+import { WindArrowLayer, LaylineLayer, CourseBoundaryDrawing, CourseDesignerEvents } from './components/MapLayers'
 
 // --- Types ---
-interface Buoy {
+export interface Buoy {
     id: string;
     type: 'MARK' | 'START' | 'FINISH' | 'GATE';
     name: string;
@@ -55,6 +56,9 @@ interface RaceState {
     currentProcedure: any | null;
     currentNodeId: string | null;
     logs: LogEntry[];
+    waitingForTrigger?: boolean;
+    actionLabel?: string;
+    isPostTrigger?: boolean;
 }
 
 // --- Icons ---
@@ -99,283 +103,6 @@ const renderBuoyIcon = (mark: Buoy, size: number, autoOrient: boolean = false) =
         iconAnchor: [size / 2, size] // Anchored at the "feet"
     });
 };
-
-// --- UI Sub-components ---
-
-const NavIcon = ({ icon: Icon, active = false, onClick }: any) => (
-    <button
-        onClick={onClick}
-        className={`p-4 rounded-2xl transition-all relative ${active ? 'bg-accent-blue/20 text-accent-blue' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-    >
-        {active && <motion.div layoutId="nav-bg" className="absolute inset-0 bg-accent-blue/10 blur-xl rounded-full" />}
-        <Icon size={24} className="relative z-10" />
-    </button>
-)
-
-const GlassPanel = ({ title, children, icon: Icon, className = "" }: any) => (
-    <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className={`bg-regatta-panel/80 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl flex flex-col ${className}`}
-    >
-        <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-                {Icon && <Icon size={18} className="text-accent-blue" />}
-                <h3 className="text-xs font-bold uppercase tracking-[0.25em] text-gray-400">{title}</h3>
-            </div>
-            <MoreHorizontal size={18} className="text-gray-600" />
-        </div>
-        {children}
-    </motion.div>
-)
-
-const DesignerTool = ({ label, active, onClick }: any) => (
-    <button
-        onClick={onClick}
-        className={`p-4 rounded-xl border text-[10px] font-bold uppercase tracking-widest transition-all
-               ${active ? 'bg-accent-blue border-accent-blue text-white shadow-lg' : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10'}`}
-    >
-        {label}
-    </button>
-)
-
-
-
-// --- Map Events for Designer ---
-const CourseDesignerEvents = ({ onAddMark, isEditing, selectedTool, drawingMode }: { onAddMark: (latlng: any) => void, isEditing: boolean, selectedTool: string | null, drawingMode: boolean }) => {
-    useMapEvents({
-        click(e) {
-            if (isEditing && selectedTool && selectedTool !== 'BOUNDARY' && !drawingMode) {
-                // Ensure we are not clicking on a marker or popup
-                const originalEvent = e.originalEvent;
-                const target = originalEvent.target as HTMLElement;
-
-                // If the target is a leaflet marker or inside a popup, ignore
-                if (target.closest('.leaflet-marker-icon') || target.closest('.leaflet-popup')) return;
-
-                onAddMark(e.latlng);
-            }
-        },
-    });
-    return null;
-}
-
-const WindControl = ({ wind, onChange }: { wind: { direction: number, speed: number }, onChange: (w: any) => void }) => {
-    const [isEditing, setIsEditing] = useState(false);
-
-    return (
-        <GlassPanel title="Wind Control" icon={Wind} className="pointer-events-auto">
-            <div className="flex items-center justify-between">
-                <div>
-                    <div className="flex items-end gap-2 mb-2">
-                        <input
-                            type="number"
-                            value={wind.speed}
-                            onChange={(e) => onChange({ ...wind, speed: Number(e.target.value) })}
-                            className="bg-transparent text-5xl font-black italic tracking-tighter leading-none text-white w-24 outline-none border-b border-white/10 focus:border-accent-blue transition-colors"
-                        />
-                        <span className="text-sm font-bold text-gray-500 not-italic mb-1 opacity-60">KTS</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <input
-                            type="range"
-                            min="0"
-                            max="360"
-                            value={wind.direction}
-                            onChange={(e) => onChange({ ...wind, direction: Number(e.target.value) })}
-                            className="w-32 accent-accent-cyan"
-                        />
-                        <span className="text-[10px] font-bold text-accent-cyan uppercase tracking-widest">{wind.direction}°</span>
-                    </div>
-                </div>
-                <div className="w-20 h-20 rounded-full border-2 border-white/10 flex items-center justify-center relative bg-white/5 shadow-inner group cursor-pointer" onClick={() => setIsEditing(!isEditing)}>
-                    <motion.div
-                        animate={{ rotate: wind.direction }}
-                        transition={{ type: "spring", stiffness: 50 }}
-                        className="text-accent-blue drop-shadow-glow-blue"
-                    >
-                        <svg viewBox="0 0 24 24" width="40" height="40" fill="currentColor">
-                            <path d="M12 2L4.5 20.29L5.21 21L12 18L18.79 21L19.5 20.29L12 2Z" />
-                        </svg>
-                    </motion.div>
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[9px] font-black text-gray-600 bg-regatta-panel px-1">N</span>
-                </div>
-            </div>
-        </GlassPanel>
-    )
-}
-
-const WindArrowLayer = ({ boundary, windDir }: { boundary: { lat: number, lon: number }[] | null, windDir: number }) => {
-    if (!boundary || boundary.length < 3) return null;
-
-    // Calculate center of boundary
-    const latSum = boundary.reduce((acc, p) => acc + p.lat, 0);
-    const lonSum = boundary.reduce((acc, p) => acc + p.lon, 0);
-    const center = { lat: latSum / boundary.length, lon: lonSum / boundary.length };
-
-    // Calculate position outside boundary (approx 0.01 degree offset)
-    const offset = 0.015;
-    const rad = (windDir - 180) * Math.PI / 180; // Pointing FROM the wind direction
-    const arrowPos = {
-        lat: center.lat - offset * Math.cos(rad),
-        lon: center.lon - offset * Math.sin(rad)
-    };
-
-    return (
-        <Marker
-            position={[arrowPos.lat, arrowPos.lon]}
-            icon={L.divIcon({
-                className: 'bg-transparent',
-                html: `<div style="transform: rotate(${windDir}deg); color: rgba(59, 130, 246, 0.4);">
-                    <svg viewBox="0 0 24 24" width="60" height="60" fill="currentColor">
-                        <path d="M12 2L4.5 20.29L5.21 21L12 18L18.79 21L19.5 20.29L12 2Z" />
-                    </svg>
-                </div>`,
-                iconSize: [60, 60],
-                iconAnchor: [30, 30]
-            })}
-        />
-    )
-}
-
-const LaylineLayer = ({ marks, windDir, boundary }: { marks: Buoy[], windDir: number, boundary: { lat: number, lon: number }[] | null }) => {
-    if (!marks.length) return null;
-
-    // Helper to find intersection of a ray with the boundary polygon
-    const findBoundaryIntersection = (start: { lat: number, lon: number }, bearing: number) => {
-        if (!boundary || boundary.length < 3) {
-            // Fallback to old behavior if no boundary
-            const R = 6371;
-            const d = 2.0 / R; // 2km fallback
-            const lat1 = start.lat * Math.PI / 180;
-            const lon1 = start.lon * Math.PI / 180;
-            const brng = bearing * Math.PI / 180;
-            const lat2 = Math.asin(Math.sin(lat1) * Math.cos(d) + Math.cos(lat1) * Math.sin(d) * Math.cos(brng));
-            const lon2 = lon1 + Math.atan2(Math.sin(brng) * Math.sin(d) * Math.cos(lat1), Math.cos(d) - Math.sin(lat1) * Math.sin(lat2));
-            return { lat: lat2 * 180 / Math.PI, lon: lon2 * 180 / Math.PI };
-        }
-
-        // Raycasting to find intersection with boundary segments
-        // Simplified: just extend far and use a line intersection helper
-        const extendDist = 5.0; // 5km to ensure it reaches boundary
-        const R = 6371;
-        const d = extendDist / R;
-        const lat1 = start.lat * Math.PI / 180;
-        const lon1 = start.lon * Math.PI / 180;
-        const brng = bearing * Math.PI / 180;
-        const lat2 = Math.asin(Math.sin(lat1) * Math.cos(d) + Math.cos(lat1) * Math.sin(d) * Math.cos(brng));
-        const lon2 = lon1 + Math.atan2(Math.sin(brng) * Math.sin(d) * Math.cos(lat1), Math.cos(d) - Math.sin(lat1) * Math.sin(lat2));
-        const farPoint = { lat: lat2 * 180 / Math.PI, lon: lon2 * 180 / Math.PI };
-
-        const intersect = (p1: any, p2: any, p3: any, p4: any) => {
-            const den = (p4.lon - p3.lon) * (p2.lat - p1.lat) - (p4.lat - p3.lat) * (p2.lon - p1.lon);
-            if (Math.abs(den) < 0.000001) return null;
-            const ua = ((p4.lat - p3.lat) * (p1.lon - p3.lon) - (p4.lon - p3.lon) * (p1.lat - p3.lat)) / den;
-            const ub = ((p2.lat - p1.lat) * (p1.lon - p3.lon) - (p2.lon - p1.lon) * (p1.lat - p3.lat)) / den;
-            if (ua < 0 || ua > 1 || ub < 0 || ub > 1) return null;
-            return { lat: p1.lat + ua * (p2.lat - p1.lat), lon: p1.lon + ua * (p2.lon - p1.lon) };
-        };
-
-        let closestDist = Infinity;
-        let bestPoint = farPoint;
-
-        for (let i = 0; i < boundary.length; i++) {
-            const b1 = boundary[i];
-            const b2 = boundary[(i + 1) % boundary.length];
-            const intersection = intersect(start, farPoint, b1, b2);
-            if (intersection) {
-                const d = Math.sqrt(Math.pow(intersection.lat - start.lat, 2) + Math.pow(intersection.lon - start.lon, 2));
-                if (d < closestDist) {
-                    closestDist = d;
-                    bestPoint = intersection;
-                }
-            }
-        }
-        return bestPoint;
-    };
-
-    return (
-        <>
-            {marks.filter(m => (m.type === 'MARK' || m.type === 'GATE' || m.type === 'START' || m.type === 'FINISH') && !m.disableLaylines).map(m => {
-                const shift = m.gateDirection === 'UPWIND' ? 180 : 0;
-                const TACK_ANGLE = 45;
-                const portBearing = (windDir + TACK_ANGLE + shift + 360) % 360;
-                const stbdBearing = (windDir - TACK_ANGLE + shift + 360) % 360;
-
-                const pPort = findBoundaryIntersection(m.pos, portBearing);
-                const pStbd = findBoundaryIntersection(m.pos, stbdBearing);
-
-                return (
-                    <React.Fragment key={`layline-${m.id}`}>
-                        <Polyline positions={[[m.pos.lat, m.pos.lon], [pPort.lat, pPort.lon]]} pathOptions={{ color: 'rgba(239,68,68,0.4)', weight: 1, dashArray: '5,5' }} />
-                        <Polyline positions={[[m.pos.lat, m.pos.lon], [pStbd.lat, pStbd.lon]]} pathOptions={{ color: 'rgba(34,197,94,0.4)', weight: 1, dashArray: '5,5' }} />
-                    </React.Fragment>
-                )
-            })}
-        </>
-    )
-}
-
-
-
-const CourseBoundaryDrawing = ({
-    isDrawing,
-    boundary,
-    setBoundary
-}: {
-    isDrawing: boolean,
-    boundary: { lat: number, lon: number }[] | null,
-    setBoundary: (b: { lat: number, lon: number }[] | null) => void
-}) => {
-    const map = useMapEvents({
-        click(e) {
-            if (!isDrawing) return;
-
-            const newPoint = { lat: e.latlng.lat, lon: e.latlng.lng };
-
-            if (!boundary) {
-                setBoundary([newPoint]);
-            } else {
-                setBoundary([...boundary, newPoint]);
-            }
-        }
-    });
-
-    useEffect(() => {
-        if (boundary && boundary.length > 2 && !isDrawing) {
-            // Auto zoom to boundary when created or loaded if needed
-            const bounds = L.latLngBounds(boundary.map(p => [p.lat, p.lon]));
-            if (bounds.isValid()) map.flyToBounds(bounds, { padding: [50, 50], duration: 1.5 });
-        }
-    }, [boundary, isDrawing]); /** Depend on isDrawing to zoom ONLY when finished */
-
-    if (!boundary) return null;
-
-    return (
-        <>
-            {boundary.length > 1 && (
-                <Polygon
-                    positions={boundary.map(p => [p.lat, p.lon])}
-                    pathOptions={{
-                        color: 'rgba(6,182,212,0.8)',
-                        weight: 2,
-                        dashArray: isDrawing ? '10, 10' : undefined,
-                        fillColor: 'rgba(6,182,212,0.1)',
-                        fillOpacity: 0.2
-                    }}
-                />
-            )}
-            {boundary.map((p, i) => (
-                <CircleMarker
-                    key={i}
-                    center={[p.lat, p.lon]}
-                    radius={4}
-                    pathOptions={{ color: 'white', fillColor: 'cyan', fillOpacity: 1 }}
-                />
-            ))}
-        </>
-    )
-}
 
 // --- Main App ---
 
@@ -446,7 +173,10 @@ export default function App() {
                 prepFlag: state.prepFlag || 'P', // Default to P if missing
                 currentProcedure: state.currentProcedure || null,
                 currentNodeId: state.currentNodeId || null,
-                logs: state.logs || []
+                logs: state.logs || [],
+                waitingForTrigger: state.waitingForTrigger,
+                actionLabel: state.actionLabel,
+                isPostTrigger: state.isPostTrigger,
             })
         })
         s.on('boat-update', (data) => {
@@ -465,16 +195,21 @@ export default function App() {
             ...state,
             currentFlags: state.currentSequence?.flags || prev.currentFlags,
             currentEvent: state.currentSequence?.event || prev.currentEvent,
+            waitingForTrigger: state.waitingForTrigger,
+            actionLabel: state.actionLabel,
+            isPostTrigger: state.isPostTrigger,
         })))
         s.on('sequence-update', (data) => setRaceState(prev => ({
             ...prev,
             status: data.status || prev.status,
-            sequenceTimeRemaining: data.time !== undefined ? data.time : prev.sequenceTimeRemaining,
-            currentSequence: data.event || prev.currentSequence,
-            currentFlags: data.flags || prev.currentFlags,
-            currentEvent: data.event || prev.currentEvent,
-            prepFlag: data.prepFlag || prev.prepFlag,
+            sequenceTimeRemaining: data.sequenceTimeRemaining !== undefined ? data.sequenceTimeRemaining : prev.sequenceTimeRemaining,
+            currentSequence: data.currentSequence?.event || prev.currentSequence,
+            currentFlags: data.currentSequence?.flags || prev.currentFlags,
+            currentEvent: data.currentSequence?.event || prev.currentEvent,
             currentNodeId: data.currentNodeId || prev.currentNodeId,
+            waitingForTrigger: data.waitingForTrigger,
+            actionLabel: data.actionLabel,
+            isPostTrigger: data.isPostTrigger,
         })))
         s.on('new-log', (log: any) => {
             console.log('[LOG] New entry received:', log);
@@ -735,6 +470,7 @@ export default function App() {
                             renderBuoyIcon={renderBuoyIcon}
                             LaylineLayer={LaylineLayer}
                             CourseBoundaryDrawing={CourseBoundaryDrawing}
+                            onUpdateBoundary={handleUpdateBoundary}
                             onDeleteMark={handleDeleteMark}
                         />
 
@@ -980,6 +716,8 @@ export default function App() {
                                                 prepFlag={raceState.prepFlag}
                                                 currentProcedure={raceState.currentProcedure}
                                                 currentNodeId={raceState.currentNodeId}
+                                                waitingForTrigger={raceState.waitingForTrigger}
+                                                actionLabel={raceState.actionLabel}
                                             />
                                         </ErrorBoundary>
                                     </GlassPanel>

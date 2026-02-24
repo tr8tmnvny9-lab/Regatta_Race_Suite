@@ -57,6 +57,10 @@ async fn run_engine_tick(
                     let mut state = shared.write().await;
                     state.current_sequence = Some(upd.current_sequence.clone());
                     state.sequence_time_remaining = Some(upd.sequence_time_remaining);
+                    state.current_node_id = Some(upd.current_node_id.clone());
+                    state.waiting_for_trigger = upd.waiting_for_trigger;
+                    state.action_label = upd.action_label.clone();
+                    state.is_post_trigger = upd.is_post_trigger;
                 }
                 let _ = io.emit("sequence-update", &upd);
             }

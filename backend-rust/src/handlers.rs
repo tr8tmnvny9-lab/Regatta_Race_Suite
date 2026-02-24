@@ -82,6 +82,10 @@ pub fn standard_procedure(minutes: u64, prep_flag: &str) -> ProcedureGraph {
                 flags: vec![],
                 duration: 0.0,
                 sound: None,
+                wait_for_user_trigger: false,
+                action_label: None,
+                post_trigger_duration: 0.0,
+                post_trigger_flags: vec![],
             },
         },
         ProcedureNode {
@@ -93,6 +97,10 @@ pub fn standard_procedure(minutes: u64, prep_flag: &str) -> ProcedureGraph {
                 flags: vec!["CLASS".into()],
                 duration: warn_dur,
                 sound: None,
+                wait_for_user_trigger: false,
+                action_label: None,
+                post_trigger_duration: 0.0,
+                post_trigger_flags: vec![],
             },
         },
         ProcedureNode {
@@ -104,6 +112,10 @@ pub fn standard_procedure(minutes: u64, prep_flag: &str) -> ProcedureGraph {
                 flags: vec!["CLASS".into(), prep_flag.to_string()],
                 duration: prep_dur,
                 sound: None,
+                wait_for_user_trigger: false,
+                action_label: None,
+                post_trigger_duration: 0.0,
+                post_trigger_flags: vec![],
             },
         },
         ProcedureNode {
@@ -115,6 +127,10 @@ pub fn standard_procedure(minutes: u64, prep_flag: &str) -> ProcedureGraph {
                 flags: vec!["CLASS".into()],
                 duration: one_min_dur,
                 sound: None,
+                wait_for_user_trigger: false,
+                action_label: None,
+                post_trigger_duration: 0.0,
+                post_trigger_flags: vec![],
             },
         },
         ProcedureNode {
@@ -126,6 +142,10 @@ pub fn standard_procedure(minutes: u64, prep_flag: &str) -> ProcedureGraph {
                 flags: vec![],
                 duration: 0.0,
                 sound: None,
+                wait_for_user_trigger: false,
+                action_label: None,
+                post_trigger_duration: 0.0,
+                post_trigger_flags: vec![],
             },
         },
         ProcedureNode {
@@ -137,6 +157,10 @@ pub fn standard_procedure(minutes: u64, prep_flag: &str) -> ProcedureGraph {
                 flags: vec![],
                 duration: 3600.0,
                 sound: None,
+                wait_for_user_trigger: false,
+                action_label: None,
+                post_trigger_duration: 0.0,
+                post_trigger_flags: vec![],
             },
         },
     ];
@@ -353,13 +377,19 @@ pub async fn on_connect(
             let shared = shared.clone();
             let engine = engine.clone();
             async move {
-                let minutes = data["minutes"].as_u64().unwrap_or(5);
                 let prep_flag_str = data["prepFlag"].as_str().unwrap_or("P");
 
-                let graph = standard_procedure(minutes, prep_flag_str);
-
                 let mut eng = engine.write().await;
-                eng.load_procedure(graph.clone());
+                
+                // Keep the deployed graph if present, otherwise load standard
+                let graph = if let Some(g) = &eng.graph {
+                    g.clone()
+                } else {
+                    let minutes = data["minutes"].as_u64().unwrap_or(5);
+                    let g = standard_procedure(minutes, prep_flag_str);
+                    eng.load_procedure(g.clone());
+                    g
+                };
 
                 let update = eng.start();
                 drop(eng);
@@ -389,6 +419,16 @@ pub async fn on_connect(
                 let state = shared.read().await;
                 let _ = s.broadcast().emit("state-update", &*state);
                 let _ = s.emit("state-update", &*state);
+
+                emit_log(
+                    &shared,
+                    &s,
+                    LogCategory::Procedure,
+                    "Director".to_string(),
+                    "Started 5-Minute Sequence".to_string(),
+                    None,
+                    false,
+                ).await;
             }
         });
     }
@@ -554,6 +594,38 @@ pub async fn on_connect(
         });
     }
 
+    // ── resume-sequence ───────────────────────────────────────────────────────
+    {
+        let socket = socket.clone();
+        let shared = shared.clone();
+        let engine = engine.clone();
+        socket.on("resume-sequence", move |s: SocketRef, Data::<Value>(_data)| {
+            let shared = shared.clone();
+            let engine = engine.clone();
+            async move {
+                let update = engine.write().await.resume_sequence();
+                if let Some(upd) = update {
+                    let mut state = shared.write().await;
+                    state.current_sequence = Some(upd.current_sequence.clone());
+                    state.sequence_time_remaining = Some(upd.sequence_time_remaining);
+                    let _ = s.broadcast().emit("sequence-update", &upd);
+                    let _ = s.emit("sequence-update", &upd);
+
+                    // Global Log
+                    emit_log(
+                        &shared,
+                        &s,
+                        LogCategory::Procedure,
+                        "Director".to_string(),
+                        "Resumed sequence manually".to_string(),
+                        None,
+                        false,
+                    ).await;
+                }
+            }
+        });
+    }
+
     // ── update-course ─────────────────────────────────────────────────────────
     {
         let socket = socket.clone();
@@ -581,7 +653,7 @@ pub async fn on_connect(
                             false,
                         ).await;
                     }
-                    Err(e) => warn!("Failed to parse course: {e}"),
+                    Err(e) => error!("Failed to parse course payload from frontend! Error: {e} | Raw Data: {}", data),
                 }
             }
         });
@@ -596,7 +668,7 @@ pub async fn on_connect(
             async move {
                 if let Ok(boundary) = serde_json::from_value::<Vec<LatLon>>(data) {
                     let mut state = shared.write().await;
-                    state.course.course_boundary = boundary;
+                    state.course.course_boundary = Some(boundary);
                     let _ = save_state(&state).await;
                     let _ = s.broadcast().emit("course-updated", &state.course);
                     let _ = s.emit("course-updated", &state.course);
@@ -612,6 +684,8 @@ pub async fn on_connect(
                         None,
                         false,
                     ).await;
+                } else {
+                    error!("Failed to parse course boundary from frontend! Raw Data: {}", data);
                 }
             }
         });
@@ -632,7 +706,7 @@ pub async fn on_connect(
                         let _ = s.broadcast().emit("wind-updated", &state.wind);
                         let _ = s.emit("wind-updated", &state.wind);
                     }
-                    Err(e) => warn!("Failed to parse wind: {e}"),
+                    Err(e) => error!("Failed to parse wind payload from frontend! Error: {e} | Raw Data: {}", data),
                 }
             }
         });
@@ -652,7 +726,7 @@ pub async fn on_connect(
                         let _ = save_state(&state).await;
                         info!("Default location saved");
                     }
-                    Err(e) => warn!("Failed to parse location: {e}"),
+                    Err(e) => error!("Failed to parse location payload from frontend! Error: {e} | Raw Data: {}", data),
                 }
             }
         });

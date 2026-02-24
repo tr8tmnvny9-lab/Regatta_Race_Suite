@@ -44,6 +44,26 @@ const TEMPLATES = [
         description: 'Immediate race abandonment'
     },
     {
+        label: 'AP Sequence',
+        duration: 0,
+        flags: ['AP'],
+        waitForUserTrigger: true,
+        actionLabel: 'Take AP Down',
+        postTriggerDuration: 60,
+        postTriggerFlags: [],
+        description: 'Postponement. Holds sequence until triggered, then gives 1-minute warning.'
+    },
+    {
+        label: 'N Sequence',
+        duration: 0,
+        flags: ['N'],
+        waitForUserTrigger: true,
+        actionLabel: 'Take N Down',
+        postTriggerDuration: 60,
+        postTriggerFlags: [],
+        description: 'Abandonment. Holds sequence until triggered, then gives 1-minute warning.'
+    },
+    {
         label: 'General Recall',
         duration: 60,
         flags: ['FIRST_SUB'],

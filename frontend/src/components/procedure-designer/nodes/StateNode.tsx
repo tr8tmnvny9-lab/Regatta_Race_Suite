@@ -15,7 +15,6 @@ export default function StateNode({ id, data, selected }: NodeProps) {
     const handleSpacing = 20; // px
     const getHandlePos = (index: number, total: number) => {
         if (total <= 1) return '50%';
-        // This is a bit tricky with % and px. Let's use left: calc(...)
         return `calc(50% + ${(index - (total - 1) / 2) * handleSpacing}px)`;
     };
 
@@ -58,64 +57,64 @@ export default function StateNode({ id, data, selected }: NodeProps) {
                 )}
             </div>
 
-            {/* Input Handles (Top) */}
+            {/* Input Handles (Left) */}
             {incomingEdges.map((edge, idx) => (
                 <Handle
                     key={edge.id}
                     type="target"
-                    position={Position.Top}
+                    position={Position.Left}
                     id={edge.targetHandle || `in-${idx}`}
-                    style={{ left: getHandlePos(idx, incomingEdges.length + (isHovered ? 1 : 0)) }}
-                    className="!w-4 !h-4 !-top-2 !bg-accent-cyan !border-2 !border-regatta-dark hover:!scale-150 transition-transform cursor-crosshair opacity-0 hover:opacity-100"
+                    style={{ top: getHandlePos(idx, incomingEdges.length + (isHovered ? 1 : 0)) }}
+                    className="!w-4 !h-4 !-left-2 !bg-accent-cyan !border-2 !border-regatta-dark hover:!scale-150 transition-transform cursor-crosshair opacity-0 hover:opacity-100"
                 />
             ))}
             {/* The actual visible dots for incoming edges */}
             {incomingEdges.map((edge, idx) => (
                 <div
                     key={`dot-in-${edge.id}`}
-                    className="absolute -top-1 w-2 h-2 bg-accent-cyan rounded-full border border-regatta-dark pointer-events-none"
-                    style={{ left: getHandlePos(idx, incomingEdges.length + (isHovered ? 1 : 0)), transform: 'translateX(-50%)' }}
+                    className="absolute -left-1 w-2 h-2 bg-accent-cyan rounded-full border border-regatta-dark pointer-events-none"
+                    style={{ top: getHandlePos(idx, incomingEdges.length + (isHovered ? 1 : 0)), transform: 'translateY(-50%)' }}
                 />
             ))}
 
-            {/* "New Port" Input Handle (Top) */}
+            {/* "New Connection" Input Handle (Left) */}
             <Handle
                 type="target"
-                position={Position.Top}
+                position={Position.Left}
                 id={`in-new`}
-                style={{ left: getHandlePos(incomingEdges.length, incomingEdges.length + 1) }}
-                className={`!w-6 !h-6 !-top-3 !bg-white/10 !border-2 !border-dashed !border-white/20 !rounded-full hover:!bg-accent-cyan transition-all cursor-crosshair flex items-center justify-center
+                style={{ top: getHandlePos(incomingEdges.length, incomingEdges.length + 1) }}
+                className={`!w-6 !h-6 !-left-3 !bg-white/10 !border-2 !border-dashed !border-white/20 !rounded-full hover:!bg-accent-cyan transition-all cursor-crosshair flex items-center justify-center
                     ${isHovered ? 'opacity-40 hover:opacity-100 scale-100' : 'opacity-0 scale-50'}
                 `}
             />
 
-            {/* Output Handles (Bottom) */}
+            {/* Output Handles (Right) */}
             {outgoingEdges.map((edge, idx) => (
                 <Handle
                     key={edge.id}
                     type="source"
-                    position={Position.Bottom}
+                    position={Position.Right}
                     id={edge.sourceHandle || `out-${idx}`}
-                    style={{ left: getHandlePos(idx, outgoingEdges.length + 1) }}
-                    className="!w-4 !h-4 !-bottom-2 !bg-accent-blue !border-2 !border-regatta-dark hover:!scale-150 transition-transform cursor-crosshair opacity-0 hover:opacity-100"
+                    style={{ top: getHandlePos(idx, outgoingEdges.length + 1) }}
+                    className="!w-4 !h-4 !-right-2 !bg-accent-blue !border-2 !border-regatta-dark hover:!scale-150 transition-transform cursor-crosshair opacity-0 hover:opacity-100"
                 />
             ))}
             {/* The actual visible dots for outgoing edges */}
             {outgoingEdges.map((edge, idx) => (
                 <div
                     key={`dot-out-${edge.id}`}
-                    className="absolute -bottom-1 w-2 h-2 bg-accent-blue rounded-full border border-regatta-dark pointer-events-none"
-                    style={{ left: getHandlePos(idx, outgoingEdges.length + 1), transform: 'translateX(-50%)' }}
+                    className="absolute -right-1 w-2 h-2 bg-accent-blue rounded-full border border-regatta-dark pointer-events-none"
+                    style={{ top: getHandlePos(idx, outgoingEdges.length + 1), transform: 'translateY(-50%)' }}
                 />
             ))}
 
-            {/* "New Connection" Button Handle (Bottom Center) */}
+            {/* "New Connection" Button Handle (Right Center) */}
             <Handle
                 type="source"
-                position={Position.Bottom}
+                position={Position.Right}
                 id={`out-new`}
-                style={{ left: getHandlePos(outgoingEdges.length, outgoingEdges.length + 1) }}
-                className={`!w-8 !h-8 !-bottom-4 !bg-accent-blue hover:!bg-accent-cyan !border-2 !border-regatta-dark !rounded-full transition-all cursor-crosshair flex items-center justify-center shadow-lg
+                style={{ top: getHandlePos(outgoingEdges.length, outgoingEdges.length + 1) }}
+                className={`!w-8 !h-8 !-right-4 !bg-accent-blue hover:!bg-accent-cyan !border-2 !border-regatta-dark !rounded-full transition-all cursor-crosshair flex items-center justify-center shadow-lg
                     ${isHovered || outgoingEdges.length === 0 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}
                 `}
             >

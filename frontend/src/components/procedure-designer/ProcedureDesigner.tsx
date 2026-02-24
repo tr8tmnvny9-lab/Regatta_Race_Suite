@@ -28,50 +28,50 @@ const initialNodes: Node[] = [
     {
         id: '0',
         type: 'state',
-        position: { x: 250, y: -100 },
+        position: { x: 0, y: 250 },
         data: { label: 'Idle', flags: [], duration: 0 }
     },
     {
         id: '1',
         type: 'state',
-        position: { x: 250, y: 50 },
+        position: { x: 300, y: 250 },
         data: { label: 'Warning Signal', flags: ['CLASS'], duration: 60 }
     },
     {
         id: '2',
         type: 'state',
-        position: { x: 250, y: 200 },
+        position: { x: 600, y: 250 },
         data: { label: 'Preparatory Signal', flags: ['CLASS', 'P'], duration: 180 }
     },
     {
         id: '3',
         type: 'state',
-        position: { x: 250, y: 350 },
+        position: { x: 900, y: 250 },
         data: { label: 'One-Minute', flags: ['CLASS'], duration: 60 }
     },
     {
         id: '4',
         type: 'state',
-        position: { x: 250, y: 500 },
+        position: { x: 1200, y: 250 },
         data: { label: 'Start', flags: [], duration: 0 }
     },
     {
         id: '5',
         type: 'state',
-        position: { x: 250, y: 650 },
+        position: { x: 1500, y: 250 },
         data: { label: 'Racing', flags: [], duration: 3600 }
     },
     // Special Nodes (Floating)
     {
         id: 'ap_down',
         type: 'state',
-        position: { x: 600, y: 200 },
+        position: { x: 600, y: 400 },
         data: { label: 'AP Down', flags: [], duration: 60, description: '1 minute to Warning Signal' }
     },
     {
         id: 'n_down',
         type: 'state',
-        position: { x: 600, y: 350 },
+        position: { x: 600, y: 550 },
         data: { label: 'N Down', flags: [], duration: 60, description: '1 minute to Warning Signal' }
     },
 ];
@@ -158,7 +158,7 @@ function DesignerInner({ currentProcedure }: { currentProcedure: any }) {
         const rawNodes = currentProcedure?.nodes || initialNodes;
         return rawNodes.map((n: any, idx: number) => ({
             ...n,
-            position: n.position || { x: 250, y: idx * 150 + 50 }
+            position: n.position || { x: idx * 300 + 50, y: 250 }
         }));
     }, [currentProcedure]);
 
@@ -321,7 +321,7 @@ function DesignerInner({ currentProcedure }: { currentProcedure: any }) {
         const newNode: Node = {
             id,
             type: 'state',
-            position: { x: 250, y: nodes.length > 0 ? nodes[nodes.length - 1].position.y + 150 : 50 },
+            position: { x: nodes.length > 0 ? nodes[nodes.length - 1].position.x + 300 : 50, y: 250 },
             data: { label: `New State ${id}`, flags: [], duration: 60 },
         };
         setNodes((nds) => nds.concat(newNode));

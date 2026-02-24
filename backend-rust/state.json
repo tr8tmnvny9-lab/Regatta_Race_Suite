@@ -146,7 +146,10 @@
         "data": {
           "label": "Idle",
           "flags": [],
-          "duration": 0.0
+          "duration": 0.0,
+          "waitForUserTrigger": false,
+          "postTriggerDuration": 0.0,
+          "postTriggerFlags": []
         },
         "position": {
           "x": 250.7401453957997,
@@ -161,7 +164,10 @@
           "flags": [
             "CLASS"
           ],
-          "duration": 60.0
+          "duration": 60.0,
+          "waitForUserTrigger": false,
+          "postTriggerDuration": 0.0,
+          "postTriggerFlags": []
         },
         "position": {
           "x": 250,
@@ -177,7 +183,10 @@
             "CLASS",
             "P"
           ],
-          "duration": 180.0
+          "duration": 180.0,
+          "waitForUserTrigger": false,
+          "postTriggerDuration": 0.0,
+          "postTriggerFlags": []
         },
         "position": {
           "x": 250,
@@ -192,7 +201,10 @@
           "flags": [
             "CLASS"
           ],
-          "duration": 60.0
+          "duration": 60.0,
+          "waitForUserTrigger": false,
+          "postTriggerDuration": 0.0,
+          "postTriggerFlags": []
         },
         "position": {
           "x": 250,
@@ -205,7 +217,10 @@
         "data": {
           "label": "Start",
           "flags": [],
-          "duration": 0.0
+          "duration": 0.0,
+          "waitForUserTrigger": false,
+          "postTriggerDuration": 0.0,
+          "postTriggerFlags": []
         },
         "position": {
           "x": 250,
@@ -218,7 +233,10 @@
         "data": {
           "label": "Racing",
           "flags": [],
-          "duration": 3600.0
+          "duration": 3600.0,
+          "waitForUserTrigger": false,
+          "postTriggerDuration": 0.0,
+          "postTriggerFlags": []
         },
         "position": {
           "x": 250,
@@ -256,9 +274,11 @@
   },
   "defaultLocation": {
     "lat": 59.323994909381206,
-    "lon": 18.050987720489506,
-    "zoom": 16.0
+    "lon": 18.050987841448265,
+    "zoom": 17.0
   },
+  "waitingForTrigger": false,
+  "isPostTrigger": false,
   "boats": {},
   "penalties": [],
   "logs": [

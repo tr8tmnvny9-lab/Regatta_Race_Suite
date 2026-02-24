@@ -5,10 +5,12 @@ use crate::state::{ProcedureGraph, ProcedureNode, SequenceInfo, SequenceUpdate};
 
 /// Tick-based procedure sequencer — port of ProcedureEngine.ts
 pub struct ProcedureEngine {
-    graph: Option<ProcedureGraph>,
-    current_node_id: Option<String>,
-    node_started_at: Option<Instant>,
-    sequence_started_at: Option<Instant>,
+    pub graph: Option<ProcedureGraph>,
+    pub current_node_id: Option<String>,
+    pub node_started_at: Option<Instant>,
+    pub sequence_started_at: Option<Instant>,
+    pub is_post_trigger: bool,
+    pub post_trigger_started_at: Option<Instant>,
 }
 
 impl ProcedureEngine {
@@ -18,6 +20,8 @@ impl ProcedureEngine {
             current_node_id: None,
             node_started_at: None,
             sequence_started_at: None,
+            is_post_trigger: false,
+            post_trigger_started_at: None,
         }
     }
 
@@ -37,10 +41,36 @@ impl ProcedureEngine {
         if graph.nodes.iter().any(|n| n.id == node_id) {
             self.current_node_id = Some(node_id.to_string());
             self.node_started_at = Some(Instant::now());
+            self.sequence_started_at = Some(Instant::now());
+            self.is_post_trigger = false;
+            self.post_trigger_started_at = None;
             info!("Jumped to node: {node_id}");
             self.build_update()
         } else {
             None
+        }
+    }
+
+    /// Resume the sequence manually
+    pub fn resume_sequence(&mut self) -> Option<SequenceUpdate> {
+        let current_id = self.current_node_id.clone()?;
+        let graph = self.graph.as_ref()?;
+        let current_node = graph.nodes.iter().find(|n| n.id == current_id)?;
+
+        // If it has post-trigger logic and we are not in it yet, transition to it
+        if !self.is_post_trigger && current_node.data.post_trigger_duration > 0.0 {
+            self.is_post_trigger = true;
+            self.post_trigger_started_at = Some(Instant::now());
+            match self.build_update() {
+                Some(u) => Some(u),
+                None => None,
+            }
+        } else {
+            // Otherwise, jump to the next node
+            match self.transition_next() {
+                TickResult::Update(u) => Some(u),
+                _ => None,
+            }
         }
     }
 
@@ -59,6 +89,8 @@ impl ProcedureEngine {
         self.current_node_id = Some(node_id);
         self.node_started_at = Some(Instant::now());
         self.sequence_started_at = Some(Instant::now());
+        self.is_post_trigger = false;
+        self.post_trigger_started_at = None;
 
         self.build_update()
     }
@@ -66,6 +98,8 @@ impl ProcedureEngine {
     pub fn stop(&mut self) {
         self.current_node_id = None;
         self.node_started_at = None;
+        self.is_post_trigger = false;
+        self.post_trigger_started_at = None;
     }
 
     pub fn is_running(&self) -> bool {
@@ -95,14 +129,45 @@ impl ProcedureEngine {
         let elapsed = started_at.elapsed().as_secs_f64();
         let duration = current_node.data.duration;
 
-        if duration > 0.0 && elapsed >= duration {
-            // Transition to next node
-            self.transition_next()
+        if self.is_post_trigger {
+            let post_started_at = match self.post_trigger_started_at {
+                Some(t) => t,
+                None => return TickResult::Idle,
+            };
+            let post_elapsed = post_started_at.elapsed().as_secs_f64();
+            let post_dur = current_node.data.post_trigger_duration;
+
+            if post_elapsed >= post_dur {
+                self.transition_next()
+            } else {
+                match self.build_update() {
+                    Some(update) => TickResult::Update(update),
+                    None => TickResult::Idle,
+                }
+            }
         } else {
-            // Still in current node — emit time update
-            match self.build_update() {
-                Some(update) => TickResult::Update(update),
-                None => TickResult::Idle,
+            let is_waiting = current_node.data.wait_for_user_trigger && (duration == 0.0 || elapsed >= duration);
+
+            if duration > 0.0 && elapsed >= duration && !is_waiting {
+                // Transition to next mode - might be post trigger
+                if current_node.data.post_trigger_duration > 0.0 {
+                    self.is_post_trigger = true;
+                    self.post_trigger_started_at = Some(Instant::now());
+                    match self.build_update() {
+                        Some(update) => TickResult::Update(update),
+                        None => TickResult::Idle,
+                    }
+                } else {
+                    self.transition_next()
+                }
+            } else if duration == 0.0 && !is_waiting {
+                self.transition_next()
+            } else {
+                // Still in current node — emit time update
+                match self.build_update() {
+                    Some(update) => TickResult::Update(update),
+                    None => TickResult::Idle,
+                }
             }
         }
     }
@@ -122,6 +187,8 @@ impl ProcedureEngine {
                 info!("Procedure: transitioning to node {id}");
                 self.current_node_id = Some(id);
                 self.node_started_at = Some(Instant::now());
+                self.is_post_trigger = false;
+                self.post_trigger_started_at = None;
                 match self.build_update() {
                     Some(upd) => TickResult::Update(upd),
                     None => TickResult::Idle,
@@ -132,6 +199,8 @@ impl ProcedureEngine {
                 info!("Procedure: sequence complete, transitioning to RACING");
                 self.current_node_id = None;
                 self.node_started_at = None;
+                self.is_post_trigger = false;
+                self.post_trigger_started_at = None;
                 TickResult::SequenceComplete
             }
         }
@@ -146,23 +215,42 @@ impl ProcedureEngine {
 
         let elapsed = started_at.elapsed().as_secs_f64();
         let duration = current_node.data.duration;
-        let node_remaining = if duration > 0.0 {
-            (duration - elapsed).max(0.0).ceil()
+
+        let is_waiting = !self.is_post_trigger && current_node.data.wait_for_user_trigger && (duration == 0.0 || elapsed >= duration);
+        
+        let node_remaining = if self.is_post_trigger {
+            let p_elapsed = self.post_trigger_started_at?.elapsed().as_secs_f64();
+            let p_dur = current_node.data.post_trigger_duration;
+            (p_dur - p_elapsed).max(0.0).ceil()
         } else {
-            0.0
+            if duration > 0.0 {
+                (duration - elapsed).max(0.0).ceil()
+            } else {
+                0.0
+            }
         };
 
         let total_remaining = self.calculate_total_remaining(current_node, elapsed);
+        
+        // Use post trigger flags if we are in that phase and they exist, otherwise use standard flags
+        let active_flags = if self.is_post_trigger && !current_node.data.post_trigger_flags.is_empty() {
+            current_node.data.post_trigger_flags.clone()
+        } else {
+            current_node.data.flags.clone()
+        };
 
         Some(SequenceUpdate {
-            status: "PRE_START".to_string(),
+            status: "PRE_START".to_string(), // In the handler, we can adjust this
             current_sequence: SequenceInfo {
                 event: current_node.data.label.clone(),
-                flags: current_node.data.flags.clone(),
+                flags: active_flags,
             },
             sequence_time_remaining: total_remaining,
             node_time_remaining: node_remaining,
             current_node_id: current_id.clone(),
+            waiting_for_trigger: is_waiting,
+            action_label: current_node.data.action_label.clone(),
+            is_post_trigger: self.is_post_trigger,
         })
     }
 

@@ -3,6 +3,7 @@ import { io, Socket } from 'socket.io-client'
 import { Play, Share2, Globe, Clock, Navigation, Wind, TrendingUp, BarChart3 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet'
+import MiniTimeline from './components/MiniTimeline'
 
 export default function MediaHub() {
     const [_socket, setSocket] = useState<Socket | null>(null)
@@ -19,6 +20,10 @@ export default function MediaHub() {
         })
 
         s.on('init-state', (state) => setRaceState(state))
+
+        s.on('sequence-update', (data) => {
+            setRaceState((prev: any) => ({ ...prev, sequence: data }))
+        })
 
         s.on('media-boat-update', (data: any) => {
             setBoats(prev => ({ ...prev, [data.boatId]: data }))
@@ -76,6 +81,16 @@ export default function MediaHub() {
             </header>
 
             <main className="flex-1 relative flex">
+                {/* MiniTimeline Overlay Center Top */}
+                <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1001]">
+                    <MiniTimeline
+                        raceStatus={_raceState?.status || 'IDLE'}
+                        currentSequence={_raceState?.sequence?.currentSequence?.event || null}
+                        sequenceTimeRemaining={_raceState?.sequence?.sequenceTimeRemaining ?? null}
+                        currentFlags={_raceState?.sequence?.currentSequence?.flags || []}
+                    />
+                </div>
+
                 {/* Cinematic Map Layer */}
                 <div className="flex-1 relative">
                     <MapContainer

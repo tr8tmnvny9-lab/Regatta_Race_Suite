@@ -31,6 +31,7 @@ interface TacticalMapProps {
     renderBuoyIcon: (mark: any, size: number, autoOrient: boolean) => L.DivIcon;
     LaylineLayer: React.FC<any>;
     CourseBoundaryDrawing: React.FC<any>;
+    onUpdateBoundary: (b: { lat: number, lon: number }[] | null) => void;
     onDeleteMark?: (id: string) => void;
 }
 
@@ -47,6 +48,7 @@ const TacticalMap = ({
     renderBuoyIcon,
     LaylineLayer,
     CourseBoundaryDrawing,
+    onUpdateBoundary,
     onDeleteMark
 }: TacticalMapProps) => {
     const map = useMapEvents({
@@ -96,7 +98,7 @@ const TacticalMap = ({
                 <LaylineLayer marks={localMarks} windDir={raceState.wind.direction} boundary={raceState.course.courseBoundary} />
             )}
 
-            <CourseBoundaryDrawing isDrawing={drawingMode} boundary={raceState.course.courseBoundary} setBoundary={(b: any) => socket?.emit('update-course', { ...raceState.course, courseBoundary: b })} />
+            <CourseBoundaryDrawing isDrawing={drawingMode} boundary={raceState.course.courseBoundary} setBoundary={onUpdateBoundary} />
 
             {/* Gate lines are also expensive, hide them during drag to stay at 60fps */}
             {!draggingMarkId.current && (

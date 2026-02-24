@@ -110,7 +110,8 @@ pub struct CourseState {
     pub start_line: Option<CourseLine>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub finish_line: Option<CourseLine>,
-    pub course_boundary: Vec<LatLon>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub course_boundary: Option<Vec<LatLon>>,
 }
 
 // ─── Wind ─────────────────────────────────────────────────────────────────────
@@ -187,6 +188,14 @@ pub struct ProcedureNodeData {
     pub duration: f64,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sound: Option<String>,
+    #[serde(rename = "waitForUserTrigger", default)]
+    pub wait_for_user_trigger: bool,
+    #[serde(rename = "actionLabel", skip_serializing_if = "Option::is_none")]
+    pub action_label: Option<String>,
+    #[serde(rename = "postTriggerDuration", default)]
+    pub post_trigger_duration: f64,
+    #[serde(rename = "postTriggerFlags", default)]
+    pub post_trigger_flags: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -225,6 +234,12 @@ pub struct SequenceUpdate {
     pub sequence_time_remaining: f64,
     pub node_time_remaining: f64,
     pub current_node_id: String,
+    #[serde(default)]
+    pub waiting_for_trigger: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub action_label: Option<String>,
+    #[serde(default)]
+    pub is_post_trigger: bool,
 }
 
 // ─── Logging ─────────────────────────────────────────────────────────────────
@@ -271,6 +286,14 @@ pub struct RaceState {
     pub current_procedure: Option<ProcedureGraph>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub default_location: Option<DefaultLocation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub current_node_id: Option<String>,
+    #[serde(default)]
+    pub waiting_for_trigger: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub action_label: Option<String>,
+    #[serde(default)]
+    pub is_post_trigger: bool,
     // Ephemeral — populated at runtime, not persisted
     #[serde(default)]
     pub boats: HashMap<String, BoatState>,
@@ -295,6 +318,10 @@ impl Default for RaceState {
             course: CourseState::default(),
             current_procedure: None,
             default_location: None,
+            current_node_id: None,
+            waiting_for_trigger: false,
+            action_label: None,
+            is_post_trigger: false,
             boats: HashMap::new(),
             penalties: Vec::new(),
             logs: Vec::new(),

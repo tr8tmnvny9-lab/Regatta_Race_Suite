@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Play, AlertTriangle, RotateCcw, ChevronDown } from 'lucide-react'
 import type { Socket } from 'socket.io-client'
@@ -81,6 +81,8 @@ interface StartingTimelineProps {
     prepFlag: string
     currentProcedure: any | null
     currentNodeId: string | null
+    waitingForTrigger?: boolean
+    actionLabel?: string
 }
 
 function formatTime(seconds: number) {
@@ -98,6 +100,8 @@ export default function StartingTimeline({
     prepFlag,
     currentProcedure,
     currentNodeId,
+    waitingForTrigger,
+    actionLabel,
 }: StartingTimelineProps) {
     const [selectedPrepFlag, setSelectedPrepFlag] = useState<string>(prepFlag || 'P')
     const [showPrepSelector, setShowPrepSelector] = useState(false)
@@ -196,14 +200,50 @@ export default function StartingTimeline({
         setShowPrepSelector(false)
     }
 
+    const [now, setNow] = useState(new Date())
+
+    useEffect(() => {
+        const timer = setInterval(() => setNow(new Date()), 1000)
+        return () => clearInterval(timer)
+    }, [])
+
+    const timeString = now.toLocaleTimeString('en-US', { hour12: false })
+
     return (
         <div className="flex flex-col h-full min-h-[400px]">
             <div className="text-[8px] font-black text-accent-cyan/40 uppercase tracking-[0.4em] mb-4 pointer-events-none">Sequence Intelligence Active</div>
 
+            {/* ── Universal Time ── */}
+            <div className="text-center mb-4 bg-black/20 py-3 rounded-2xl border border-white/5 mx-4">
+                <div className="text-3xl font-black italic tracking-tighter tabular-nums text-accent-cyan leading-none drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]">
+                    {timeString}
+                </div>
+                <div className="text-[8px] font-black uppercase tracking-[0.4em] text-gray-500 mt-2">Universal Time</div>
+            </div>
+
             {/* ── Big Countdown Display ── */}
-            <div className="text-center mb-6">
+            <div className="text-center mb-6 min-h-[120px] flex items-center justify-center">
                 <AnimatePresence mode="wait">
-                    {isActive && sequenceTimeRemaining !== null && (
+                    {waitingForTrigger ? (
+                        <motion.div
+                            key="waiting"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 1.1 }}
+                            className="relative flex flex-col items-center justify-center gap-4 w-full"
+                        >
+                            <div className="text-3xl font-black italic tracking-tighter text-amber-500 leading-none drop-shadow-[0_0_20px_rgba(245,158,11,0.5)]">
+                                HOLDING
+                            </div>
+                            <button
+                                onClick={() => socket?.emit('resume-sequence', {})}
+                                className="px-8 py-3 bg-amber-500 hover:bg-amber-400 text-black rounded-xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(245,158,11,0.4)] hover:shadow-[0_0_50px_rgba(245,158,11,0.6)] hover:scale-105 transition-all duration-300 w-3/4"
+                            >
+                                <Play fill="currentColor" size={14} />
+                                {actionLabel || 'RESUME SEQUENCE'}
+                            </button>
+                        </motion.div>
+                    ) : isActive && sequenceTimeRemaining !== null ? (
                         <motion.div
                             key="countdown"
                             initial={{ opacity: 0, scale: 0.7, filter: 'blur(20px)' }}
@@ -214,12 +254,11 @@ export default function StartingTimeline({
                             <div className="text-7xl font-black italic tracking-tighter tabular-nums text-white leading-none">
                                 {formatTime(sequenceTimeRemaining)}
                             </div>
-                            <div className="text-[10px] font-black uppercase tracking-[0.4em] text-accent-cyan mt-2">
+                            <div className="text-[10px] font-black uppercase tracking-[0.4em] text-accent-cyan mt-3">
                                 {currentEvent || 'SEQUENCE ACTIVE'}
                             </div>
                         </motion.div>
-                    )}
-                    {isIdle && (
+                    ) : isIdle ? (
                         <motion.div
                             key="idle"
                             initial={{ opacity: 0 }}
@@ -227,14 +266,13 @@ export default function StartingTimeline({
                             exit={{ opacity: 0 }}
                         >
                             <div className="text-5xl font-black italic tracking-tighter text-gray-700 leading-none">
-                                5:00
+                                {steps.length > 0 ? formatTime(steps[0].seconds) : '5:00'}
                             </div>
-                            <div className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-600 mt-2">
+                            <div className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-600 mt-3">
                                 READY TO START
                             </div>
                         </motion.div>
-                    )}
-                    {isSpecial && (
+                    ) : isSpecial ? (
                         <motion.div
                             key="special"
                             initial={{ opacity: 0, y: -10 }}
@@ -248,22 +286,20 @@ export default function StartingTimeline({
                                 {raceStatus.replace('_', ' ')}
                             </div>
                         </motion.div>
-                    )}
-                    {isRacing && (
+                    ) : isRacing ? (
                         <motion.div
                             key="racing"
                             initial={{ opacity: 0, scale: 0.8 }}
                             animate={{ opacity: 1, scale: 1 }}
                         >
-                            <div className="text-4xl font-black italic tracking-tighter text-accent-green leading-none">
+                            <div className="text-5xl font-black italic tracking-tighter text-accent-green leading-none drop-shadow-[0_0_20px_rgba(34,197,94,0.4)]">
                                 RACING
                             </div>
-                            <div className="text-[10px] font-black uppercase tracking-[0.4em] text-accent-green/60 mt-2">
+                            <div className="text-[10px] font-black uppercase tracking-[0.4em] text-accent-green/60 mt-3">
                                 SEQUENCE COMPLETE
                             </div>
                         </motion.div>
-                    )}
-                    {!(isActive || isIdle || isSpecial || isRacing) && (
+                    ) : (
                         <div className="text-2xl font-black uppercase text-gray-500">
                             {raceStatus || 'UNKNOWN STATUS'}
                         </div>
