@@ -4,6 +4,8 @@ mod auth;
 mod procedure_engine;
 mod state;
 mod flight_engine;
+mod audit;
+mod uwb_hub;
 
 use std::collections::HashSet;
 use std::sync::Arc;
@@ -20,10 +22,12 @@ use axum::http::HeaderValue;
 use tracing::info;
 
 use auth::AuthEngine;
+use audit::AuditLogger;
 use handlers::{on_connect, DeadBoats, SharedEngine, SharedState};
 use persistence::load_state;
 use procedure_engine::{ProcedureEngine, TickResult};
 use state::{RaceStatus, SequenceInfo};
+use uwb_hub::{start_uwb_hub, UwbHubConfig};
 
 // ─── Global startup time (for uptime reporting) ──────────────────────────────
 static STARTUP_MS: AtomicU64 = AtomicU64::new(0);
@@ -155,7 +159,6 @@ async fn main() {
     let auth_engine = AuthEngine::new();
     let auth_clone = auth_engine.clone();
     tokio::spawn(async move {
-        // Refresh keys now and every 24 hours
         auth_clone.refresh_apple_keys().await;
         let mut interval = tokio::time::interval(Duration::from_secs(86400));
         loop {
@@ -163,6 +166,18 @@ async fn main() {
             auth_clone.refresh_apple_keys().await;
         }
     });
+
+    // Audit Logger (SHA-256 chained, satisfies Invariant #2)
+    let audit_logger = AuditLogger::new();
+    audit_logger.log_session_event("server_start", Some(serde_json::json!({
+        "version": env!("CARGO_PKG_VERSION"),
+        "mode": backend_mode,
+    }))).await;
+
+    // UWB Hub (UDP listener on :5555, satisfies Invariant #1 path)
+    let (ocs_tx, _ocs_rx) = tokio::sync::mpsc::channel::<uwb_hub::OcsEvent>(64);
+    let uwb_config = UwbHubConfig::default();
+    tokio::spawn(start_uwb_hub(uwb_config, ocs_tx));
 
     // Build Socket.IO layer
     let (socket_layer, io) = SocketIo::builder().build_layer();
