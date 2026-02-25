@@ -1,41 +1,30 @@
 import { useState, useEffect } from 'react'
-import { io, Socket } from 'socket.io-client'
 import { Gavel, Crosshair, Users, ChevronRight, ShieldAlert } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import MiniTimeline from './components/MiniTimeline'
 
-export default function JuryApp() {
-    const [socket, setSocket] = useState<Socket | null>(null)
-    const [boats, setBoats] = useState<Record<string, any>>({})
+export default function JuryApp({ socket, raceState }: { socket: any, raceState: any }) {
     const [nearbyBoats, setNearbyBoats] = useState<string[]>([])
     const [selectedBoat, setSelectedBoat] = useState<string | null>(null)
-    const [raceState, setRaceState] = useState<any>(null)
+
+    // Fallback if boats object is missing
+    const boats = raceState?.boats || {};
 
     useEffect(() => {
-        const s = io('http://localhost:3001')
-        setSocket(s)
+        if (!socket) return;
+        socket.emit('register', { type: 'jury' })
 
-        s.on('connect', () => {
-            s.emit('register', { type: 'jury' })
-        })
-
-        s.on('init-state', (state) => {
-            setBoats(state.boats)
-            setRaceState(state)
-        })
-
-        s.on('boat-update', (data) => {
-            setBoats(prev => ({ ...prev, [data.boatId]: { ...data, lastUpdate: Date.now() } }))
+        const handleBoatUpdate = (data: any) => {
             // Proximity simulation: if DTL is low or updated recently
-            setNearbyBoats(prev => Array.from(new Set([...prev, data.boatId])).slice(-4))
-        })
+            setNearbyBoats(prev => Array.from(new Set([...prev, data.boatId || data.boat_id])).slice(-4))
+        }
 
-        s.on('sequence-update', (data) => {
-            setRaceState((prev: any) => ({ ...prev, sequence: data }))
-        })
+        socket.on('boat-update', handleBoatUpdate)
 
-        return () => { s.close() }
-    }, [])
+        return () => {
+            socket.off('boat-update', handleBoatUpdate)
+        }
+    }, [socket])
 
     const issuePenalty = (type: string) => {
         if (selectedBoat && socket) {
@@ -163,9 +152,9 @@ export default function JuryApp() {
                     <div className="absolute top-8 left-1/2 -translate-x-1/2 z-50">
                         <MiniTimeline
                             raceStatus={raceState?.status || 'IDLE'}
-                            currentSequence={raceState?.sequence?.currentSequence?.event || null}
-                            sequenceTimeRemaining={raceState?.sequence?.sequenceTimeRemaining ?? null}
-                            currentFlags={raceState?.sequence?.currentSequence?.flags || []}
+                            currentSequence={raceState?.currentEvent || null}
+                            sequenceTimeRemaining={raceState?.sequenceTimeRemaining ?? null}
+                            currentFlags={raceState?.currentFlags || []}
                         />
                     </div>
                 </div>

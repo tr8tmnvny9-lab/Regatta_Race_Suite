@@ -1,11 +1,14 @@
 import React from 'react';
 
-export const GlassPanel = ({ title, icon: Icon, children, className = '' }: any) => (
+export const GlassPanel = ({ title, icon: Icon, children, className = '', extraHeader }: any) => (
     <div className={`bg-regatta-panel border border-regatta-border rounded-2xl overflow-hidden shadow-2xl flex flex-col ${className}`}>
         {title && (
-            <div className="bg-black/40 px-5 py-4 border-b border-white/5 flex items-center gap-3">
-                <Icon size={16} className="text-accent-blue" />
-                <h3 className="text-xs font-black uppercase text-gray-400 tracking-[0.2em]">{title}</h3>
+            <div className="bg-black/40 px-5 py-4 border-b border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    {Icon && <Icon size={16} className="text-accent-blue" />}
+                    <h3 className="text-xs font-black uppercase text-gray-400 tracking-[0.2em]">{title}</h3>
+                </div>
+                {extraHeader && extraHeader}
             </div>
         )}
         <div className="p-5 flex-1 overflow-hidden flex flex-col">
@@ -34,11 +37,31 @@ export const DesignerTool = ({ icon: Icon, label, active, onClick }: { icon?: an
     </button>
 )
 
-export const WindControl = ({ wind, onChange }: { wind: { direction: number, speed: number }, onChange: (w: any) => void }) => {
+export const WindControl = ({ wind, onChange, onFetchWeather, isFetching }: { wind: { direction: number, speed: number }, onChange: (w: any) => void, onFetchWeather?: () => void, isFetching?: boolean }) => {
     const [isEditing, setIsEditing] = React.useState(false);
 
     return (
-        <GlassPanel title="Wind Control" className="pointer-events-auto">
+        <GlassPanel
+            title="Wind Control"
+            className="pointer-events-auto"
+            extraHeader={
+                onFetchWeather ? (
+                    <button
+                        onClick={onFetchWeather}
+                        disabled={isFetching}
+                        className={`text-accent-cyan hover:text-white transition-colors p-1 rounded hover:bg-white/10 ${isFetching ? 'opacity-50 cursor-not-allowed animate-pulse' : ''}`}
+                        title="Sync with OpenMeteo API"
+                    >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isFetching ? "animate-spin" : ""}>
+                            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                            <path d="M3 3v5h5" />
+                            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                            <path d="M16 16h5v5" />
+                        </svg>
+                    </button>
+                ) : null
+            }
+        >
             <div className="flex items-center justify-between">
                 <div>
                     <div className="flex items-end gap-2 mb-2">

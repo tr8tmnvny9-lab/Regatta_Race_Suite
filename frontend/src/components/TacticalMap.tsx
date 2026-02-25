@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Marker, Popup, Polyline, Polygon, TileLayer, useMapEvents } from 'react-leaflet';
+import { Marker, Popup, Polyline, Polygon, TileLayer, useMapEvents, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import { Trash2 } from 'lucide-react';
+import { FleetHeatmapLayer } from './MapLayers';
 
 const BOAT_ICON = (heading: number) => L.divIcon({
     className: 'boat-marker',
@@ -17,6 +18,39 @@ const BOAT_ICON = (heading: number) => L.divIcon({
     iconAnchor: [12, 38] // Anchored near the stern/pivot point
 });
 
+const calculateDeadReckoning = (pos: { lat: number, lon: number }, speedKts: number, headingDeg: number, timeSec: number) => {
+    // 1 knot = 0.514444 m/s
+    const speedMps = speedKts * 0.514444;
+    const distanceMeters = speedMps * timeSec;
+
+    // Earth radius in meters
+    const R = 6378137;
+    const brng = headingDeg * Math.PI / 180;
+    const lat1 = pos.lat * Math.PI / 180;
+    const lon1 = pos.lon * Math.PI / 180;
+
+    const lat2 = Math.asin(Math.sin(lat1) * Math.cos(distanceMeters / R) +
+        Math.cos(lat1) * Math.sin(distanceMeters / R) * Math.cos(brng));
+    const lon2 = lon1 + Math.atan2(Math.sin(brng) * Math.sin(distanceMeters / R) * Math.cos(lat1),
+        Math.cos(distanceMeters / R) - Math.sin(lat1) * Math.sin(lat2));
+
+    return { lat: lat2 * 180 / Math.PI, lon: lon2 * 180 / Math.PI };
+};
+
+const GHOST_ICON = (heading: number) => L.divIcon({
+    className: 'boat-marker-ghost',
+    html: `
+        <div style="transform: rotate(${heading}deg); transition: transform 0.5s ease; opacity: 0.4;">
+            <svg width="24" height="40" viewBox="0 0 24 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C12 2 4 12 4 24C4 32.8366 7.58172 38 12 38C16.4183 38 20 32.8366 20 24C20 12 12 2 12 2Z" fill="#9ca3af" fill-opacity="0.2" stroke="#9ca3af" stroke-width="2" stroke-dasharray="2 2"/>
+                <path d="M12 6V20" stroke="#9ca3af" stroke-width="1" stroke-linecap="round" stroke-dasharray="2 2"/>
+            </svg>
+        </div>
+    `,
+    iconSize: [24, 40],
+    iconAnchor: [12, 38]
+});
+
 
 interface TacticalMapProps {
     raceState: any;
@@ -25,7 +59,12 @@ interface TacticalMapProps {
     drawingMode: boolean;
     zoom: number;
     autoOrient: boolean;
+    showHeatmap: boolean;
+    syncDrag: boolean;
+    measurePoints?: { lat: number, lon: number }[];
+    setMeasurePoints?: React.Dispatch<React.SetStateAction<{ lat: number, lon: number }[]>>;
     draggingMarkId: React.MutableRefObject<string | null>;
+    playbackTime?: number | null;
     socket: any;
     setRaceState: React.Dispatch<React.SetStateAction<any>>;
     renderBuoyIcon: (mark: any, size: number, autoOrient: boolean) => L.DivIcon;
@@ -42,7 +81,11 @@ const TacticalMap = ({
     drawingMode,
     zoom,
     autoOrient,
+    showHeatmap,
+    syncDrag,
+    measurePoints,
     draggingMarkId,
+    playbackTime,
     socket,
     setRaceState,
     renderBuoyIcon,
@@ -61,6 +104,33 @@ const TacticalMap = ({
         }
     });
     const [localMarks, setLocalMarks] = useState(raceState.course.marks);
+    const dragOrigin = React.useRef<{ lat: number, lon: number } | null>(null);
+
+    const activeBoats = React.useMemo(() => {
+        if (!playbackTime || !raceState.fleetHistory) return raceState.boats;
+        const historicalBoats: Record<string, any> = {};
+        for (const [boatId, history] of Object.entries(raceState.fleetHistory as Record<string, any[]>)) {
+            if (!history || history.length === 0) continue;
+            let closest = history[0];
+            let minDiff = Infinity;
+            for (const ping of history) {
+                const diff = Math.abs(ping.timestamp - playbackTime);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closest = ping;
+                }
+            }
+            if (minDiff < 30000) { // Only show if we have data within 30 seconds of scrubber
+                historicalBoats[boatId] = {
+                    ...raceState.boats[boatId],
+                    pos: { lat: closest.lat, lon: closest.lon },
+                    dtl: 0,
+                    velocity: { speed: 0, dir: 0 }
+                };
+            }
+        }
+        return historicalBoats;
+    }, [raceState.boats, raceState.fleetHistory, playbackTime]);
 
     // Sync localMarks with raceState when not dragging
     useEffect(() => {
@@ -78,6 +148,27 @@ const TacticalMap = ({
     }, [autoOrient, raceState.course.courseBoundary, map]);
 
     const size = Math.max(8, Math.min(48, (zoom - 10) * 8));
+
+    const formatMeasurement = (p1: any, p2: any) => {
+        const R = 3440.065; // Earth radius in nautical miles
+        const lat1 = p1.lat * Math.PI / 180;
+        const lat2 = p2.lat * Math.PI / 180;
+        const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+        const dLon = (p2.lon - p1.lon) * Math.PI / 180;
+
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1) * Math.cos(lat2) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c;
+
+        const y = Math.sin(dLon) * Math.cos(lat2);
+        const x = Math.cos(lat1) * Math.sin(lat2) -
+            Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+        const brng = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+
+        return `${distance.toFixed(2)} NM | ${Math.round(brng)}°`;
+    };
 
     return (
         <>
@@ -120,20 +211,52 @@ const TacticalMap = ({
             {/* Start/Finish lines - hide during drag */}
             {!draggingMarkId.current && (
                 <>
-                    {(() => {
-                        const starts = localMarks.filter((m: any) => m.type === 'START');
-                        if (starts.length === 2) {
-                            return <Polyline positions={[[starts[0].pos.lat, starts[0].pos.lon], [starts[1].pos.lat, starts[1].pos.lon]]} pathOptions={{ color: '#fbbf24', weight: 4, dashArray: '10, 10' }} />;
+                    {localMarks.filter((m: any) => m.type === 'START' && m.pairId).reduce((acc: any[], current: any) => {
+                        if (!acc.find(g => g.pairId === current.pairId)) {
+                            const pairMember = localMarks.find((m: any) => m.pairId === current.pairId && m.id !== current.id);
+                            if (pairMember) acc.push({ pairId: current.pairId, p1: current.pos, p2: pairMember.pos });
                         }
-                        return null;
-                    })()}
-                    {(() => {
-                        const finishes = localMarks.filter((m: any) => m.type === 'FINISH');
-                        if (finishes.length === 2) {
-                            return <Polyline positions={[[finishes[0].pos.lat, finishes[0].pos.lon], [finishes[1].pos.lat, finishes[1].pos.lon]]} pathOptions={{ color: '#3b82f6', weight: 4, dashArray: '10, 10' }} />;
+                        return acc;
+                    }, []).map((line: any) => (
+                        <Polyline
+                            key={`start-line-${line.pairId}`}
+                            positions={[[line.p1.lat, line.p1.lon], [line.p2.lat, line.p2.lon]]}
+                            pathOptions={{ color: '#fbbf24', weight: 4, dashArray: '10, 10' }}
+                        />
+                    ))}
+                    {localMarks.filter((m: any) => m.type === 'FINISH' && m.pairId).reduce((acc: any[], current: any) => {
+                        if (!acc.find(g => g.pairId === current.pairId)) {
+                            const pairMember = localMarks.find((m: any) => m.pairId === current.pairId && m.id !== current.id);
+                            if (pairMember) acc.push({ pairId: current.pairId, p1: current.pos, p2: pairMember.pos });
                         }
-                        return null;
-                    })()}
+                        return acc;
+                    }, []).map((line: any) => (
+                        <Polyline
+                            key={`finish-line-${line.pairId}`}
+                            positions={[[line.p1.lat, line.p1.lon], [line.p2.lat, line.p2.lon]]}
+                            pathOptions={{ color: '#3b82f6', weight: 4, dashArray: '10, 10' }}
+                        />
+                    ))}
+                </>
+            )}
+
+            {/* Measurement Tool */}
+            {measurePoints && measurePoints.length > 0 && (
+                <>
+                    {measurePoints.map((p, i) => (
+                        <Marker
+                            key={`m-pt-${i}`}
+                            position={[p.lat, p.lon]}
+                            icon={L.divIcon({ className: 'custom-measure-point', html: '<div style="width: 8px; height: 8px; background: white; border: 1px solid black; border-radius: 50%;"></div>', iconSize: [8, 8], iconAnchor: [4, 4] })}
+                        />
+                    ))}
+                    {measurePoints.length === 2 && (
+                        <Polyline positions={[[measurePoints[0].lat, measurePoints[0].lon], [measurePoints[1].lat, measurePoints[1].lon]]} pathOptions={{ color: 'white', weight: 2, dashArray: '5, 5' }}>
+                            <Tooltip permanent direction="center" className="bg-black/90 text-white border border-white/20 text-[11px] font-mono px-3 py-1.5 rounded-lg shadow-xl shadow-black/50" opacity={1}>
+                                {formatMeasurement(measurePoints[0], measurePoints[1])}
+                            </Tooltip>
+                        </Polyline>
+                    )}
                 </>
             )}
 
@@ -145,6 +268,7 @@ const TacticalMap = ({
                     eventHandlers={{
                         dragstart: () => {
                             draggingMarkId.current = mark.id;
+                            dragOrigin.current = { lat: mark.pos.lat, lon: mark.pos.lon };
                         },
                         drag: (e) => {
                             // Using direct Leaflet manipulation (Vector-fast)
@@ -155,7 +279,25 @@ const TacticalMap = ({
                         dragend: (e) => {
                             const marker = e.target;
                             const position = marker.getLatLng();
-                            const updatedMarks = localMarks.map((m: any) => m.id === mark.id ? { ...m, pos: { lat: position.lat, lon: position.lng } } : m);
+
+                            let deltaLat = 0;
+                            let deltaLon = 0;
+                            if (dragOrigin.current) {
+                                deltaLat = position.lat - dragOrigin.current.lat;
+                                deltaLon = position.lng - dragOrigin.current.lon;
+                            }
+
+                            const updatedMarks = localMarks.map((m: any) => {
+                                if (m.id === mark.id) {
+                                    return { ...m, pos: { lat: position.lat, lon: position.lng } };
+                                }
+                                // Linked translation for pair
+                                if (syncDrag && mark.pairId && m.pairId === mark.pairId && m.id !== mark.id) {
+                                    return { ...m, pos: { lat: m.pos.lat + deltaLat, lon: m.pos.lon + deltaLon } };
+                                }
+                                return m;
+                            });
+
                             const updatedCourse = { ...raceState.course, marks: updatedMarks };
 
                             // Force sync back to React state on end
@@ -165,6 +307,7 @@ const TacticalMap = ({
 
                             setTimeout(() => {
                                 draggingMarkId.current = null;
+                                dragOrigin.current = null;
                             }, 50);
                         },
                         click: (e) => {
@@ -296,13 +439,33 @@ const TacticalMap = ({
             ))}
 
             {/* Fleet */}
-            {Object.entries(raceState.boats).map(([id, boat]: [string, any]) => (
-                <Marker
-                    key={id}
-                    position={[boat.pos.lat, boat.pos.lon]}
-                    icon={BOAT_ICON(boat.imu?.heading || 0)}
-                />
-            ))}
+            <FleetHeatmapLayer boats={activeBoats} visible={showHeatmap} />
+            {Object.entries(activeBoats).map(([id, boat]: [string, any]) => {
+                const isMoving = boat.velocity && boat.velocity.speed > 0.5;
+                const drPos = isMoving ? calculateDeadReckoning(boat.pos, boat.velocity.speed, boat.imu?.heading || 0, 15) : null;
+
+                return (
+                    <React.Fragment key={`boat-group-${id}`}>
+                        <Marker
+                            position={[boat.pos.lat, boat.pos.lon]}
+                            icon={BOAT_ICON(boat.imu?.heading || 0)}
+                        />
+                        {drPos && !playbackTime && (
+                            <>
+                                <Polyline
+                                    positions={[[boat.pos.lat, boat.pos.lon], [drPos.lat, drPos.lon]]}
+                                    pathOptions={{ color: '#9ca3af', weight: 1, dashArray: '4, 4', opacity: 0.5 }}
+                                />
+                                <Marker
+                                    position={[drPos.lat, drPos.lon]}
+                                    icon={GHOST_ICON(boat.imu?.heading || 0)}
+                                    interactive={false}
+                                />
+                            </>
+                        )}
+                    </React.Fragment>
+                );
+            })}
         </>
     );
 };

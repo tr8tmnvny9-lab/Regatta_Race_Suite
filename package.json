@@ -1,0 +1,8 @@
+{
+    "name": "regatta-suite-workspace",
+    "private": true,
+    "workspaces": [
+        "regatta-core",
+        "frontend"
+    ]
+}

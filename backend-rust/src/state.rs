@@ -16,19 +16,42 @@ pub struct DefaultLocation {
     pub zoom: f64,
 }
 
-// ─── Race Status ─────────────────────────────────────────────────────────────
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HistoricalPing {
+    pub timestamp: i64,
+    pub lat: f64,
+    pub lon: f64,
+}
+
+// ─── Race Status (RRS-compliant state machine) ───────────────────────────────
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum RaceStatus {
     #[default]
     Idle,
-    PreStart,
-    Racing,
+    Warning,            // T-5:00 → T-4:00 (class flag up, 1 sound)
+    Preparatory,        // T-4:00 → T-1:00 (prep flag up, 1 sound)
+    OneMinute,          // T-1:00 → T-0:00 (prep flag down, 1 long sound)
+    Racing,             // After start signal
     Finished,
-    Postponed,
-    Recall,
-    Abandoned,
+    Postponed,          // AP flag + 2 sounds
+    IndividualRecall,   // X flag + 1 sound (transient, returns to Racing)
+    GeneralRecall,      // 1st Substitute + 2 sounds (resets to new Warning)
+    Abandoned,          // N flag + 3 sounds
+}
+
+// ─── Sound Signals ───────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum SoundSignal {
+    #[default]
+    None,
+    OneShort,       // 1 short sound
+    OneLong,        // 1 long sound
+    TwoShort,       // 2 short sounds
+    ThreeShort,     // 3 short sounds
 }
 
 // ─── Flags ───────────────────────────────────────────────────────────────────
@@ -114,12 +137,33 @@ pub struct CourseState {
     pub course_boundary: Option<Vec<LatLon>>,
 }
 
-// ─── Wind ─────────────────────────────────────────────────────────────────────
+// ─── Wind & Weather ───────────────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct WindState {
     pub direction: f64,
     pub speed: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum WeatherProvider {
+    Manual,
+    Openmeteo,
+    Noaa,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WeatherReport {
+    pub timestamp: i64,
+    pub wind_direction: f64,
+    pub wind_speed: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gusts: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub temperature: Option<f64>,
+    pub provider: WeatherProvider,
 }
 
 // ─── Boat Telemetry ───────────────────────────────────────────────────────────
@@ -160,15 +204,42 @@ pub struct BoatState {
     pub path_progress: f64,
 }
 
-// ─── Penalty ──────────────────────────────────────────────────────────────────
+// ─── Penalty (RRS + Appendix UF) ─────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum PenaltyType {
+    Ocs,                // On Course Side at start
+    Dsq,                // Disqualified (Black flag / rule breach)
+    Dnf,                // Did Not Finish
+    Dns,                // Did Not Start
+    Tle,                // Time Limit Expired
+    Turn360,            // Umpire: 360° turn penalty
+    UmpireNoAction,     // Umpire: Green+White (no penalty)
+    UmpirePenalty,      // Umpire: Red flag penalty
+    UmpireDsq,          // Umpire: Black flag DSQ
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Penalty {
     pub boat_id: String,
     #[serde(rename = "type")]
-    pub penalty_type: String,
+    pub penalty_type: PenaltyType,
     pub timestamp: i64,
+}
+
+// ─── Time Limits ──────────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct TimeLimits {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mark1_limit_secs: Option<f64>,       // Abandon if no boat at mark 1
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub finish_window_secs: Option<f64>,     // Time after first finisher
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tle_scoring: Option<String>,         // e.g. "LAST+2"
 }
 
 // ─── Sequence / Procedure ─────────────────────────────────────────────────────
@@ -186,8 +257,10 @@ pub struct ProcedureNodeData {
     pub flags: Vec<String>,
     #[serde(default)]
     pub duration: f64,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub sound: Option<String>,
+    #[serde(default)]
+    pub sound: SoundSignal,
+    #[serde(rename = "soundOnRemove", default)]
+    pub sound_on_remove: SoundSignal,
     #[serde(rename = "waitForUserTrigger", default)]
     pub wait_for_user_trigger: bool,
     #[serde(rename = "actionLabel", skip_serializing_if = "Option::is_none")]
@@ -196,6 +269,9 @@ pub struct ProcedureNodeData {
     pub post_trigger_duration: f64,
     #[serde(rename = "postTriggerFlags", default)]
     pub post_trigger_flags: Vec<String>,
+    // Map this node to a specific RaceStatus (optional override)
+    #[serde(rename = "raceStatus", skip_serializing_if = "Option::is_none")]
+    pub race_status: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -222,6 +298,8 @@ pub struct ProcedureGraph {
     pub id: String,
     pub nodes: Vec<ProcedureNode>,
     pub edges: Vec<ProcedureEdge>,
+    #[serde(rename = "autoRestart", default)]
+    pub auto_restart: bool,
 }
 
 // ─── Sequence Update (broadcast payload) ─────────────────────────────────────
@@ -240,6 +318,8 @@ pub struct SequenceUpdate {
     pub action_label: Option<String>,
     #[serde(default)]
     pub is_post_trigger: bool,
+    #[serde(default)]
+    pub sound: SoundSignal,
 }
 
 // ─── Logging ─────────────────────────────────────────────────────────────────
@@ -247,11 +327,11 @@ pub struct SequenceUpdate {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum LogCategory {
-    Boat,     // Tracker/Simulation activity
-    Course,   // Mark movements/settings
-    Procedure,// Start logic, node triggers
-    Jury,     // Penalties
-    System,   // Server-level events
+    Boat,      // Tracker/Simulation activity
+    Course,    // Mark movements/settings
+    Procedure, // Start logic, node triggers
+    Jury,      // Penalties
+    System,    // Server-level events
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -265,6 +345,10 @@ pub struct LogEntry {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<serde_json::Value>,
     pub is_active: bool, // true for "moving/constantly changing", false for one-offs
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub protest_flagged: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub jury_notes: Option<String>,
 }
 
 // ─── Full Race State ──────────────────────────────────────────────────────────
@@ -274,6 +358,8 @@ pub struct LogEntry {
 pub struct RaceState {
     pub status: RaceStatus,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub global_override: Option<String>, // "AP", "N", "GENERAL_RECALL", "INDIVIDUAL_RECALL"
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub current_sequence: Option<SequenceInfo>,
     pub prep_flag: PrepFlag,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -281,6 +367,8 @@ pub struct RaceState {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub start_time: Option<i64>,
     pub wind: WindState,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub weather: Option<WeatherReport>,
     pub course: CourseState,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub current_procedure: Option<ProcedureGraph>,
@@ -294,6 +382,12 @@ pub struct RaceState {
     pub action_label: Option<String>,
     #[serde(default)]
     pub is_post_trigger: bool,
+    // Time limits configuration
+    #[serde(default)]
+    pub time_limits: TimeLimits,
+    // OCS boat list (boats on course side at start)
+    #[serde(default)]
+    pub ocs_boats: Vec<String>,
     // Ephemeral — populated at runtime, not persisted
     #[serde(default)]
     pub boats: HashMap<String, BoatState>,
@@ -301,12 +395,15 @@ pub struct RaceState {
     pub penalties: Vec<Penalty>,
     #[serde(default)]
     pub logs: Vec<LogEntry>,
+    #[serde(default)]
+    pub fleet_history: HashMap<String, Vec<HistoricalPing>>,
 }
 
 impl Default for RaceState {
     fn default() -> Self {
         Self {
             status: RaceStatus::Idle,
+            global_override: None,
             current_sequence: None,
             prep_flag: PrepFlag::P,
             sequence_time_remaining: None,
@@ -315,6 +412,7 @@ impl Default for RaceState {
                 direction: 180.0,
                 speed: 12.0,
             },
+            weather: None,
             course: CourseState::default(),
             current_procedure: None,
             default_location: None,
@@ -322,9 +420,12 @@ impl Default for RaceState {
             waiting_for_trigger: false,
             action_label: None,
             is_post_trigger: false,
+            time_limits: TimeLimits::default(),
+            ocs_boats: Vec::new(),
             boats: HashMap::new(),
             penalties: Vec::new(),
             logs: Vec::new(),
+            fleet_history: HashMap::new(),
         }
     }
 }

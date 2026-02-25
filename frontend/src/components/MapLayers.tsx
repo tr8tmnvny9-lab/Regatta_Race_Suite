@@ -1,12 +1,13 @@
 import React from 'react';
-import { Marker, Polyline, useMapEvents } from 'react-leaflet';
+import { Marker, Polyline, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { Buoy } from '../App';
+import 'leaflet.heat';
+import { Buoy } from '@regatta/core';
 
-export const CourseDesignerEvents = ({ onAddMark, isEditing, selectedTool, drawingMode }: { onAddMark: (latlng: any) => void, isEditing: boolean, selectedTool: string | null, drawingMode: boolean }) => {
+export const CourseDesignerEvents = ({ onAddMark, selectedTool, drawingMode }: { onAddMark: (latlng: any) => void, selectedTool: string | null, drawingMode: boolean }) => {
     useMapEvents({
         click(e) {
-            if (isEditing && selectedTool && selectedTool !== 'BOUNDARY' && !drawingMode) {
+            if (selectedTool && selectedTool !== 'BOUNDARY' && !drawingMode) {
                 const originalEvent = e.originalEvent;
                 const target = originalEvent.target as HTMLElement;
                 if (target.closest('.leaflet-marker-icon') || target.closest('.leaflet-popup')) return;
@@ -168,4 +169,45 @@ export const CourseBoundaryDrawing = ({
             )}
         </>
     )
+}
+
+export const FleetHeatmapLayer = ({ boats, visible }: { boats: Record<string, any>, visible: boolean }) => {
+    const map = useMap();
+    const layerRef = React.useRef<any>(null);
+
+    React.useEffect(() => {
+        if (!visible) {
+            if (layerRef.current) {
+                map.removeLayer(layerRef.current);
+                layerRef.current = null;
+            }
+            return;
+        }
+
+        const points = Object.values(boats).map(b => {
+            return [b.pos?.lat || 0, b.pos?.lon || 0, 1];
+        }).filter(p => p[0] !== 0 && p[1] !== 0);
+
+        if (!layerRef.current && points.length > 0) {
+            layerRef.current = (L as any).heatLayer(points, {
+                radius: 35,
+                blur: 25,
+                maxZoom: 17,
+                gradient: { 0.4: 'cyan', 0.6: 'lime', 0.8: 'yellow', 1.0: 'red' }
+            }).addTo(map);
+        } else if (layerRef.current) {
+            layerRef.current.setLatLngs(points);
+        }
+
+    }, [boats, visible, map]);
+
+    React.useEffect(() => {
+        return () => {
+            if (layerRef.current) {
+                map.removeLayer(layerRef.current);
+            }
+        }
+    }, [map]);
+
+    return null;
 }

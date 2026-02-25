@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Play, AlertTriangle, RotateCcw, ChevronDown } from 'lucide-react'
+import { Play, AlertTriangle, RotateCcw, ChevronDown, Volume2 } from 'lucide-react'
 import type { Socket } from 'socket.io-client'
 
 import { FlagIcon, flagLabel } from './FlagIcons'
@@ -18,6 +18,7 @@ interface TimelineStep {
     description: string
     flagsUp: string[]        // Flags raised at this moment
     flagsDown: string[]      // Flags lowered at this moment
+    rawDuration: number      // Raw duration of the node
 }
 
 const STANDARD_SEQUENCE: TimelineStep[] = [
@@ -29,6 +30,7 @@ const STANDARD_SEQUENCE: TimelineStep[] = [
         description: 'Waiting for warning signal',
         flagsUp: [],
         flagsDown: [],
+        rawDuration: 0,
     },
     {
         id: 'warning',
@@ -38,6 +40,7 @@ const STANDARD_SEQUENCE: TimelineStep[] = [
         description: 'Class flag is raised with one sound signal',
         flagsUp: ['CLASS'],
         flagsDown: [],
+        rawDuration: 0,
     },
     {
         id: 'preparatory',
@@ -47,6 +50,7 @@ const STANDARD_SEQUENCE: TimelineStep[] = [
         description: 'Preparatory flag raised with one sound signal',
         flagsUp: ['PREP'],   // Will be replaced dynamically with actual prep flag
         flagsDown: [],
+        rawDuration: 0,
     },
     {
         id: 'one_minute',
@@ -56,6 +60,7 @@ const STANDARD_SEQUENCE: TimelineStep[] = [
         description: 'Prep flag lowered with one long sound signal',
         flagsUp: [],
         flagsDown: ['PREP'], // Will be replaced dynamically
+        rawDuration: 0,
     },
     {
         id: 'start',
@@ -65,6 +70,7 @@ const STANDARD_SEQUENCE: TimelineStep[] = [
         description: 'Class flag lowered with one sound signal',
         flagsUp: [],
         flagsDown: ['CLASS'],
+        rawDuration: 0,
     },
 ]
 
@@ -109,9 +115,9 @@ export default function StartingTimeline({
 
 
 
-    const isActive = raceStatus === 'PRE_START'
+    const isActive = ['WARNING', 'PREPARATORY', 'ONE_MINUTE'].includes(raceStatus)
     const isIdle = raceStatus === 'IDLE'
-    const isSpecial = ['POSTPONED', 'RECALL', 'ABANDONED'].includes(raceStatus)
+    const isSpecial = ['POSTPONED', 'INDIVIDUAL_RECALL', 'GENERAL_RECALL', 'ABANDONED'].includes(raceStatus)
     const isRacing = raceStatus === 'RACING'
 
     // Build dynamic steps from procedure graph if available, else fallback to standard
@@ -158,6 +164,7 @@ export default function StartingTimeline({
                 description: node.data.description || `Automatic transition in ${node.data.duration}s`,
                 flagsUp: node.data.flags || [],
                 flagsDown: [], // Node system usually defines what's UP at each state
+                rawDuration: node.data.duration || 0,
             })
             timeRemaining -= (node.data.duration || 0)
         })
@@ -175,6 +182,11 @@ export default function StartingTimeline({
     }
 
     const specialNodes = getSpecialNodes()
+
+    const handleMutateNode = (nodeId: string, newDuration: number) => {
+        if (newDuration < 0) return
+        socket?.emit('mutate-future-node', { nodeId, duration: newDuration })
+    }
 
     // Determine which step is currently active
     const getActiveStepIndex = (): number => {
@@ -202,10 +214,56 @@ export default function StartingTimeline({
 
     const [now, setNow] = useState(new Date())
 
+    const [vhfAudioEnabled, setVhfAudioEnabled] = useState(false)
+    const prevTimeRef = useRef<number | null>(null)
+
     useEffect(() => {
         const timer = setInterval(() => setNow(new Date()), 1000)
         return () => clearInterval(timer)
     }, [])
+
+    useEffect(() => {
+        if (!vhfAudioEnabled || sequenceTimeRemaining === null) return;
+
+        const curr = Math.floor(sequenceTimeRemaining);
+        const prev = prevTimeRef.current;
+
+        if (prev !== null && prev !== curr) {
+            let announcement = "";
+
+            switch (curr) {
+                case 300: announcement = "Five minutes to start. Warning signal."; break;
+                case 240: announcement = "Four minutes. Preparatory signal."; break;
+                case 30: announcement = "Thirty seconds."; break;
+                case 20: announcement = "Twenty seconds."; break;
+                case 10: announcement = "Ten."; break;
+                case 9: announcement = "Nine."; break;
+                case 8: announcement = "Eight."; break;
+                case 7: announcement = "Seven."; break;
+                case 6: announcement = "Six."; break;
+                case 5: announcement = "Five."; break;
+                case 4: announcement = "Four."; break;
+                case 3: announcement = "Three."; break;
+                case 2: announcement = "Two."; break;
+                case 1: announcement = "One."; break;
+                case 0: announcement = "Start!"; break;
+                default:
+                    // Dynamic announcement for standard sequences (1m, etc based on seconds)
+                    if (curr === 60) announcement = "One minute.";
+                    break;
+            }
+
+            if (announcement && window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(announcement);
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+                // Avoid using non-standard speech configurations that might fail on different OS
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+        prevTimeRef.current = curr;
+    }, [sequenceTimeRemaining, vhfAudioEnabled]);
 
     const timeString = now.toLocaleTimeString('en-US', { hour12: false })
 
@@ -213,12 +271,22 @@ export default function StartingTimeline({
         <div className="flex flex-col h-full min-h-[400px]">
             <div className="text-[8px] font-black text-accent-cyan/40 uppercase tracking-[0.4em] mb-4 pointer-events-none">Sequence Intelligence Active</div>
 
-            {/* ── Universal Time ── */}
-            <div className="text-center mb-4 bg-black/20 py-3 rounded-2xl border border-white/5 mx-4">
-                <div className="text-3xl font-black italic tracking-tighter tabular-nums text-accent-cyan leading-none drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]">
-                    {timeString}
+            {/* ── Universal Time & Audio ── */}
+            <div className="flex items-center justify-between mb-4 bg-black/20 py-3 px-6 rounded-2xl border border-white/5 mx-4">
+                <div className="flex flex-col items-start pr-4 border-r border-white/5">
+                    <div className="text-3xl font-black italic tracking-tighter tabular-nums text-accent-cyan leading-none drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]">
+                        {timeString}
+                    </div>
+                    <div className="text-[8px] font-black uppercase tracking-[0.4em] text-gray-500 mt-2">Universal Time</div>
                 </div>
-                <div className="text-[8px] font-black uppercase tracking-[0.4em] text-gray-500 mt-2">Universal Time</div>
+                <button
+                    onClick={() => setVhfAudioEnabled(!vhfAudioEnabled)}
+                    className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all min-w-[64px] ${vhfAudioEnabled ? 'bg-accent-cyan/20 border-accent-cyan/50 text-accent-cyan shadow-[0_0_15px_rgba(6,182,212,0.3)]' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white hover:bg-white/10'}`}
+                    title="Toggle VHF Automatic Announcements"
+                >
+                    <Volume2 size={16} className={vhfAudioEnabled ? '' : 'opacity-50'} />
+                    <div className="text-[8px] font-black uppercase mt-1 tracking-widest">{vhfAudioEnabled ? 'VHF ON' : 'VHF OFF'}</div>
+                </button>
             </div>
 
             {/* ── Big Countdown Display ── */}
@@ -280,10 +348,10 @@ export default function StartingTimeline({
                             exit={{ opacity: 0 }}
                         >
                             <div className={`text-4xl font-black italic tracking-tighter leading-none ${raceStatus === 'POSTPONED' ? 'text-amber-400' :
-                                raceStatus === 'RECALL' ? 'text-accent-cyan' :
+                                ['INDIVIDUAL_RECALL', 'GENERAL_RECALL'].includes(raceStatus) ? 'text-accent-cyan' :
                                     'text-accent-red'
                                 }`}>
-                                {raceStatus.replace('_', ' ')}
+                                {raceStatus.replace(/_/g, ' ')}
                             </div>
                         </motion.div>
                     ) : isRacing ? (
@@ -413,15 +481,20 @@ export default function StartingTimeline({
                                     )}
                                 </div>
 
-                                {/* Content */}
                                 <div className={`transition-all duration-300 ${isCurrent ? 'translate-x-1' : ''}`}>
-                                    <div className="flex items-center gap-3 mb-1">
+                                    <div className="flex items-center justify-between gap-3 mb-1">
                                         <span className={`text-[10px] font-black uppercase tracking-[0.3em] transition-colors ${isCurrent ? 'text-accent-blue' :
                                             isPast || isCompleted ? 'text-accent-cyan/60' :
                                                 'text-gray-600'
                                             }`}>
                                             {step.time}
                                         </span>
+                                        {(!isPast && !isCompleted && step.rawDuration > 0 && isActive) && (
+                                            <div className="flex items-center gap-1 opacity-10 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => handleMutateNode(step.id, step.rawDuration - 60)} className="w-5 h-5 flex items-center justify-center rounded bg-white/5 hover:bg-white/10 text-accent-red hover:text-white border border-white/10 text-xs transition-colors" title="-1 Min">-</button>
+                                                <button onClick={() => handleMutateNode(step.id, step.rawDuration + 60)} className="w-5 h-5 flex items-center justify-center rounded bg-white/5 hover:bg-white/10 text-accent-green hover:text-white border border-white/10 text-xs transition-colors" title="+1 Min">+</button>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className={`text-sm font-black italic uppercase tracking-tight mb-1 transition-colors ${isCurrent ? 'text-white' :
                                         isPast || isCompleted ? 'text-gray-400' :
@@ -527,7 +600,7 @@ export default function StartingTimeline({
                         className="w-full py-4 bg-accent-blue hover:bg-blue-600 text-white rounded-xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(59,130,246,0.3)] hover:shadow-[0_0_50px_rgba(59,130,246,0.5)] hover:scale-[1.02] transition-all duration-300"
                     >
                         <Play fill="currentColor" size={14} />
-                        Start 5-Minute Sequence
+                        START {currentProcedure ? 'CUSTOM PROCEDURE' : '5-MINUTE SEQUENCE'}
                     </button>
                 )}
 
@@ -552,28 +625,28 @@ export default function StartingTimeline({
                                     className="grid grid-cols-2 gap-2 overflow-hidden"
                                 >
                                     <button
-                                        onClick={() => socket?.emit('procedure-action', { type: 'INDIVIDUAL_RECALL' })}
+                                        onClick={() => socket?.emit('procedure-action', { action: 'INDIVIDUAL_RECALL' })}
                                         className="py-3 bg-white/5 border border-white/10 hover:bg-accent-blue/10 hover:border-accent-blue/30 rounded-xl text-[9px] font-black uppercase transition-all flex flex-col items-center gap-2"
                                     >
                                         <FlagIcon flag="X" size={28} />
                                         <span className="text-accent-blue">Individual Recall</span>
                                     </button>
                                     <button
-                                        onClick={() => socket?.emit('procedure-action', { type: 'GENERAL_RECALL' })}
+                                        onClick={() => socket?.emit('procedure-action', { action: 'GENERAL_RECALL' })}
                                         className="py-3 bg-white/5 border border-white/10 hover:bg-accent-cyan/10 hover:border-accent-cyan/30 rounded-xl text-[9px] font-black uppercase transition-all flex flex-col items-center gap-2"
                                     >
                                         <FlagIcon flag="FIRST_SUB" size={28} />
                                         <span className="text-accent-cyan">General Recall</span>
                                     </button>
                                     <button
-                                        onClick={() => socket?.emit('procedure-action', { type: 'POSTPONE' })}
+                                        onClick={() => socket?.emit('procedure-action', { action: 'POSTPONE' })}
                                         className="py-3 bg-white/5 border border-white/10 hover:bg-amber-500/10 hover:border-amber-500/30 rounded-xl text-[9px] font-black uppercase transition-all flex flex-col items-center gap-2"
                                     >
                                         <FlagIcon flag="AP" size={28} />
                                         <span className="text-amber-400">Postpone</span>
                                     </button>
                                     <button
-                                        onClick={() => socket?.emit('procedure-action', { type: 'ABANDON' })}
+                                        onClick={() => socket?.emit('procedure-action', { action: 'ABANDON' })}
                                         className="py-3 bg-white/5 border border-white/10 hover:bg-accent-red/10 hover:border-accent-red/30 rounded-xl text-[9px] font-black uppercase transition-all flex flex-col items-center gap-2"
                                     >
                                         <FlagIcon flag="N" size={28} />

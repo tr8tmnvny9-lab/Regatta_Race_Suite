@@ -1,9 +1,9 @@
 use std::time::Instant;
 use tracing::info;
 
-use crate::state::{ProcedureGraph, ProcedureNode, SequenceInfo, SequenceUpdate};
+use crate::state::{ProcedureGraph, ProcedureNode, RaceStatus, SequenceInfo, SequenceUpdate, SoundSignal};
 
-/// Tick-based procedure sequencer — port of ProcedureEngine.ts
+/// Tick-based procedure sequencer — RRS-compliant state machine
 pub struct ProcedureEngine {
     pub graph: Option<ProcedureGraph>,
     pub current_node_id: Option<String>,
@@ -14,6 +14,13 @@ pub struct ProcedureEngine {
 }
 
 impl ProcedureEngine {
+    pub fn update_node_duration(&mut self, node_id: &str, new_duration: f64) {
+        if let Some(graph) = &mut self.graph {
+            if let Some(node) = graph.nodes.iter_mut().find(|n| n.id == node_id) {
+                node.data.duration = new_duration;
+            }
+        }
+    }
     pub fn new() -> Self {
         Self {
             graph: None,
@@ -51,7 +58,7 @@ impl ProcedureEngine {
         }
     }
 
-    /// Resume the sequence manually
+    /// Resume the sequence manually (user trigger button pressed)
     pub fn resume_sequence(&mut self) -> Option<SequenceUpdate> {
         let current_id = self.current_node_id.clone()?;
         let graph = self.graph.as_ref()?;
@@ -61,10 +68,7 @@ impl ProcedureEngine {
         if !self.is_post_trigger && current_node.data.post_trigger_duration > 0.0 {
             self.is_post_trigger = true;
             self.post_trigger_started_at = Some(Instant::now());
-            match self.build_update() {
-                Some(u) => Some(u),
-                None => None,
-            }
+            self.build_update()
         } else {
             // Otherwise, jump to the next node
             match self.transition_next() {
@@ -95,6 +99,7 @@ impl ProcedureEngine {
         self.build_update()
     }
 
+    /// Stop the engine (used by postpone, abandon, general recall)
     pub fn stop(&mut self) {
         self.current_node_id = None;
         self.node_started_at = None;
@@ -104,6 +109,59 @@ impl ProcedureEngine {
 
     pub fn is_running(&self) -> bool {
         self.current_node_id.is_some()
+    }
+
+    /// Determine which RaceStatus maps to the current node label
+    pub fn current_race_status(&self) -> RaceStatus {
+        let graph = match &self.graph {
+            Some(g) => g,
+            None => return RaceStatus::Idle,
+        };
+        let current_id = match &self.current_node_id {
+            Some(id) => id,
+            None => return RaceStatus::Idle,
+        };
+        let node = match graph.nodes.iter().find(|n| &n.id == current_id) {
+            Some(n) => n,
+            None => return RaceStatus::Idle,
+        };
+
+        // Check for explicit raceStatus override on the node
+        if let Some(ref status_str) = node.data.race_status {
+            return match status_str.as_str() {
+                "IDLE" => RaceStatus::Idle,
+                "WARNING" => RaceStatus::Warning,
+                "PREPARATORY" => RaceStatus::Preparatory,
+                "ONE_MINUTE" => RaceStatus::OneMinute,
+                "RACING" => RaceStatus::Racing,
+                "FINISHED" => RaceStatus::Finished,
+                "POSTPONED" => RaceStatus::Postponed,
+                "INDIVIDUAL_RECALL" => RaceStatus::IndividualRecall,
+                "GENERAL_RECALL" => RaceStatus::GeneralRecall,
+                "ABANDONED" => RaceStatus::Abandoned,
+                _ => RaceStatus::Idle,
+            };
+        }
+
+        // Auto-detect from label if no override
+        let label_lower = node.data.label.to_lowercase();
+        if label_lower.contains("warning") {
+            RaceStatus::Warning
+        } else if label_lower.contains("preparatory") || label_lower.contains("prep") {
+            RaceStatus::Preparatory
+        } else if label_lower.contains("one-minute") || label_lower.contains("one minute") || label_lower.contains("1-minute") {
+            RaceStatus::OneMinute
+        } else if label_lower.contains("start") {
+            // Starting signal node — still part of the pre-start sequence
+            RaceStatus::OneMinute
+        } else if label_lower.contains("racing") || label_lower.contains("race") {
+            RaceStatus::Racing
+        } else if label_lower.contains("idle") {
+            RaceStatus::Idle
+        } else {
+            // Default: if engine is running, it's in the pre-start zone
+            RaceStatus::Warning
+        }
     }
 
     /// Called at 5Hz. Returns Some(update) whenever state needs to be broadcast.
@@ -195,8 +253,25 @@ impl ProcedureEngine {
                 }
             }
             None => {
-                // End of graph — race starts
-                info!("Procedure: sequence complete, transitioning to RACING");
+                // End of graph — check if auto_restart is true for rolling sequences
+                let should_loop = self.graph.as_ref().map(|g| g.auto_restart).unwrap_or(false);
+                if should_loop {
+                    // Start over at node 0 (Idle) or node 1 depending on graph layout, but let's just go to nodes.first()
+                    if let Some(first_node) = self.graph.as_ref().and_then(|g| g.nodes.first()) {
+                        info!("Procedure: auto-restarting sequence to node {}", first_node.id);
+                        self.current_node_id = Some(first_node.id.clone());
+                        self.node_started_at = Some(Instant::now());
+                        self.is_post_trigger = false;
+                        self.post_trigger_started_at = None;
+                        return match self.build_update() {
+                            Some(upd) => TickResult::Update(upd),
+                            None => TickResult::Idle,
+                        };
+                    }
+                }
+
+                // End of graph — sequence complete
+                info!("Procedure: sequence complete");
                 self.current_node_id = None;
                 self.node_started_at = None;
                 self.is_post_trigger = false;
@@ -206,7 +281,7 @@ impl ProcedureEngine {
         }
     }
 
-    fn build_update(&self) -> Option<SequenceUpdate> {
+    pub fn build_update(&self) -> Option<SequenceUpdate> {
         let graph = self.graph.as_ref()?;
         let current_id = self.current_node_id.as_ref()?;
         let started_at = self.node_started_at?;
@@ -239,8 +314,30 @@ impl ProcedureEngine {
             current_node.data.flags.clone()
         };
 
+        // Determine the correct RaceStatus for this node
+        let status = self.current_race_status();
+        let status_str = match status {
+            RaceStatus::Idle => "IDLE",
+            RaceStatus::Warning => "WARNING",
+            RaceStatus::Preparatory => "PREPARATORY",
+            RaceStatus::OneMinute => "ONE_MINUTE",
+            RaceStatus::Racing => "RACING",
+            RaceStatus::Finished => "FINISHED",
+            RaceStatus::Postponed => "POSTPONED",
+            RaceStatus::IndividualRecall => "INDIVIDUAL_RECALL",
+            RaceStatus::GeneralRecall => "GENERAL_RECALL",
+            RaceStatus::Abandoned => "ABANDONED",
+        };
+
+        // Only emit sound on the first tick of a node (< 0.3s elapsed)
+        let sound = if elapsed < 0.3 && !self.is_post_trigger {
+            current_node.data.sound.clone()
+        } else {
+            SoundSignal::None
+        };
+
         Some(SequenceUpdate {
-            status: "PRE_START".to_string(), // In the handler, we can adjust this
+            status: status_str.to_string(),
             current_sequence: SequenceInfo {
                 event: current_node.data.label.clone(),
                 flags: active_flags,
@@ -251,6 +348,7 @@ impl ProcedureEngine {
             waiting_for_trigger: is_waiting,
             action_label: current_node.data.action_label.clone(),
             is_post_trigger: self.is_post_trigger,
+            sound,
         })
     }
 

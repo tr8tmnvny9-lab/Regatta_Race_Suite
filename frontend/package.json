@@ -10,20 +10,23 @@
         "preview": "vite preview"
     },
     "dependencies": {
+        "@regatta/core": "^1.0.0",
         "cors": "^2.8.5",
         "express": "^4.19.2",
         "framer-motion": "^11.2.10",
         "leaflet": "^1.9.4",
+        "leaflet.heat": "^0.2.0",
         "lucide-react": "^0.400.0",
+        "qrcode.react": "^4.2.0",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
         "react-leaflet": "^4.2.1",
-        "reactflow": "^11.11.4",
         "socket.io-client": "^4.7.5"
     },
     "devDependencies": {
         "@tailwindcss/postcss": "^4.1.18",
         "@types/leaflet": "^1.9.12",
+        "@types/leaflet.heat": "^0.2.5",
         "@types/react": "^18.3.3",
         "@types/react-dom": "^18.3.0",
         "@vitejs/plugin-react": "^4.3.1",

@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { MapContainer, TileLayer, Polyline, Marker, useMapEvents, CircleMarker } from 'react-leaflet'
 import L from 'leaflet'
-import { io, Socket } from 'socket.io-client'
+import { RegattaEngine } from '@regatta/core'
 import {
     Zap, MousePointer2, Trash2, Play, Square,
     Activity, Clock, ChevronRight,
-    Shield
+    Shield, Globe
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -34,7 +34,7 @@ export default function TrackerMock() {
     const params = new URLSearchParams(window.location.search);
     const boatId = params.get('boatId') || `BOAT-${Math.random().toString(36).substring(7).toUpperCase()}`;
 
-    const [socket, setSocket] = useState<Socket | null>(null);
+    const [engine, setEngine] = useState<RegattaEngine | null>(null);
     const [status, setStatus] = useState<'IDLE' | 'LIVE' | 'TERMINATED'>('IDLE');
     const [pos, setPos] = useState({ lat: 59.3293, lon: 18.0686 });
     const [heading, setHeading] = useState(124);
@@ -51,8 +51,10 @@ export default function TrackerMock() {
 
     // Socket Connection
     useEffect(() => {
-        const s = io('http://localhost:3001');
-        setSocket(s);
+        const eng = new RegattaEngine('http://localhost:3001', 'tracker');
+        setEngine(eng);
+        const s = eng.socket;
+        if (!s) return;
 
         s.on('connect', () => {
             if (isTerminated.current) {
@@ -63,31 +65,22 @@ export default function TrackerMock() {
             setStatus('LIVE');
         });
 
-        s.on('init-state', (data) => {
-            setRaceState(data);
-            if (data.boats && data.boats[boatId]) {
-                const b = data.boats[boatId];
+        eng.onStateChange((state) => {
+            setRaceState(state);
+            if (state.boats && state.boats[boatId]) {
+                const b = state.boats[boatId];
                 if (b.simulationPath) {
                     setPath(b.simulationPath.map((p: any) => [p.lat, p.lon]));
                 }
                 if (b.isSimulating !== undefined) setIsSimulating(b.isSimulating);
                 if (b.speedSetting !== undefined) setSpeedSetting(b.speedSetting);
                 if (b.pathProgress !== undefined) setPathProgress(b.pathProgress);
-                if (b.pos) setPos({ lat: b.pos.lat, lon: b.pos.lon });
+                // Only update pos if not simulating locally to avoid fighting the interpolator
+                if (b.pos && !isSimulating) setPos({ lat: b.pos.lat, lon: b.pos.lon });
             }
         });
 
-        s.on('boat-update', (data) => {
-            if (data.boat_id === boatId) {
-                if (data.simulation_path) setPath(data.simulation_path.map((p: any) => [p.lat, p.lon]));
-                if (data.is_simulating !== undefined) setIsSimulating(data.is_simulating);
-                if (data.speed_setting !== undefined) setSpeedSetting(data.speed_setting);
-            }
-        });
-
-        s.on('state-update', (data) => setRaceState(data));
-
-        s.on('kill-simulation', (payload) => {
+        s.on('kill-simulation', (payload: any) => {
             const targetId = typeof payload === 'string' ? payload : payload.id;
             if (targetId === boatId || targetId === 'all') {
                 isTerminated.current = true;
@@ -98,9 +91,52 @@ export default function TrackerMock() {
         });
 
         return () => {
-            s.disconnect();
+            s?.disconnect();
         };
     }, [boatId]);
+
+    const watchId = useRef<number | null>(null);
+    const [gpsActive, setGpsActive] = useState(false);
+
+    const toggleGPS = () => {
+        if (gpsActive) {
+            if (watchId.current !== null) navigator.geolocation.clearWatch(watchId.current);
+            setGpsActive(false);
+            if (status === 'LIVE' && !isSimulating) {
+                setSpeed(0);
+            }
+        } else {
+            if ("geolocation" in navigator) {
+                watchId.current = navigator.geolocation.watchPosition(
+                    (position) => {
+                        setPos({ lat: position.coords.latitude, lon: position.coords.longitude });
+                        if (position.coords.heading !== null) setHeading(position.coords.heading);
+                        if (position.coords.speed !== null) setSpeed(position.coords.speed * 1.94384); // m/s to knots
+                        setIsSimulating(false);
+                        setGpsActive(true);
+
+                        // Clear manual path to avoid visual confusion
+                        setPath([]);
+                        setPathProgress(0);
+                    },
+                    (error) => {
+                        console.error(error);
+                        alert("Geolocation error: " + error.message);
+                        setGpsActive(false);
+                    },
+                    { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+                );
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+    };
+
+    useEffect(() => {
+        return () => {
+            if (watchId.current !== null) navigator.geolocation.clearWatch(watchId.current);
+        }
+    }, [])
 
     // Path Simulation Logic
     useEffect(() => {
@@ -154,8 +190,8 @@ export default function TrackerMock() {
 
     // Emit Updates
     useEffect(() => {
-        if (socket && status === 'LIVE') {
-            socket.emit('track-update', {
+        if (engine && engine.socket && status === 'LIVE') {
+            engine.socket.emit('track-update', {
                 boatId,
                 pos,
                 imu: { heading, roll: 0, pitch: 0 },
@@ -168,7 +204,7 @@ export default function TrackerMock() {
                 pathProgress
             });
         }
-    }, [socket, status, boatId, pos, heading, speed, dtl, path, isSimulating, speedSetting, pathProgress]);
+    }, [engine, status, boatId, pos, heading, speed, dtl, path, isSimulating, speedSetting, pathProgress]);
 
     const handleMapClick = (e: any) => {
         if (!isDrawing) return;
@@ -200,6 +236,19 @@ export default function TrackerMock() {
                 </div>
 
                 <div className="flex-1 space-y-8 overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="space-y-4">
+                        <div className="text-[10px] font-black text-gray-500 tracking-[0.2em] flex items-center gap-2"><Globe size={12} className="text-green-500" /> Real-World Tracker</div>
+                        <button
+                            onClick={toggleGPS}
+                            className={`w-full py-5 rounded-3xl flex items-center justify-center gap-3 border transition-all ${gpsActive ? 'bg-green-600 border-green-400 text-white shadow-[0_0_20px_rgba(22,163,74,0.4)]' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}
+                        >
+                            {gpsActive ? <Square size={18} fill="currentColor" /> : <Shield size={18} className="text-green-500" />}
+                            <span className="text-[11px] font-black tracking-widest">{gpsActive ? 'Disable Live GPS' : 'Enable HTML5 GPS Sensor'}</span>
+                        </button>
+                    </div>
+
+                    <div className="h-px w-full bg-white/5 my-6" />
+
                     <div className="space-y-4">
                         <div className="text-[10px] font-black text-gray-500 tracking-[0.2em]">Manual Path Architect</div>
                         <button

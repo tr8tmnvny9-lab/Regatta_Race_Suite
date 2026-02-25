@@ -2,8 +2,8 @@
   "status": "IDLE",
   "prepFlag": "P",
   "wind": {
-    "direction": 77.0,
-    "speed": 17.0
+    "direction": 90.0,
+    "speed": 12.0
   },
   "course": {
     "marks": [
@@ -147,6 +147,8 @@
           "label": "Idle",
           "flags": [],
           "duration": 0.0,
+          "sound": "NONE",
+          "soundOnRemove": "NONE",
           "waitForUserTrigger": false,
           "postTriggerDuration": 0.0,
           "postTriggerFlags": []
@@ -165,6 +167,8 @@
             "CLASS"
           ],
           "duration": 60.0,
+          "sound": "NONE",
+          "soundOnRemove": "NONE",
           "waitForUserTrigger": false,
           "postTriggerDuration": 0.0,
           "postTriggerFlags": []
@@ -184,6 +188,8 @@
             "P"
           ],
           "duration": 180.0,
+          "sound": "NONE",
+          "soundOnRemove": "NONE",
           "waitForUserTrigger": false,
           "postTriggerDuration": 0.0,
           "postTriggerFlags": []
@@ -202,6 +208,8 @@
             "CLASS"
           ],
           "duration": 60.0,
+          "sound": "NONE",
+          "soundOnRemove": "NONE",
           "waitForUserTrigger": false,
           "postTriggerDuration": 0.0,
           "postTriggerFlags": []
@@ -218,6 +226,8 @@
           "label": "Start",
           "flags": [],
           "duration": 0.0,
+          "sound": "NONE",
+          "soundOnRemove": "NONE",
           "waitForUserTrigger": false,
           "postTriggerDuration": 0.0,
           "postTriggerFlags": []
@@ -234,6 +244,8 @@
           "label": "Racing",
           "flags": [],
           "duration": 3600.0,
+          "sound": "NONE",
+          "soundOnRemove": "NONE",
           "waitForUserTrigger": false,
           "postTriggerDuration": 0.0,
           "postTriggerFlags": []
@@ -279,6 +291,8 @@
   },
   "waitingForTrigger": false,
   "isPostTrigger": false,
+  "timeLimits": {},
+  "ocsBoats": [],
   "boats": {},
   "penalties": [],
   "logs": [

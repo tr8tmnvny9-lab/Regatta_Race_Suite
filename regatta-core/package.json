@@ -1,0 +1,19 @@
+{
+  "name": "@regatta/core",
+  "version": "1.0.0",
+  "description": "Shared business logic, networking, and types for the Regatta Suite ecosystem",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.7.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "author": "Regatta Suite",
+  "license": "UNLICENSED"
+}

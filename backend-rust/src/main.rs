@@ -1,5 +1,6 @@
 mod handlers;
 mod persistence;
+mod auth;
 mod procedure_engine;
 mod state;
 
@@ -13,8 +14,10 @@ use serde_json::json;
 use socketioxide::SocketIo;
 use tokio::sync::RwLock;
 use tower_http::cors::{Any, CorsLayer};
+use axum::http::HeaderValue;
 use tracing::info;
 
+use auth::AuthEngine;
 use handlers::{on_connect, DeadBoats, SharedEngine, SharedState};
 use persistence::load_state;
 use procedure_engine::{ProcedureEngine, TickResult};
@@ -52,9 +55,14 @@ async fn run_engine_tick(
         match result {
             TickResult::Idle => {}
             TickResult::Update(upd) => {
-                // Update shared state
+                // Sync race status from engine's node-level mapping
+                let eng = engine.read().await;
+                let engine_status = eng.current_race_status();
+                drop(eng);
+
                 {
                     let mut state = shared.write().await;
+                    state.status = engine_status;
                     state.current_sequence = Some(upd.current_sequence.clone());
                     state.sequence_time_remaining = Some(upd.sequence_time_remaining);
                     state.current_node_id = Some(upd.current_node_id.clone());
@@ -65,25 +73,24 @@ async fn run_engine_tick(
                 let _ = io.emit("sequence-update", &upd);
             }
             TickResult::SequenceComplete => {
-                info!("Sequence complete — transitioning to RACING");
-                let start_time = SystemTime::now()
+                info!("Sequence complete — race finished");
+                let finish_time = SystemTime::now()
                     .duration_since(UNIX_EPOCH)
                     .unwrap_or_default()
                     .as_millis() as i64;
 
                 {
                     let mut state = shared.write().await;
-                    state.status = RaceStatus::Racing;
-                    state.start_time = Some(start_time);
+                    state.status = RaceStatus::Finished;
                     state.current_sequence = Some(SequenceInfo {
-                        event: "STARTED".to_string(),
+                        event: "FINISHED".to_string(),
                         flags: vec![],
                     });
                     state.sequence_time_remaining = Some(0.0);
                 }
 
                 let state = shared.read().await;
-                let _ = io.emit("race-started", &json!({ "startTime": start_time }));
+                let _ = io.emit("race-finished", &json!({ "finishTime": finish_time }));
                 let _ = io.emit("state-update", &*state);
             }
         }
@@ -109,6 +116,19 @@ async fn main() {
     let shared: SharedState = Arc::new(RwLock::new(race_state));
     let engine: SharedEngine = Arc::new(RwLock::new(ProcedureEngine::new()));
     let dead_boats: DeadBoats = Arc::new(RwLock::new(HashSet::new()));
+    
+    // Auth Engine
+    let auth_engine = AuthEngine::new();
+    let auth_clone = auth_engine.clone();
+    tokio::spawn(async move {
+        // Refresh keys now and every 24 hours
+        auth_clone.refresh_apple_keys().await;
+        let mut interval = tokio::time::interval(Duration::from_secs(86400));
+        loop {
+            interval.tick().await;
+            auth_clone.refresh_apple_keys().await;
+        }
+    });
 
     // Build Socket.IO layer
     let (socket_layer, io) = SocketIo::builder().build_layer();
@@ -117,22 +137,30 @@ async fn main() {
     let shared_sock = shared.clone();
     let engine_sock = engine.clone();
     let dead_sock = dead_boats.clone();
+    let auth_sock = auth_engine.clone();
 
     io.ns("/", move |socket: socketioxide::extract::SocketRef| {
         let shared = shared_sock.clone();
         let engine = engine_sock.clone();
         let dead_boats = dead_sock.clone();
+        let auth_engine = auth_sock.clone();
         async move {
-            on_connect(socket, shared, engine, dead_boats).await;
+            on_connect(socket, shared, engine, dead_boats, auth_engine).await;
         }
     });
 
     // Start engine tick loop
     tokio::spawn(run_engine_tick(engine.clone(), shared.clone(), io.clone()));
 
-    // CORS — allow all origins (keeps parity with TypeScript backend)
+    // CORS — configurable origins (defaults to dev localhost)
+    let allowed_origins = std::env::var("CORS_ORIGINS")
+        .unwrap_or_else(|_| "http://localhost:3000".to_string());
+    let origins: Vec<HeaderValue> = allowed_origins
+        .split(',')
+        .filter_map(|o| o.trim().parse::<HeaderValue>().ok())
+        .collect();
     let cors = CorsLayer::new()
-        .allow_origin(Any)
+        .allow_origin(origins)
         .allow_methods(Any)
         .allow_headers(Any);
 

@@ -5,13 +5,14 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use serde_json::{json, Value};
 use socketioxide::extract::{Data, SocketRef};
 use tokio::sync::RwLock;
-use tracing::{info, warn};
+use tracing::{info, warn, error};
 
 use crate::persistence::save_state;
 use crate::procedure_engine::ProcedureEngine;
 use crate::state::{
-    BoatState, ImuData, LatLon, LogCategory, LogEntry, Penalty, PrepFlag, ProcedureGraph,
-    RaceState, RaceStatus, SequenceInfo, VelocityData,
+    BoatState, CourseState, DefaultLocation, ImuData, LatLon, LogCategory, LogEntry,
+    Penalty, PenaltyType, PrepFlag, ProcedureGraph, RaceState, RaceStatus,
+    SequenceInfo, SoundSignal, VelocityData, WindState,
 };
 
 // ─── Shared State Types ───────────────────────────────────────────────────────
@@ -46,6 +47,8 @@ pub async fn emit_log(
         message,
         data,
         is_active,
+        protest_flagged: None,
+        jury_notes: None,
     };
 
     {
@@ -61,7 +64,7 @@ pub async fn emit_log(
     let _ = socket.emit("new-log", &log);
 }
 
-// ─── Built-in Standard Procedure Graph ───────────────────────────────────────
+// ─── Built-in Standard Procedure Graphs (RRS 26 compliant) ──────────────────
 
 pub fn standard_procedure(minutes: u64, prep_flag: &str) -> ProcedureGraph {
     use crate::state::{ProcedureEdge, ProcedureNode, ProcedureNodeData};
@@ -81,11 +84,13 @@ pub fn standard_procedure(minutes: u64, prep_flag: &str) -> ProcedureGraph {
                 label: "Idle".into(),
                 flags: vec![],
                 duration: 0.0,
-                sound: None,
+                sound: SoundSignal::None,
+                sound_on_remove: SoundSignal::None,
                 wait_for_user_trigger: false,
                 action_label: None,
                 post_trigger_duration: 0.0,
                 post_trigger_flags: vec![],
+                race_status: Some("IDLE".into()),
             },
         },
         ProcedureNode {
@@ -96,11 +101,13 @@ pub fn standard_procedure(minutes: u64, prep_flag: &str) -> ProcedureGraph {
                 label: "Warning Signal".into(),
                 flags: vec!["CLASS".into()],
                 duration: warn_dur,
-                sound: None,
+                sound: SoundSignal::OneShort,           // 1 sound at flag raise
+                sound_on_remove: SoundSignal::None,
                 wait_for_user_trigger: false,
                 action_label: None,
                 post_trigger_duration: 0.0,
                 post_trigger_flags: vec![],
+                race_status: Some("WARNING".into()),
             },
         },
         ProcedureNode {
@@ -111,11 +118,13 @@ pub fn standard_procedure(minutes: u64, prep_flag: &str) -> ProcedureGraph {
                 label: "Preparatory Signal".into(),
                 flags: vec!["CLASS".into(), prep_flag.to_string()],
                 duration: prep_dur,
-                sound: None,
+                sound: SoundSignal::OneShort,           // 1 sound at prep flag raise
+                sound_on_remove: SoundSignal::OneLong,  // 1 long sound when prep flag removed
                 wait_for_user_trigger: false,
                 action_label: None,
                 post_trigger_duration: 0.0,
                 post_trigger_flags: vec![],
+                race_status: Some("PREPARATORY".into()),
             },
         },
         ProcedureNode {
@@ -126,11 +135,13 @@ pub fn standard_procedure(minutes: u64, prep_flag: &str) -> ProcedureGraph {
                 label: "One-Minute".into(),
                 flags: vec!["CLASS".into()],
                 duration: one_min_dur,
-                sound: None,
+                sound: SoundSignal::OneLong,            // 1 long sound (prep flag down)
+                sound_on_remove: SoundSignal::None,
                 wait_for_user_trigger: false,
                 action_label: None,
                 post_trigger_duration: 0.0,
                 post_trigger_flags: vec![],
+                race_status: Some("ONE_MINUTE".into()),
             },
         },
         ProcedureNode {
@@ -141,11 +152,13 @@ pub fn standard_procedure(minutes: u64, prep_flag: &str) -> ProcedureGraph {
                 label: "Start".into(),
                 flags: vec![],
                 duration: 0.0,
-                sound: None,
-                wait_for_user_trigger: false,
+                sound: SoundSignal::OneShort,            // 1 sound (start gun)
+                sound_on_remove: SoundSignal::None,
+                wait_for_user_trigger: false,             // Auto-transition to Racing
                 action_label: None,
                 post_trigger_duration: 0.0,
                 post_trigger_flags: vec![],
+                race_status: Some("RACING".into()),
             },
         },
         ProcedureNode {
@@ -155,12 +168,14 @@ pub fn standard_procedure(minutes: u64, prep_flag: &str) -> ProcedureGraph {
             data: ProcedureNodeData {
                 label: "Racing".into(),
                 flags: vec![],
-                duration: 3600.0,
-                sound: None,
-                wait_for_user_trigger: false,
-                action_label: None,
+                duration: 0.0,
+                sound: SoundSignal::None,
+                sound_on_remove: SoundSignal::None,
+                wait_for_user_trigger: true,
+                action_label: Some("FINISH RACE — End racing".into()),
                 post_trigger_duration: 0.0,
                 post_trigger_flags: vec![],
+                race_status: Some("RACING".into()),
             },
         },
     ];
@@ -177,6 +192,7 @@ pub fn standard_procedure(minutes: u64, prep_flag: &str) -> ProcedureGraph {
         id: format!("standard-{minutes}min"),
         nodes,
         edges,
+        auto_restart: false,
     }
 }
 
@@ -187,24 +203,61 @@ pub async fn on_connect(
     shared: SharedState,
     engine: SharedEngine,
     dead_boats: DeadBoats,
+    auth: std::sync::Arc<crate::auth::AuthEngine>,
 ) {
     let socket_id = socket.id.to_string();
     info!("Client connected: {socket_id}");
+    
+    // Cleanup on disconnect
+    socket.on_disconnect({
+        let auth = auth.clone();
+        let sid = socket_id.clone();
+        move |_: SocketRef| async move {
+            auth.remove_role(&sid).await;
+            info!("Client disconnected, roles cleaned: {sid}");
+        }
+    });
 
     // ── register ──────────────────────────────────────────────────────────────
     {
         let socket = socket.clone();
         let shared = shared.clone();
+        let auth = auth.clone();
         socket.on("register", move |s: SocketRef, Data::<Value>(data)| {
             let shared = shared.clone();
+            let auth = auth.clone();
             async move {
-                let client_type = data["type"].as_str().unwrap_or("unknown");
-                info!("Client {}: registered as {client_type}", s.id);
+                let token = data["type"].as_str().unwrap_or("unknown");
+                let client_type = match token {
+                    "director123" => "director",
+                    "jury123" => "jury",
+                    "media123" => "media",
+                    "tracker123" => "tracker",
+                    // Also support the old literal names just in case some subapps are still using them locally
+                    "director" => "director",
+                    "jury" => "jury",
+                    "media" => "media",
+                    "tracker" => "tracker",
+                    _ => "unknown",
+                };
+
+                auth.set_role(&s.id.to_string(), client_type).await;
+                info!("Client {}: registered and authenticated as Role: {client_type}", s.id);
 
                 let _ = s.join(client_type.to_string());
 
                 let state = shared.read().await;
                 let _ = s.emit("init-state", &*state);
+            }
+        });
+    }
+
+    // ── latency-ping ──────────────────────────────────────────────────────────
+    {
+        let socket = socket.clone();
+        socket.on("latency-ping", move |s: SocketRef, Data::<Value>(data)| {
+            async move {
+                let _ = s.emit("latency-pong", &data);
             }
         });
     }
@@ -245,7 +298,7 @@ pub async fn on_connect(
                 let dtl = data["dtl"].as_f64().unwrap_or(0.0);
                 let timestamp = data["timestamp"].as_i64().unwrap_or_else(now_ms);
 
-                // Simulation data (optional, only sent if it's a simulation update or high-fidelity sync)
+                // Simulation data
                 let sim_path = data["simulationPath"].as_array().map(|arr| {
                     arr.iter().filter_map(|v| {
                         Some(LatLon {
@@ -261,6 +314,19 @@ pub async fn on_connect(
 
                 {
                     let mut state = shared.write().await;
+                    
+                    let hist = state.fleet_history.entry(boat_id.clone()).or_insert_with(Vec::new);
+                    if hist.is_empty() || timestamp - hist.last().unwrap().timestamp > 5000 {
+                        hist.push(crate::state::HistoricalPing {
+                            timestamp,
+                            lat: pos.lat,
+                            lon: pos.lon,
+                        });
+                        if hist.len() > 360 {
+                            hist.remove(0);
+                        }
+                    }
+
                     if let Some(existing) = state.boats.get_mut(&boat_id) {
                         existing.pos = pos;
                         existing.imu = imu;
@@ -273,7 +339,6 @@ pub async fn on_connect(
                         if let Some(speed) = speed_setting { existing.speed_setting = speed; }
                         if let Some(prog) = path_progress { existing.path_progress = prog; }
                     } else {
-                        // Create new boat if doesn't exist
                         let boat = BoatState {
                             boat_id: boat_id.clone(),
                             pos,
@@ -339,28 +404,11 @@ pub async fn on_connect(
                         let _ = s.broadcast().emit("boat-update", &*boat);
                         let _ = s.emit("boat-update", &*boat);
 
-                        // Global Log
                         drop(state);
                         if sim_started {
-                            emit_log(
-                                &shared,
-                                &s,
-                                LogCategory::Boat,
-                                boat_id.clone(),
-                                "Simulation started".to_string(),
-                                Some(json!({ "speed": speed_setting })),
-                                true,
-                            ).await;
+                            emit_log(&shared, &s, LogCategory::Boat, boat_id.clone(), "Simulation started".to_string(), Some(json!({ "speed": speed_setting })), true).await;
                         } else if sim_stopped {
-                            emit_log(
-                                &shared,
-                                &s,
-                                LogCategory::Boat,
-                                boat_id.clone(),
-                                "Simulation stopped".to_string(),
-                                None,
-                                false,
-                            ).await;
+                            emit_log(&shared, &s, LogCategory::Boat, boat_id.clone(), "Simulation stopped".to_string(), None, false).await;
                         }
                     }
                 }
@@ -373,10 +421,17 @@ pub async fn on_connect(
         let socket = socket.clone();
         let shared = shared.clone();
         let engine = engine.clone();
+        let auth = auth.clone();
         socket.on("start-sequence", move |s: SocketRef, Data::<Value>(data)| {
             let shared = shared.clone();
             let engine = engine.clone();
+            let auth = auth.clone();
             async move {
+                if auth.get_role(&s.id.to_string()).await.as_deref() != Some("director") {
+                    warn!("Unauthorized starting sequence attempt by: {}", s.id);
+                    return;
+                }
+                
                 let prep_flag_str = data["prepFlag"].as_str().unwrap_or("P");
 
                 let mut eng = engine.write().await;
@@ -392,12 +447,14 @@ pub async fn on_connect(
                 };
 
                 let update = eng.start();
+                let status = eng.current_race_status();
                 drop(eng);
 
                 {
                     let mut state = shared.write().await;
-                    state.status = RaceStatus::PreStart;
+                    state.status = status;
                     state.current_procedure = Some(graph);
+                    state.ocs_boats.clear();
                     state.prep_flag = match prep_flag_str {
                         "I" => PrepFlag::I,
                         "Z" => PrepFlag::Z,
@@ -420,15 +477,7 @@ pub async fn on_connect(
                 let _ = s.broadcast().emit("state-update", &*state);
                 let _ = s.emit("state-update", &*state);
 
-                emit_log(
-                    &shared,
-                    &s,
-                    LogCategory::Procedure,
-                    "Director".to_string(),
-                    "Started 5-Minute Sequence".to_string(),
-                    None,
-                    false,
-                ).await;
+                emit_log(&shared, &s, LogCategory::Procedure, "Director".to_string(), "Started sequence".to_string(), None, false).await;
             }
         });
     }
@@ -455,55 +504,280 @@ pub async fn on_connect(
         });
     }
 
-    // ── procedure-action ──────────────────────────────────────────────────────
+    // ── procedure-action (RRS Race Management) ────────────────────────────────
     {
         let socket = socket.clone();
         let shared = shared.clone();
         let engine = engine.clone();
+        let auth = auth.clone();
         socket.on("procedure-action", move |s: SocketRef, Data::<Value>(data)| {
             let shared = shared.clone();
             let engine = engine.clone();
+            let auth = auth.clone();
             async move {
+                if auth.get_role(&s.id.to_string()).await.as_deref() != Some("director") {
+                    warn!("Unauthorized procedure action attempt by: {}", s.id);
+                    return;
+                }
+                
                 let action = data["action"].as_str().unwrap_or("");
                 info!("Procedure action: {action}");
 
-                let (new_status, seq_event, seq_flags): (RaceStatus, &str, Vec<&str>) = match action {
-                    "POSTPONE" => (RaceStatus::Postponed, "Postpone", vec!["AP"]),
-                    "INDIVIDUAL_RECALL" => (RaceStatus::Recall, "Individual Recall", vec!["X"]),
-                    "GENERAL_RECALL" => (RaceStatus::Recall, "General Recall", vec!["FIRST_SUB"]),
-                    "ABANDON" => (RaceStatus::Abandoned, "Abandon", vec!["N"]),
+                match action {
+                    // ── POSTPONE (AP flag + 2 sounds) ─────────────────────
+                    "POSTPONE" => {
+                        engine.write().await.stop();
+                        {
+                            let mut state = shared.write().await;
+                            state.status = RaceStatus::Postponed;
+                            state.current_sequence = Some(SequenceInfo {
+                                event: "Postponed".to_string(),
+                                flags: vec!["AP".to_string()],
+                            });
+                            state.sequence_time_remaining = None;
+                            state.waiting_for_trigger = false;
+                            state.action_label = None;
+
+                            let _ = s.broadcast().emit("state-update", &*state);
+                            let _ = s.emit("state-update", &*state);
+                        }
+
+                        emit_log(&shared, &s, LogCategory::Procedure, "Director".to_string(),
+                            "Race postponed — AP flag raised, 2 sounds".to_string(),
+                            Some(json!({ "signal": "AP", "sounds": 2 })), false).await;
+
+                        // Auto-resume: spawn a task that waits 60s then starts new Warning
+                        let shared_r = shared.clone();
+                        let engine_r = engine.clone();
+                        let s_r = s.clone();
+                        tokio::spawn(async move {
+                            tokio::time::sleep(Duration::from_secs(60)).await;
+                            
+                            // Only resume if still postponed (RC may have manually changed)
+                            let is_still_postponed = shared_r.read().await.status == RaceStatus::Postponed;
+                            if !is_still_postponed { return; }
+
+                            info!("AP lowered — resuming with new Warning in 1 min");
+                            
+                            // Restart the engine
+                            let mut eng = engine_r.write().await;
+                            let update = eng.start();
+                            let status = eng.current_race_status();
+                            drop(eng);
+
+                            {
+                                let mut state = shared_r.write().await;
+                                state.status = status;
+                                if let Some(upd) = &update {
+                                    state.current_sequence = Some(upd.current_sequence.clone());
+                                    state.sequence_time_remaining = Some(upd.sequence_time_remaining);
+                                }
+                            }
+
+                            if let Some(upd) = update {
+                                let _ = s_r.broadcast().emit("sequence-update", &upd);
+                                let _ = s_r.emit("sequence-update", &upd);
+                            }
+
+                            let state = shared_r.read().await;
+                            let _ = s_r.broadcast().emit("state-update", &*state);
+                            let _ = s_r.emit("state-update", &*state);
+
+                            emit_log(&shared_r, &s_r, LogCategory::Procedure, "Director".to_string(),
+                                "AP lowered — new Warning signal, 1 sound".to_string(),
+                                Some(json!({ "signal": "AP_DOWN", "sounds": 1 })), false).await;
+                        });
+                    }
+
+                    // ── INDIVIDUAL RECALL (X flag + 1 sound) ──────────────
+                    "INDIVIDUAL_RECALL" => {
+                        // Don't stop the engine — racing continues
+                        let ocs_boats: Vec<String> = data["boats"].as_array()
+                            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect())
+                            .unwrap_or_default();
+                        
+                        {
+                            let mut state = shared.write().await;
+                            state.status = RaceStatus::IndividualRecall;
+                            state.ocs_boats = ocs_boats.clone();
+                            state.current_sequence = Some(SequenceInfo {
+                                event: "Individual Recall".to_string(),
+                                flags: vec!["X".to_string()],
+                            });
+
+                            let _ = s.broadcast().emit("state-update", &*state);
+                            let _ = s.emit("state-update", &*state);
+                        }
+
+                        emit_log(&shared, &s, LogCategory::Procedure, "Director".to_string(),
+                            format!("Individual Recall — X flag raised, OCS: {}", if ocs_boats.is_empty() { "none identified".to_string() } else { ocs_boats.join(", ") }),
+                            Some(json!({ "signal": "X", "sounds": 1, "ocsBoats": ocs_boats })), false).await;
+
+                        // Auto-clear X flag after 5 minutes (DNS default)
+                        let shared_r = shared.clone();
+                        let s_r = s.clone();
+                        tokio::spawn(async move {
+                            tokio::time::sleep(Duration::from_secs(300)).await; // 5 min
+                            
+                            let is_still_recall = shared_r.read().await.status == RaceStatus::IndividualRecall;
+                            if !is_still_recall { return; }
+
+                            info!("X flag auto-lowered after 5 minutes");
+                            {
+                                let mut state = shared_r.write().await;
+                                state.status = RaceStatus::Racing;
+                                state.current_sequence = Some(SequenceInfo {
+                                    event: "Racing".to_string(),
+                                    flags: vec![],
+                                });
+
+                                // Issue DNS to OCS boats
+                                let ocs_list = state.ocs_boats.clone();
+                                for boat_id in &ocs_list {
+                                    state.penalties.push(Penalty {
+                                        boat_id: boat_id.clone(),
+                                        penalty_type: PenaltyType::Dns,
+                                        timestamp: now_ms(),
+                                    });
+                                }
+                                state.ocs_boats.clear();
+
+                                let _ = s_r.broadcast().emit("state-update", &*state);
+                                let _ = s_r.emit("state-update", &*state);
+                            }
+
+                            emit_log(&shared_r, &s_r, LogCategory::Procedure, "Director".to_string(),
+                                "X flag lowered — DNS applied to OCS boats".to_string(), None, false).await;
+                        });
+                    }
+
+                    // ── GENERAL RECALL (1st Substitute + 2 sounds) ────────
+                    "GENERAL_RECALL" => {
+                        engine.write().await.stop();
+                        {
+                            let mut state = shared.write().await;
+                            state.status = RaceStatus::GeneralRecall;
+                            state.current_sequence = Some(SequenceInfo {
+                                event: "General Recall".to_string(),
+                                flags: vec!["FIRST_SUB".to_string()],
+                            });
+                            state.sequence_time_remaining = None;
+                            state.waiting_for_trigger = false;
+                            state.action_label = None;
+
+                            let _ = s.broadcast().emit("state-update", &*state);
+                            let _ = s.emit("state-update", &*state);
+                        }
+
+                        emit_log(&shared, &s, LogCategory::Procedure, "Director".to_string(),
+                            "General Recall — 1st Substitute raised, 2 sounds".to_string(),
+                            Some(json!({ "signal": "FIRST_SUB", "sounds": 2 })), false).await;
+
+                        // Auto: 1st Sub down + 1 sound, new Warning 1 min later
+                        let shared_r = shared.clone();
+                        let engine_r = engine.clone();
+                        let s_r = s.clone();
+                        tokio::spawn(async move {
+                            tokio::time::sleep(Duration::from_secs(60)).await;
+
+                            let is_still_recall = shared_r.read().await.status == RaceStatus::GeneralRecall;
+                            if !is_still_recall { return; }
+
+                            info!("1st Substitute lowered — new Warning sequence starting");
+
+                            let mut eng = engine_r.write().await;
+                            let update = eng.start();
+                            let status = eng.current_race_status();
+                            drop(eng);
+
+                            {
+                                let mut state = shared_r.write().await;
+                                state.status = status;
+                                if let Some(upd) = &update {
+                                    state.current_sequence = Some(upd.current_sequence.clone());
+                                    state.sequence_time_remaining = Some(upd.sequence_time_remaining);
+                                }
+                            }
+
+                            if let Some(upd) = update {
+                                let _ = s_r.broadcast().emit("sequence-update", &upd);
+                                let _ = s_r.emit("sequence-update", &upd);
+                            }
+
+                            let state = shared_r.read().await;
+                            let _ = s_r.broadcast().emit("state-update", &*state);
+                            let _ = s_r.emit("state-update", &*state);
+
+                            emit_log(&shared_r, &s_r, LogCategory::Procedure, "Director".to_string(),
+                                "1st Substitute lowered — new Warning signal, 1 sound".to_string(),
+                                Some(json!({ "signal": "FIRST_SUB_DOWN", "sounds": 1 })), false).await;
+                        });
+                    }
+
+                    // ── ABANDON (N flag + 3 sounds) ───────────────────────
+                    "ABANDON" => {
+                        engine.write().await.stop();
+                        {
+                            let mut state = shared.write().await;
+                            state.status = RaceStatus::Abandoned;
+                            state.current_sequence = Some(SequenceInfo {
+                                event: "Abandoned".to_string(),
+                                flags: vec!["N".to_string()],
+                            });
+                            state.sequence_time_remaining = None;
+                            state.waiting_for_trigger = false;
+                            state.action_label = None;
+                            state.ocs_boats.clear();
+
+                            let _ = s.broadcast().emit("state-update", &*state);
+                            let _ = s.emit("state-update", &*state);
+                        }
+
+                        emit_log(&shared, &s, LogCategory::Procedure, "Director".to_string(),
+                            "Race abandoned — N flag raised, 3 sounds".to_string(),
+                            Some(json!({ "signal": "N", "sounds": 3 })), false).await;
+                    }
+
+                    // ── SHORTEN COURSE (S flag + 2 sounds) ────────────────
+                    "SHORTEN_COURSE" => {
+                        emit_log(&shared, &s, LogCategory::Procedure, "Director".to_string(),
+                            "Shorten Course — S flag raised, 2 sounds".to_string(),
+                            Some(json!({ "signal": "S", "sounds": 2 })), false).await;
+                    }
+
+                    // ── COURSE CHANGE (C flag + repetitive sounds) ────────
+                    "COURSE_CHANGE" => {
+                        emit_log(&shared, &s, LogCategory::Procedure, "Director".to_string(),
+                            "Course Change — C flag raised, repetitive sounds".to_string(),
+                            Some(json!({ "signal": "C", "sounds": "repetitive" })), false).await;
+                    }
+
+                    // ── RESET TO IDLE ──────────────────────────────────────
+                    "RESET" => {
+                        engine.write().await.stop();
+                        {
+                            let mut state = shared.write().await;
+                            state.status = RaceStatus::Idle;
+                            state.current_sequence = None;
+                            state.sequence_time_remaining = None;
+                            state.start_time = None;
+                            state.waiting_for_trigger = false;
+                            state.action_label = None;
+                            state.is_post_trigger = false;
+                            state.ocs_boats.clear();
+
+                            let _ = s.broadcast().emit("state-update", &*state);
+                            let _ = s.emit("state-update", &*state);
+                        }
+
+                        emit_log(&shared, &s, LogCategory::Procedure, "Director".to_string(),
+                            "Race reset to Idle".to_string(), None, false).await;
+                    }
+
                     _ => {
                         warn!("Unknown procedure action: {action}");
-                        return;
                     }
-                };
-
-                // Stop the engine
-                engine.write().await.stop();
-
-                {
-                    let mut state = shared.write().await;
-                    state.status = new_status;
-                    state.current_sequence = Some(SequenceInfo {
-                        event: seq_event.to_string(),
-                        flags: seq_flags.iter().map(|f| f.to_string()).collect(),
-                    });
-                    state.sequence_time_remaining = None;
-
-                    let _ = s.broadcast().emit("state-update", &*state);
-                    let _ = s.emit("state-update", &*state);
                 }
-
-                // Global Log
-                emit_log(
-                    &shared,
-                    &s,
-                    LogCategory::Procedure,
-                    "Director".to_string(),
-                    format!("Manual Procedure Action: {action}"),
-                    None,
-                    false,
-                ).await;
             }
         });
     }
@@ -513,20 +787,28 @@ pub async fn on_connect(
         let socket = socket.clone();
         let shared = shared.clone();
         let engine = engine.clone();
+        let auth = auth.clone();
         socket.on("save-procedure", move |s: SocketRef, Data::<Value>(data)| {
             let shared = shared.clone();
             let engine = engine.clone();
+            let auth = auth.clone();
             async move {
+                if auth.get_role(&s.id.to_string()).await.as_deref() != Some("director") {
+                    warn!("Unauthorized save-procedure attempt by: {}", s.id);
+                    return;
+                }
+                
                 match serde_json::from_value::<ProcedureGraph>(data) {
                     Ok(graph) => {
                         let mut eng = engine.write().await;
                         eng.load_procedure(graph.clone());
                         let update = eng.start();
+                        let status = eng.current_race_status();
                         drop(eng);
 
                         {
                             let mut state = shared.write().await;
-                            state.status = RaceStatus::PreStart;
+                            state.status = status;
                             state.current_procedure = Some(graph);
                             if let Some(upd) = &update {
                                 state.current_sequence = Some(upd.current_sequence.clone());
@@ -543,16 +825,8 @@ pub async fn on_connect(
                         let _ = s.broadcast().emit("state-update", &*state);
                         let _ = s.emit("state-update", &*state);
 
-                        // Global Log
-                        emit_log(
-                            &shared,
-                            &s,
-                            LogCategory::Procedure,
-                            "Architect".to_string(),
-                            "Custom procedure deployed and started".to_string(),
-                            None,
-                            false,
-                        ).await;
+                        emit_log(&shared, &s, LogCategory::Procedure, "Architect".to_string(),
+                            "Custom procedure deployed and started".to_string(), None, false).await;
                     }
                     Err(e) => warn!("Failed to parse procedure: {e}"),
                 }
@@ -565,10 +839,17 @@ pub async fn on_connect(
         let socket = socket.clone();
         let shared = shared.clone();
         let engine = engine.clone();
+        let auth = auth.clone();
         socket.on("trigger-node", move |s: SocketRef, Data::<Value>(data)| {
             let shared = shared.clone();
             let engine = engine.clone();
+            let auth = auth.clone();
             async move {
+                if auth.get_role(&s.id.to_string()).await.as_deref() != Some("director") {
+                    warn!("Unauthorized node trigger attempt by: {}", s.id);
+                    return;
+                }
+                
                 if let Some(node_id) = data["nodeId"].as_str() {
                     let update = engine.write().await.jump_to_node(node_id);
                     if let Some(upd) = update {
@@ -578,18 +859,64 @@ pub async fn on_connect(
                         let _ = s.broadcast().emit("sequence-update", &upd);
                         let _ = s.emit("sequence-update", &upd);
 
-                        // Global Log
-                        emit_log(
-                            &shared,
-                            &s,
-                            LogCategory::Procedure,
-                            "Director".to_string(),
-                            format!("Triggered procedure node: {node_id}"),
-                            None,
-                            false,
-                        ).await;
+                        emit_log(&shared, &s, LogCategory::Procedure, "Director".to_string(),
+                            format!("Triggered procedure node: {node_id}"), None, false).await;
                     }
                 }
+            }
+        });
+    }
+
+    // ── mutate-future-node ───────────────────────────────────────────────────
+    {
+        let socket = socket.clone();
+        let shared = shared.clone();
+        let engine = engine.clone();
+        let auth = auth.clone();
+        socket.on("mutate-future-node", move |s: SocketRef, Data::<Value>(data)| {
+            let shared = shared.clone();
+            let engine = engine.clone();
+            let auth = auth.clone();
+            async move {
+                if auth.get_role(&s.id.to_string()).await.as_deref() != Some("director") {
+                    warn!("Unauthorized mutate-future-node attempt by: {}", s.id);
+                    return;
+                }
+                
+                let node_id = match data["nodeId"].as_str() {
+                    Some(id) => id,
+                    None => return,
+                };
+                let new_duration = match data["duration"].as_f64() {
+                    Some(d) => d,
+                    None => return,
+                };
+
+                let mut eng = engine.write().await;
+                eng.update_node_duration(node_id, new_duration);
+                let update = eng.build_update();
+                let graph = eng.graph.clone();
+                drop(eng);
+
+                {
+                    let mut state = shared.write().await;
+                    if let Some(g) = graph {
+                        state.current_procedure = Some(g);
+                    }
+                    if let Some(upd) = &update {
+                        state.current_sequence = Some(upd.current_sequence.clone());
+                        state.sequence_time_remaining = Some(upd.sequence_time_remaining);
+                    }
+                    let _ = save_state(&state).await;
+                }
+
+                if let Some(upd) = update {
+                    let _ = s.broadcast().emit("sequence-update", &upd);
+                    let _ = s.emit("sequence-update", &upd);
+                }
+                let state = shared.read().await;
+                let _ = s.broadcast().emit("state-update", &*state);
+                let _ = s.emit("state-update", &*state);
             }
         });
     }
@@ -599,28 +926,35 @@ pub async fn on_connect(
         let socket = socket.clone();
         let shared = shared.clone();
         let engine = engine.clone();
+        let auth = auth.clone();
         socket.on("resume-sequence", move |s: SocketRef, Data::<Value>(_data)| {
             let shared = shared.clone();
             let engine = engine.clone();
+            let auth = auth.clone();
             async move {
-                let update = engine.write().await.resume_sequence();
+                if auth.get_role(&s.id.to_string()).await.as_deref() != Some("director") {
+                    warn!("Unauthorized sequence resume attempt by: {}", s.id);
+                    return;
+                }
+                
+                let mut eng = engine.write().await;
+                let update = eng.resume_sequence();
+                let status = eng.current_race_status();
+                drop(eng);
+
                 if let Some(upd) = update {
                     let mut state = shared.write().await;
+                    state.status = status;
                     state.current_sequence = Some(upd.current_sequence.clone());
                     state.sequence_time_remaining = Some(upd.sequence_time_remaining);
                     let _ = s.broadcast().emit("sequence-update", &upd);
                     let _ = s.emit("sequence-update", &upd);
 
-                    // Global Log
-                    emit_log(
-                        &shared,
-                        &s,
-                        LogCategory::Procedure,
-                        "Director".to_string(),
-                        "Resumed sequence manually".to_string(),
-                        None,
-                        false,
-                    ).await;
+                    let _ = s.broadcast().emit("state-update", &*state);
+                    let _ = s.emit("state-update", &*state);
+
+                    emit_log(&shared, &s, LogCategory::Procedure, "Director".to_string(),
+                        "Resumed sequence manually".to_string(), None, false).await;
                 }
             }
         });
@@ -630,10 +964,17 @@ pub async fn on_connect(
     {
         let socket = socket.clone();
         let shared = shared.clone();
+        let auth = auth.clone();
         socket.on("update-course", move |s: SocketRef, Data::<Value>(data)| {
             let shared = shared.clone();
+            let auth = auth.clone();
             async move {
-                match serde_json::from_value(data) {
+                if auth.get_role(&s.id.to_string()).await.as_deref() != Some("director") {
+                    warn!("Unauthorized course update attempt by: {}", s.id);
+                    return;
+                }
+                
+                match serde_json::from_value::<CourseState>(data.clone()) {
                     Ok(course) => {
                         let mut state = shared.write().await;
                         state.course = course;
@@ -641,17 +982,9 @@ pub async fn on_connect(
                         let _ = s.broadcast().emit("course-updated", &state.course);
                         let _ = s.emit("course-updated", &state.course);
 
-                        // Global Log
                         drop(state);
-                        emit_log(
-                            &shared,
-                            &s,
-                            LogCategory::Course,
-                            "Director".to_string(),
-                            "Course layout updated".to_string(),
-                            None,
-                            false,
-                        ).await;
+                        emit_log(&shared, &s, LogCategory::Course, "Director".to_string(),
+                            "Course layout updated".to_string(), None, false).await;
                     }
                     Err(e) => error!("Failed to parse course payload from frontend! Error: {e} | Raw Data: {}", data),
                 }
@@ -663,27 +996,36 @@ pub async fn on_connect(
     {
         let socket = socket.clone();
         let shared = shared.clone();
+        let auth = auth.clone();
         socket.on("update-course-boundary", move |s: SocketRef, Data::<Value>(data)| {
             let shared = shared.clone();
+            let auth = auth.clone();
             async move {
-                if let Ok(boundary) = serde_json::from_value::<Vec<LatLon>>(data) {
+                if auth.get_role(&s.id.to_string()).await.as_deref() != Some("director") {
+                    warn!("Unauthorized boundary update attempt by: {}", s.id);
+                    return;
+                }
+                
+                if data.is_null() {
+                    let mut state = shared.write().await;
+                    state.course.course_boundary = None;
+                    let _ = save_state(&state).await;
+                    let _ = s.broadcast().emit("course-updated", &state.course);
+                    let _ = s.emit("course-updated", &state.course);
+
+                    drop(state);
+                    emit_log(&shared, &s, LogCategory::Course, "Director".to_string(),
+                        "Course boundary cleared".to_string(), None, false).await;
+                } else if let Ok(boundary) = serde_json::from_value::<Vec<LatLon>>(data.clone()) {
                     let mut state = shared.write().await;
                     state.course.course_boundary = Some(boundary);
                     let _ = save_state(&state).await;
                     let _ = s.broadcast().emit("course-updated", &state.course);
                     let _ = s.emit("course-updated", &state.course);
 
-                    // Global Log
                     drop(state);
-                    emit_log(
-                        &shared,
-                        &s, // Use the local socket reference s
-                        LogCategory::Course,
-                        "Director".to_string(),
-                        "Course boundary redefined".to_string(),
-                        None,
-                        false,
-                    ).await;
+                    emit_log(&shared, &s, LogCategory::Course, "Director".to_string(),
+                        "Course boundary redefined".to_string(), None, false).await;
                 } else {
                     error!("Failed to parse course boundary from frontend! Raw Data: {}", data);
                 }
@@ -698,7 +1040,7 @@ pub async fn on_connect(
         socket.on("update-wind", move |s: SocketRef, Data::<Value>(data)| {
             let shared = shared.clone();
             async move {
-                match serde_json::from_value(data) {
+                match serde_json::from_value::<WindState>(data.clone()) {
                     Ok(wind) => {
                         let mut state = shared.write().await;
                         state.wind = wind;
@@ -719,7 +1061,7 @@ pub async fn on_connect(
         socket.on("update-default-location", move |_s: SocketRef, Data::<Value>(data)| {
             let shared = shared.clone();
             async move {
-                match serde_json::from_value(data) {
+                match serde_json::from_value::<DefaultLocation>(data.clone()) {
                     Ok(loc) => {
                         let mut state = shared.write().await;
                         state.default_location = Some(loc);
@@ -741,11 +1083,14 @@ pub async fn on_connect(
             async move {
                 if let Some(status_str) = data["status"].as_str() {
                     let new_status = match status_str {
-                        "PRE_START" => RaceStatus::PreStart,
+                        "WARNING" => RaceStatus::Warning,
+                        "PREPARATORY" => RaceStatus::Preparatory,
+                        "ONE_MINUTE" => RaceStatus::OneMinute,
                         "RACING" => RaceStatus::Racing,
                         "FINISHED" => RaceStatus::Finished,
                         "POSTPONED" => RaceStatus::Postponed,
-                        "RECALL" => RaceStatus::Recall,
+                        "INDIVIDUAL_RECALL" => RaceStatus::IndividualRecall,
+                        "GENERAL_RECALL" => RaceStatus::GeneralRecall,
                         "ABANDONED" => RaceStatus::Abandoned,
                         _ => RaceStatus::Idle,
                     };
@@ -758,19 +1103,42 @@ pub async fn on_connect(
         });
     }
 
-    // ── issue-penalty ─────────────────────────────────────────────────────────
+    // ── issue-penalty (RRS + Appendix UF umpire signals) ──────────────────────
     {
         let socket = socket.clone();
         let shared = shared.clone();
         socket.on("issue-penalty", move |s: SocketRef, Data::<Value>(data)| {
             let shared = shared.clone();
             async move {
+                let boat_id = data["boatId"].as_str().unwrap_or("").to_string();
+                let penalty_type_str = data["type"].as_str().unwrap_or("UMPIRE_PENALTY");
+                let penalty_type = match penalty_type_str {
+                    "OCS" => PenaltyType::Ocs,
+                    "DSQ" => PenaltyType::Dsq,
+                    "DNF" => PenaltyType::Dnf,
+                    "DNS" => PenaltyType::Dns,
+                    "TLE" => PenaltyType::Tle,
+                    "TURN_360" => PenaltyType::Turn360,
+                    "UMPIRE_NO_ACTION" => PenaltyType::UmpireNoAction,
+                    "UMPIRE_DSQ" => PenaltyType::UmpireDsq,
+                    _ => PenaltyType::UmpirePenalty,
+                };
+
                 let penalty = Penalty {
-                    boat_id: data["boatId"].as_str().unwrap_or("").to_string(),
-                    penalty_type: data["type"].as_str().unwrap_or("UNKNOWN").to_string(),
+                    boat_id: boat_id.clone(),
+                    penalty_type: penalty_type.clone(),
                     timestamp: data["timestamp"].as_i64().unwrap_or_else(now_ms),
                 };
                 info!("Penalty: {:?} on {}", penalty.penalty_type, penalty.boat_id);
+
+                // Determine umpire signal flags + sounds
+                let (signal, flag, sounds) = match &penalty.penalty_type {
+                    PenaltyType::UmpireNoAction => ("Umpire: No penalty", "GREEN_WHITE", "1 long"),
+                    PenaltyType::UmpirePenalty | PenaltyType::Turn360 => ("Umpire: Penalty imposed", "RED", "1 long"),
+                    PenaltyType::UmpireDsq => ("Umpire: DSQ — leave course", "BLACK_UMPIRE", "1 long"),
+                    _ => ("Penalty", "", ""),
+                };
+
                 {
                     let mut state = shared.write().await;
                     state.penalties.push(penalty.clone());
@@ -778,16 +1146,32 @@ pub async fn on_connect(
                 let _ = s.broadcast().emit("penalty-issued", &penalty);
                 let _ = s.emit("penalty-issued", &penalty);
 
-                // Global Log
-                emit_log(
-                    &shared,
-                    &s,
-                    LogCategory::Jury,
-                    "Chief Umpire".to_string(),
-                    format!("Penalty Issued: {} on {}", penalty.penalty_type, penalty.boat_id),
-                    Some(json!({ "boatId": penalty.boat_id, "type": penalty.penalty_type })),
-                    false,
-                ).await;
+                emit_log(&shared, &s, LogCategory::Jury, "Chief Umpire".to_string(),
+                    format!("{}: {} on {}", signal, penalty_type_str, boat_id),
+                    Some(json!({ "boatId": boat_id, "type": penalty_type_str, "flag": flag, "sounds": sounds })),
+                    false).await;
+            }
+        });
+    }
+
+    // ── update-log (Jury/Director Annotations) ────────────────────────────────
+    {
+        let socket = socket.clone();
+        let shared = shared.clone();
+        socket.on("update-log", move |s: SocketRef, Data::<Value>(data)| {
+            let shared = shared.clone();
+            async move {
+                if let Ok(updated_log) = serde_json::from_value::<crate::state::LogEntry>(data) {
+                    let mut state = shared.write().await;
+                    if let Some(log) = state.logs.iter_mut().find(|l| l.id == updated_log.id) {
+                        log.protest_flagged = updated_log.protest_flagged;
+                        log.jury_notes = updated_log.jury_notes.clone();
+                        info!("Log {} updated with Protest/Notes", log.id);
+                        
+                        let _ = s.broadcast().emit("log-updated", &log);
+                        let _ = s.emit("log-updated", &log);
+                    }
+                }
             }
         });
     }
@@ -863,7 +1247,6 @@ pub async fn on_connect(
         let socket = socket.clone();
         socket.on("signal", move |s: SocketRef, Data::<Value>(data)| {
             async move {
-                // Relay signal to target socket (pass-through)
                 let _ = s.broadcast().emit("signal", &data);
             }
         });

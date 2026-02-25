@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
 @theme {
-  --color-regatta-dark: #0f172a;
-  --color-regatta-panel: #1e293b;
+  --color-regatta-dark: var(--theme-bg, #0f172a);
+  --color-regatta-panel: var(--theme-panel, #1e293b);
+  --color-white: var(--theme-white, #ffffff);
+  --color-black: var(--theme-black, #000000);
+
   --color-accent-blue: #3b82f6;
   --color-accent-cyan: #06b6d4;
   --color-accent-red: #ef4444;
@@ -16,7 +19,14 @@
 
 @layer base {
   body {
-    @apply bg-regatta-dark text-white overflow-hidden font-sans;
+    @apply bg-regatta-dark text-white overflow-hidden font-sans transition-colors duration-700;
+  }
+
+  .daylight-theme {
+    --theme-bg: #f8fafc;
+    --theme-panel: #cbd5e1;
+    --theme-white: #0f172a;
+    --theme-black: #ffffff;
   }
 }
 

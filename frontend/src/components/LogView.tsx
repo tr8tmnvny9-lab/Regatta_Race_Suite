@@ -1,36 +1,54 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, HardDrive, Ship, Flag, Scale, Terminal, Search, Activity } from 'lucide-react';
-
-export interface LogEntry {
-    id: string;
-    timestamp: number;
-    category: 'BOAT' | 'COURSE' | 'PROCEDURE' | 'JURY' | 'SYSTEM';
-    source: string;
-    message: string;
-    data?: any;
-    isActive: boolean;
-}
+import { Clock, HardDrive, Ship, Flag, Scale, Terminal, Search, Activity, Download, Printer } from 'lucide-react';
+import { LogEntry } from '@regatta/core';
 
 interface LogViewProps {
     logs: LogEntry[];
+    onUpdateLog?: (log: LogEntry) => void;
 }
 
-export default function LogView({ logs }: LogViewProps) {
+export default function LogView({ logs, onUpdateLog }: LogViewProps) {
     const [view, setView] = useState<'table' | 'timeline'>('table');
     const [filter, setFilter] = useState<string>('ALL');
     const [search, setSearch] = useState('');
+    const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
+    const [modalNotes, setModalNotes] = useState('');
 
     const filteredLogs = useMemo(() => {
         return logs
             .filter(l => filter === 'ALL' || l.category === filter)
-            .filter(l => l.message.toLowerCase().includes(search.toLowerCase()) || l.source.toLowerCase().includes(search.toLowerCase()))
+            .filter(l => l.message.toLowerCase().includes(search.toLowerCase()) || l.source?.toLowerCase().includes(search.toLowerCase()))
             .sort((a, b) => b.timestamp - a.timestamp);
     }, [logs, filter, search]);
 
     const formatTime = (ms: number) => {
         const date = new Date(ms);
         return date.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    };
+
+    const handleExportCSV = () => {
+        const headers = ["Timestamp", "Category", "Source", "Message", "Level"];
+        const rows = filteredLogs.map(l => [
+            new Date(l.timestamp).toISOString(),
+            l.category,
+            l.source || '',
+            `"${l.message.replace(/"/g, '""')}"`,
+            l.level || ''
+        ].join(','));
+        const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join('\n');
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `regatta_logs_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    };
+
+    const handlePrintPDF = () => {
+        window.print();
     };
 
     const getCategoryIcon = (cat: string) => {
@@ -101,6 +119,21 @@ export default function LogView({ logs }: LogViewProps) {
                                 {cat}
                             </button>
                         ))}
+                        <div className="w-px h-6 bg-white/10 mx-2 self-center"></div>
+                        <button
+                            onClick={handleExportCSV}
+                            className={`p-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white transition-all`}
+                            title="Export to CSV"
+                        >
+                            <Download size={14} />
+                        </button>
+                        <button
+                            onClick={handlePrintPDF}
+                            className={`p-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white transition-all`}
+                            title="Print / Save to PDF"
+                        >
+                            <Printer size={14} />
+                        </button>
                     </div>
                 </div>
             </div>
@@ -123,12 +156,13 @@ export default function LogView({ logs }: LogViewProps) {
                                         <th className="px-4 pb-2">Category</th>
                                         <th className="px-4 pb-2">Source</th>
                                         <th className="px-4 pb-2">Event Message</th>
+                                        <th className="px-4 pb-2 text-center">Protest</th>
                                         <th className="px-4 pb-2 text-right">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {filteredLogs.map(log => (
-                                        <tr key={log.id} className="group transition-all">
+                                        <tr key={log.id} className={`group transition-all ${log.protestFlagged ? 'bg-accent-red/5' : ''}`}>
                                             <td className="bg-white/5 group-hover:bg-white/10 px-4 py-3 rounded-l-2xl border-l border-y border-white/5 group-hover:border-white/10 transition-colors">
                                                 <div className="flex items-center gap-2 text-[10px] font-mono text-gray-400">
                                                     <Clock size={12} className="text-gray-600" />
@@ -145,7 +179,26 @@ export default function LogView({ logs }: LogViewProps) {
                                                 <div className="text-[10px] font-bold text-white uppercase tracking-wider">{log.source}</div>
                                             </td>
                                             <td className="bg-white/5 group-hover:bg-white/10 px-4 py-3 border-y border-white/5 group-hover:border-white/10 transition-colors">
-                                                <div className="text-xs text-gray-300 group-hover:text-white transition-colors">{log.message}</div>
+                                                <div className="text-xs text-gray-300 group-hover:text-white transition-colors">
+                                                    {log.message}
+                                                    {log.juryNotes && (
+                                                        <div className="mt-2 text-[10px] text-accent-red bg-accent-red/10 p-2 rounded-lg border border-accent-red/20 inline-block font-mono flex flex-col">
+                                                            <span>[JURY NOTE]</span>
+                                                            <span className="text-white mt-1 whitespace-pre-wrap">{log.juryNotes}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="bg-white/5 group-hover:bg-white/10 px-4 py-3 border-y border-white/5 group-hover:border-white/10 transition-colors text-center">
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedLog(log);
+                                                        setModalNotes(log.juryNotes || '');
+                                                    }}
+                                                    className={`p-2 rounded-lg transition-all border ${log.protestFlagged ? 'bg-accent-red/20 text-accent-red border-accent-red/50 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'bg-black/40 text-gray-500 border-white/5 hover:border-accent-red/50 hover:text-accent-red hover:bg-accent-red/10'}`}
+                                                >
+                                                    <Flag size={14} className={log.protestFlagged ? 'fill-current' : ''} />
+                                                </button>
                                             </td>
                                             <td className="bg-white/5 group-hover:bg-white/10 px-4 py-3 rounded-r-2xl border-r border-y border-white/5 group-hover:border-white/10 transition-colors text-right">
                                                 <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[8px] font-black uppercase ${log.isActive ? 'text-accent-cyan animate-pulse' : 'text-gray-600'}`}>
@@ -231,7 +284,90 @@ export default function LogView({ logs }: LogViewProps) {
                     )}
                 </AnimatePresence>
             </div>
-        </div>
+
+            {/* Protest Editing Modal */}
+            <AnimatePresence>
+                {selectedLog && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-6"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.95, y: 20 }}
+                            className="bg-regatta-dark/90 border border-white/10 rounded-3xl p-8 w-full max-w-2xl shadow-2xl"
+                        >
+                            <div className="flex justify-between items-start mb-6">
+                                <div>
+                                    <div className="text-[10px] font-black text-accent-red uppercase tracking-widest mb-2 flex items-center gap-2">
+                                        <Scale size={14} /> Jury & Protest Annotation
+                                    </div>
+                                    <h3 className="text-xl font-black text-white">{selectedLog.source}</h3>
+                                    <div className="text-sm text-gray-400 mt-1">{selectedLog.message}</div>
+                                </div>
+                                <div className="text-[10px] font-mono text-gray-500 bg-black/40 px-3 py-1.5 rounded-lg border border-white/5">
+                                    {formatTime(selectedLog.timestamp)}
+                                </div>
+                            </div>
+
+                            <div className="bg-black/40 p-6 rounded-2xl border border-white/5 mb-6">
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Official Jury Notes</label>
+                                <textarea
+                                    value={modalNotes}
+                                    onChange={(e) => setModalNotes(e.target.value)}
+                                    className="w-full h-32 bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-accent-red/50 focus:bg-white/10 transition-all custom-scrollbar"
+                                    placeholder="Enter details regarding rules infractions, observations, or hearing outcomes..."
+                                />
+                            </div>
+
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => setSelectedLog(null)}
+                                    className="px-6 py-4 rounded-xl border border-white/10 text-gray-400 font-bold text-[10px] uppercase tracking-widest hover:bg-white/5 hover:text-white transition-all flex-1"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (onUpdateLog) {
+                                            onUpdateLog({
+                                                ...selectedLog,
+                                                protestFlagged: !selectedLog.protestFlagged, // Toggle flag automatically on click, or retain if just saving note
+                                                juryNotes: modalNotes
+                                            });
+                                        }
+                                        setSelectedLog(null);
+                                    }}
+                                    className={`px-6 py-4 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all flex-[2] flex items-center justify-center gap-2 ${selectedLog.protestFlagged ? 'bg-white/10 border border-white/20 text-white hover:bg-white/20' : 'bg-accent-red text-white shadow-lg shadow-accent-red/20 hover:shadow-accent-red/40'}`}
+                                >
+                                    <Flag size={14} className={selectedLog.protestFlagged ? '' : 'fill-current'} />
+                                    {selectedLog.protestFlagged ? 'Update Notes & Remove Flag' : 'Flag as Protest & Save'}
+                                </button>
+                                {selectedLog.protestFlagged && (
+                                    <button
+                                        onClick={() => {
+                                            if (onUpdateLog) {
+                                                onUpdateLog({
+                                                    ...selectedLog,
+                                                    juryNotes: modalNotes
+                                                });
+                                            }
+                                            setSelectedLog(null);
+                                        }}
+                                        className="px-6 py-4 rounded-xl bg-accent-blue text-white shadow-lg shadow-accent-blue/20 hover:shadow-accent-blue/40 font-bold text-[10px] uppercase tracking-widest transition-all flex-[2] flex items-center justify-center gap-2"
+                                    >
+                                        Update Notes (Keep Flag)
+                                    </button>
+                                )}
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div >
     );
 }
 

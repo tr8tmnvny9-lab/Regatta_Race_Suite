@@ -1,40 +1,38 @@
 import { useState, useEffect } from 'react'
-import { io, Socket } from 'socket.io-client'
 import { Play, Share2, Globe, Clock, Navigation, Wind, TrendingUp, BarChart3 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker, Polyline, useMap } from 'react-leaflet'
 import MiniTimeline from './components/MiniTimeline'
 
-export default function MediaHub() {
-    const [_socket, setSocket] = useState<Socket | null>(null)
-    const [_boats, setBoats] = useState<Record<string, any>>({})
+export default function MediaHub({ socket, raceState }: { socket: any, raceState: any }) {
     const [delayedBoats, setDelayedBoats] = useState<Record<string, any>>({})
-    const [_raceState, setRaceState] = useState<any>(null)
+    const [boatTrails, setBoatTrails] = useState<Record<string, { lat: number, lon: number }[]>>({})
 
     useEffect(() => {
-        const s = io('http://localhost:3001')
-        setSocket(s)
+        if (!socket) return;
+        socket.emit('register', { type: 'media' })
 
-        s.on('connect', () => {
-            s.emit('register', { type: 'media' })
-        })
-
-        s.on('init-state', (state) => setRaceState(state))
-
-        s.on('sequence-update', (data) => {
-            setRaceState((prev: any) => ({ ...prev, sequence: data }))
-        })
-
-        s.on('media-boat-update', (data: any) => {
-            setBoats(prev => ({ ...prev, [data.boatId]: data }))
+        const handleBoatUpdate = (data: any) => {
+            const id = data.boatId || data.boat_id;
             // 2s delay simulation
             setTimeout(() => {
-                setDelayedBoats(prev => ({ ...prev, [data.boatId]: data }))
+                setDelayedBoats(prev => ({ ...prev, [id]: data }))
+                setBoatTrails(prev => {
+                    const history = prev[id] || []
+                    return {
+                        ...prev,
+                        [id]: [...history, { lat: data.pos.lat, lon: data.pos.lon }].slice(-100)
+                    }
+                })
             }, 2000)
-        })
+        }
 
-        return () => { s.close() }
-    }, [])
+        socket.on('boat-update', handleBoatUpdate)
+
+        return () => {
+            socket.off('boat-update', handleBoatUpdate)
+        }
+    }, [socket])
 
     const sortedBoats = useMemo(() => {
         return Object.values(delayedBoats).sort((a: any, b: any) => a.dtl - b.dtl)
@@ -81,13 +79,24 @@ export default function MediaHub() {
             </header>
 
             <main className="flex-1 relative flex">
+
+                {/* Sponsor Overlays (Top Right) */}
+                <div className="absolute top-6 right-10 flex flex-col gap-4 items-end z-[1001]">
+                    <div className="bg-black/60 backdrop-blur-xl p-4 rounded-3xl border border-white/5 shadow-2xl flex items-center justify-center w-48 h-20 transition-all hover:border-white/20">
+                        <div className="text-white/40 text-[9px] font-black uppercase tracking-widest text-center leading-tight">
+                            Official Timekeeper<br />
+                            <span className="text-white text-xl mt-1 tracking-tighter italic block drop-shadow-lg">ROLEX</span>
+                        </div>
+                    </div>
+                </div>
+
                 {/* MiniTimeline Overlay Center Top */}
                 <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1001]">
                     <MiniTimeline
-                        raceStatus={_raceState?.status || 'IDLE'}
-                        currentSequence={_raceState?.sequence?.currentSequence?.event || null}
-                        sequenceTimeRemaining={_raceState?.sequence?.sequenceTimeRemaining ?? null}
-                        currentFlags={_raceState?.sequence?.currentSequence?.flags || []}
+                        raceStatus={raceState?.status || 'IDLE'}
+                        currentSequence={raceState?.currentEvent || null}
+                        sequenceTimeRemaining={raceState?.sequenceTimeRemaining ?? null}
+                        currentFlags={raceState?.currentFlags || []}
                     />
                 </div>
 
@@ -100,6 +109,16 @@ export default function MediaHub() {
                         className="w-full h-full grayscale opacity-40 brightness-75 contrast-125"
                     >
                         <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png" />
+
+                        <CameraFollower boats={sortedBoats} />
+
+                        {Object.entries(boatTrails).map(([id, trail]: any) => (
+                            <Polyline
+                                key={`trail-${id}`}
+                                positions={trail.map((p: any) => [p.lat, p.lon])}
+                                pathOptions={{ color: '#06b6d4', weight: 4, opacity: 0.4, dashArray: '5, 10' }}
+                            />
+                        ))}
 
                         {Object.entries(delayedBoats).map(([id, boat]: any) => (
                             <CircleMarker
@@ -247,3 +266,31 @@ function BroadcastPanel({ children, title, icon: Icon }: any) {
 
 import { useMemo } from 'react'
 import { ChevronRight } from 'lucide-react'
+
+function CameraFollower({ boats }: { boats: any[] }) {
+    const map = useMap()
+
+    useEffect(() => {
+        if (!boats || boats.length === 0) return;
+
+        // Follow top 2 boats
+        const targets = boats.slice(0, 2);
+
+        if (targets.length === 1) {
+            map.flyTo([targets[0].pos.lat, targets[0].pos.lon], 16, { duration: 2, easeLinearity: 0.25 })
+        } else {
+            const lats = targets.map((b: any) => b.pos.lat)
+            const lons = targets.map((b: any) => b.pos.lon)
+
+            // @ts-ignore
+            const bounds: any = [
+                [Math.min(...lats), Math.min(...lons)],
+                [Math.max(...lats), Math.max(...lons)]
+            ]
+
+            map.flyToBounds(bounds, { padding: [150, 150], duration: 2, easeLinearity: 0.25, maxZoom: 17 })
+        }
+    }, [boats, map])
+
+    return null
+}
