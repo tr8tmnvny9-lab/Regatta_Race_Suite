@@ -351,6 +351,70 @@ pub struct LogEntry {
     pub jury_notes: Option<String>,
 }
 
+// ─── Fleet & League Management ────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum TeamStatus {
+    Active,
+    Dns,
+    Dnf,
+    Withdrawn,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Team {
+    pub id: String,
+    pub name: String,
+    pub club: String,
+    pub skipper: String,
+    #[serde(default)]
+    pub crew_members: Vec<String>,
+    pub status: TeamStatus,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum FlightStatus {
+    Scheduled,
+    InProgress,
+    Completed,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Flight {
+    pub id: String,
+    pub flight_number: u32,
+    pub group_label: String,
+    pub status: FlightStatus,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Pairing {
+    pub id: String,
+    pub flight_id: String,
+    pub team_id: String,
+    pub boat_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum FleetMode {
+    Owner,
+    League,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FleetSettings {
+    pub mode: FleetMode,
+    #[serde(default)]
+    pub provided_boats_count: u32,
+}
+
 // ─── Full Race State ──────────────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -397,6 +461,17 @@ pub struct RaceState {
     pub logs: Vec<LogEntry>,
     #[serde(default)]
     pub fleet_history: HashMap<String, Vec<HistoricalPing>>,
+    // Fleet & League Management
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fleet_settings: Option<FleetSettings>,
+    #[serde(default)]
+    pub teams: HashMap<String, Team>,
+    #[serde(default)]
+    pub flights: HashMap<String, Flight>,
+    #[serde(default)]
+    pub pairings: Vec<Pairing>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub active_flight_id: Option<String>,
 }
 
 impl Default for RaceState {
@@ -426,6 +501,11 @@ impl Default for RaceState {
             penalties: Vec::new(),
             logs: Vec::new(),
             fleet_history: HashMap::new(),
+            fleet_settings: None,
+            teams: HashMap::new(),
+            flights: HashMap::new(),
+            pairings: Vec::new(),
+            active_flight_id: None,
         }
     }
 }

@@ -28,6 +28,7 @@ import { GlassPanel, NavIcon, DesignerTool, WindControl } from './components/UIH
 import { WindArrowLayer, LaylineLayer, CourseBoundaryDrawing, CourseDesignerEvents } from './components/MapLayers'
 import { Buoy, RaceState as CoreRaceState, RegattaEngine, LogEntry } from '@regatta/core'
 import RaceOnboarding from './components/RaceOnboarding'
+import FleetControl from './views/FleetControl'
 
 // --- Icons ---
 const renderBuoyIcon = (mark: Buoy, size: number, autoOrient: boolean = false) => {
@@ -76,7 +77,7 @@ const renderBuoyIcon = (mark: Buoy, size: number, autoOrient: boolean = false) =
 
 export default function App() {
     const [view, setView] = useState<'management' | 'tracker' | 'jury' | 'media'>('management')
-    const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'DESIGNER' | 'PROCEDURE' | 'ARCHITECT' | 'LOGS' | 'SETTINGS'>('OVERVIEW')
+    const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'FLEET' | 'DESIGNER' | 'PROCEDURE' | 'ARCHITECT' | 'LOGS' | 'SETTINGS'>('OVERVIEW')
     const [onboardingOpen, setOnboardingOpen] = useState(false)
     const [engine, setEngine] = useState<RegattaEngine | null>(null)
     const [mapInstance, setMapInstance] = useState<L.Map | null>(null)
@@ -90,10 +91,8 @@ export default function App() {
     const [measurePoints, setMeasurePoints] = useState<{ lat: number, lon: number }[]>([])
     const draggingMarkId = useRef<string | null>(null);
 
-    // Auth States
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [authPassword, setAuthPassword] = useState('');
-    const [authError, setAuthError] = useState('');
+    const [selectedRole, setSelectedRole] = useState('director');
 
     const [latency, setLatency] = useState<number | null>(null);
     const [isDaylight, setIsDaylight] = useState(false);
@@ -141,7 +140,7 @@ export default function App() {
         if (!isAuthenticated) return;
 
         const url = 'http://localhost:3001'
-        const regattaEngine = new RegattaEngine(url, authPassword) // Password is sent as the token
+        const regattaEngine = new RegattaEngine(url, selectedRole) // role token determines permissions
         regattaEngine.connect()
         setEngine(regattaEngine)
 
@@ -161,6 +160,12 @@ export default function App() {
                 waitingForTrigger: state.waitingForTrigger,
                 actionLabel: state.actionLabel,
                 isPostTrigger: state.isPostTrigger,
+                // Fleet Management fields (essential for FleetControl to work)
+                teams: (state as any).teams || {},
+                flights: (state as any).flights || {},
+                pairings: (state as any).pairings || [],
+                fleetSettings: (state as any).fleetSettings || { mode: 'OWNER', providedBoatsCount: 6 },
+                activeFlightId: (state as any).activeFlightId || null,
             })
         })
 
@@ -201,7 +206,7 @@ export default function App() {
             clearInterval(pingInterval);
             regattaEngine.disconnect()
         }
-    }, [view, isAuthenticated, authPassword])
+    }, [view, isAuthenticated, selectedRole])
 
     // Effect for Map Events
     useEffect(() => {
@@ -470,6 +475,11 @@ export default function App() {
 
     // ─── LOGIN SCREEN ───
     if (!isAuthenticated) {
+        const roles = [
+            { value: 'director', label: 'Race Director / PRO', description: 'Full race control — sequence, flags, procedures' },
+            { value: 'jury', label: 'Jury Member', description: 'Protest & penalty management view' },
+            { value: 'media', label: 'Media / Broadcast', description: 'Live data feed, leaderboard, no control' },
+        ];
         return (
             <div className="fixed inset-0 bg-regatta-dark flex items-center justify-center z-[9999]">
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -492,46 +502,38 @@ export default function App() {
                             Regatta <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-blue to-accent-cyan">Pro</span>
                         </h1>
                         <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                            Secure Access Required
+                            Select your role to connect
                         </p>
                     </div>
 
-                    <form onSubmit={(e) => {
-                        e.preventDefault();
-                        if (authPassword.length >= 3) {
-                            setIsAuthenticated(true);
-                        } else {
-                            setAuthError('INVALID CREDENTIALS');
-                        }
-                    }} className="space-y-4">
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-1">Access Token</label>
-                            <input
-                                type="password"
-                                value={authPassword}
-                                onChange={e => {
-                                    setAuthPassword(e.target.value);
-                                    setAuthError('');
-                                }}
-                                autoFocus
-                                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white font-mono placeholder:text-gray-700 outline-none focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/50 transition-all text-center tracking-widest"
-                                placeholder="••••••••"
-                            />
-                        </div>
+                    <div className="space-y-3">
+                        {roles.map(role => (
+                            <button
+                                key={role.value}
+                                onClick={() => setSelectedRole(role.value)}
+                                className={`w-full p-4 rounded-2xl border text-left transition-all ${selectedRole === role.value
+                                    ? 'bg-accent-blue/20 border-accent-blue/50 shadow-[0_0_20px_rgba(59,130,246,0.2)]'
+                                    : 'bg-white/5 border-white/10 hover:bg-white/10'
+                                    }`}
+                            >
+                                <div className={`font-bold text-sm tracking-wide ${selectedRole === role.value ? 'text-accent-blue' : 'text-white'}`}>
+                                    {role.label}
+                                </div>
+                                <div className="text-xs text-gray-500 mt-0.5">{role.description}</div>
+                            </button>
+                        ))}
+                    </div>
 
-                        {authError && (
-                            <div className="text-[10px] font-black uppercase tracking-widest text-accent-red text-center animate-pulse">
-                                {authError}
-                            </div>
-                        )}
+                    <button
+                        onClick={() => setIsAuthenticated(true)}
+                        className="w-full bg-gradient-to-r from-accent-blue to-accent-cyan text-white font-black italic uppercase tracking-widest py-3 rounded-xl shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)] hover:scale-[1.02] transition-all"
+                    >
+                        Connect as {roles.find(r => r.value === selectedRole)?.label}
+                    </button>
 
-                        <button
-                            type="submit"
-                            className="w-full bg-gradient-to-r from-accent-blue to-accent-cyan text-white font-black italic uppercase tracking-widest py-3 rounded-xl shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)] hover:scale-[1.02] transition-all"
-                        >
-                            Authenticate Session
-                        </button>
-                    </form>
+                    <p className="text-center text-[10px] text-gray-600 font-mono">
+                        Connecting to localhost:3001 · Regatta Backend
+                    </p>
                 </motion.div>
             </div>
         )
@@ -552,6 +554,7 @@ export default function App() {
                 </div>
                 <div className="flex flex-col gap-6 w-full px-4 text-center">
                     <NavIcon icon={Layout} active={activeTab === 'OVERVIEW'} onClick={() => setActiveTab('OVERVIEW')} />
+                    <NavIcon icon={Users} active={activeTab === 'FLEET'} onClick={() => setActiveTab('FLEET')} />
                     <NavIcon icon={MapIcon} active={activeTab === 'DESIGNER'} onClick={() => setActiveTab('DESIGNER')} />
                     <NavIcon icon={Activity} active={activeTab === 'LOGS'} onClick={() => setActiveTab('LOGS')} />
                     <NavIcon icon={Flag} active={activeTab === 'PROCEDURE'} onClick={() => setActiveTab('PROCEDURE')} />
@@ -729,7 +732,7 @@ export default function App() {
                             measurePoints={measurePoints}
                             draggingMarkId={draggingMarkId}
                             playbackTime={playbackTime}
-                            socket={engine}
+                            socket={engine.socket as any}
                             setRaceState={setRaceState}
                             renderBuoyIcon={renderBuoyIcon}
                             LaylineLayer={LaylineLayer}
@@ -896,6 +899,12 @@ export default function App() {
                                         </div>
                                     </GlassPanel>
                                 </motion.div>
+                            )
+                        }
+
+                        {
+                            activeTab === 'FLEET' && (
+                                <FleetControl key="fleet" engine={engine} raceState={raceState} />
                             )
                         }
 
@@ -1087,7 +1096,7 @@ export default function App() {
                                     <GlassPanel title="Starting Procedure (RRS 26)" icon={Flag} className="pointer-events-auto h-full">
                                         <ErrorBoundary>
                                             <StartingTimeline
-                                                socket={engine as any}
+                                                socket={engine.socket as any}
                                                 raceStatus={raceState.status}
                                                 sequenceTimeRemaining={raceState.sequenceTimeRemaining}
                                                 currentFlags={raceState.currentFlags}
@@ -1097,6 +1106,9 @@ export default function App() {
                                                 currentNodeId={raceState.currentNodeId}
                                                 waitingForTrigger={raceState.waitingForTrigger}
                                                 actionLabel={raceState.actionLabel}
+                                                activeFlightId={raceState.activeFlightId}
+                                                fleetMode={raceState.fleetSettings?.mode}
+                                                flights={Object.values(raceState.flights || {}).sort((a: any, b: any) => a.flightNumber - b.flightNumber)}
                                             />
                                         </ErrorBoundary>
                                     </GlassPanel>
@@ -1301,7 +1313,7 @@ export default function App() {
                                 <div className="flex-1 relative border-t border-white/5 bg-slate-900/50">
                                     <div className="absolute top-2 left-6 z-[110] text-[8px] font-black text-white/20 uppercase tracking-[0.5em] pointer-events-none">Logic Canvas Active</div>
                                     <ErrorBoundary>
-                                        <ProcedureEditor currentProcedure={raceState.currentProcedure} socket={engine} />
+                                        <ProcedureEditor currentProcedure={raceState.currentProcedure} socket={engine.socket as any} />
                                     </ErrorBoundary>
                                 </div>
                             </motion.div>

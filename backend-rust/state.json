@@ -282,11 +282,12 @@
         "source": "4",
         "target": "5"
       }
-    ]
+    ],
+    "autoRestart": false
   },
   "defaultLocation": {
     "lat": 59.323994909381206,
-    "lon": 18.050987841448265,
+    "lon": 18.050982356071476,
     "zoom": 17.0
   },
   "waitingForTrigger": false,
@@ -568,5 +569,6 @@
       "message": "Course layout updated",
       "isActive": false
     }
-  ]
+  ],
+  "fleetHistory": {}
 }

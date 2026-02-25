@@ -80,12 +80,12 @@ export default function MediaHub({ socket, raceState }: { socket: any, raceState
 
             <main className="flex-1 relative flex">
 
-                {/* Sponsor Overlays (Top Right) */}
-                <div className="absolute top-6 right-10 flex flex-col gap-4 items-end z-[1001]">
-                    <div className="bg-black/60 backdrop-blur-xl p-4 rounded-3xl border border-white/5 shadow-2xl flex items-center justify-center w-48 h-20 transition-all hover:border-white/20">
-                        <div className="text-white/40 text-[9px] font-black uppercase tracking-widest text-center leading-tight">
-                            Official Timekeeper<br />
-                            <span className="text-white text-xl mt-1 tracking-tighter italic block drop-shadow-lg">ROLEX</span>
+                {/* Sponsor Overlays (Top Center) */}
+                <div className="absolute top-6 right-10 flex gap-4 z-[1001]">
+                    <div className="bg-gradient-to-tr from-blue-900 to-black backdrop-blur-xl p-4 rounded-3xl border border-blue-500/30 shadow-[0_0_30px_rgba(59,130,246,0.3)] flex items-center justify-center w-56 h-20 transition-all hover:border-blue-400">
+                        <div className="text-blue-300 text-[10px] font-black uppercase tracking-widest text-center leading-tight">
+                            Official Connectivity Partner<br />
+                            <span className="text-white text-2xl mt-1 tracking-tighter italic block drop-shadow-lg font-sans font-black">STARLINK</span>
                         </div>
                     </div>
                 </div>
@@ -151,32 +151,51 @@ export default function MediaHub({ socket, raceState }: { socket: any, raceState
 
                                 <div className="space-y-6">
                                     <AnimatePresence mode="popLayout">
-                                        {sortedBoats.slice(0, 5).map((boat: any, idx: number) => (
-                                            <motion.div
-                                                key={boat.boatId}
-                                                layout
-                                                initial={{ opacity: 0, x: -20 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                className="flex items-center justify-between group"
-                                            >
-                                                <div className="flex items-center gap-6">
-                                                    <span className="text-3xl font-black italic text-gray-800 group-hover:text-blue-500 transition-colors w-10">0{idx + 1}</span>
-                                                    <div className="w-14 h-14 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-center font-black text-xl italic group-hover:scale-105 transition-transform">
-                                                        {boat.boatId.substring(0, 2)}
+                                        {sortedBoats.slice(0, 5).map((boat: any, idx: number) => {
+                                            const isLeague = raceState?.fleetSettings?.mode === 'LEAGUE'
+                                            const activeFlight = raceState?.activeFlightId
+                                            let displayTitle = boat.boatId.substring(0, 8)
+                                            let displaySub = boat.boatId.substring(0, 2)
+
+                                            // Map physical telemetry drone to virtual Team if League mode is active
+                                            if (isLeague && activeFlight) {
+                                                const pairing = raceState?.pairings?.find((p: any) => p.flightId === activeFlight && p.boatId === boat.boatId)
+                                                if (pairing) {
+                                                    const team = raceState?.teams?.[pairing.teamId]
+                                                    if (team) {
+                                                        displayTitle = team.name
+                                                        displaySub = team.club
+                                                    }
+                                                }
+                                            }
+
+                                            return (
+                                                <motion.div
+                                                    key={boat.boatId}
+                                                    layout
+                                                    initial={{ opacity: 0, x: -20 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    className="flex items-center justify-between group"
+                                                >
+                                                    <div className="flex items-center gap-6">
+                                                        <span className="text-3xl font-black italic text-gray-800 group-hover:text-blue-500 transition-colors w-10">0{idx + 1}</span>
+                                                        <div className="w-14 h-14 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-center font-black text-xl italic group-hover:scale-105 transition-transform overflow-hidden px-1 text-center leading-none">
+                                                            {displaySub}
+                                                        </div>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-sm font-black tracking-tight uppercase group-hover:text-blue-500 transition-colors">{displayTitle}</span>
+                                                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">DTL: {boat.dtl?.toFixed(1) || '0.0'}m</span>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-sm font-black tracking-tight uppercase group-hover:text-blue-500 transition-colors">{boat.boatId.substring(0, 8)}</span>
-                                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">DTL: {boat.dtl.toFixed(1)}m</span>
+                                                    <div className="text-right">
+                                                        <div className="text-2xl font-black italic tracking-tighter">{boat.velocity?.speed?.toFixed(1) || '0.0'} <span className="text-[10px] font-normal not-italic text-gray-500 uppercase ml-1">knots</span></div>
+                                                        <div className={`text-[9px] font-black uppercase tracking-widest ${(boat.dtl || 0) < 10 ? 'text-red-500' : 'text-blue-500'}`}>
+                                                            {(boat.dtl || 0) < 10 ? 'OCS RISK' : 'CLEAR'}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <div className="text-2xl font-black italic tracking-tighter">{boat.velocity?.speed} <span className="text-[10px] font-normal not-italic text-gray-500 uppercase ml-1">knots</span></div>
-                                                    <div className={`text-[9px] font-black uppercase tracking-widest ${boat.dtl < 10 ? 'text-red-500' : 'text-blue-500'}`}>
-                                                        {boat.dtl < 10 ? 'OCS RISK' : 'CLEAR'}
-                                                    </div>
-                                                </div>
-                                            </motion.div>
-                                        ))}
+                                                </motion.div>
+                                            )
+                                        })}
                                     </AnimatePresence>
                                 </div>
                             </motion.div>
@@ -185,16 +204,16 @@ export default function MediaHub({ socket, raceState }: { socket: any, raceState
                             <motion.div
                                 initial={{ x: 20, opacity: 0 }}
                                 animate={{ x: 0, opacity: 1 }}
-                                className="flex flex-col gap-6 w-96"
+                                className="flex flex-col gap-6 w-96 pointer-events-auto"
                             >
                                 <BroadcastPanel title="Wind Condition" icon={Wind}>
                                     <div className="flex items-center justify-between mt-2">
                                         <div>
-                                            <div className="text-5xl font-black italic tracking-tighter">14.5<span className="text-sm font-normal text-gray-500 not-italic ml-1 opacity-50 uppercase">kn</span></div>
-                                            <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-1">NNE • Dir: 245°</div>
+                                            <div className="text-5xl font-black italic tracking-tighter">{raceState?.wind?.speed?.toFixed(1) || '0.0'}<span className="text-sm font-normal text-gray-500 not-italic ml-1 opacity-50 uppercase">kn</span></div>
+                                            <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-1">Dir: {Math.round(raceState?.wind?.direction || 0)}°</div>
                                         </div>
                                         <motion.div
-                                            animate={{ rotate: 245 }}
+                                            animate={{ rotate: raceState?.wind?.direction || 0 }}
                                             className="w-20 h-20 bg-blue-600 rounded-[32px] flex items-center justify-center shadow-2xl shadow-blue-600/30"
                                         >
                                             <Navigation size={48} className="text-white fill-current" />
@@ -206,21 +225,21 @@ export default function MediaHub({ socket, raceState }: { socket: any, raceState
                                     <div className="space-y-4 py-2">
                                         <div>
                                             <div className="flex justify-between items-end mb-2">
-                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Race Progress</span>
-                                                <span className="text-sm font-black italic">65<span className="text-[10px] font-normal not-italic ml-0.5">%</span></span>
+                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sequence Phase</span>
+                                                <span className="text-sm font-black italic uppercase text-blue-500">{raceState?.status || 'IDLE'}</span>
                                             </div>
                                             <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                                <motion.div animate={{ width: '65%' }} className="h-full bg-blue-600 rounded-full" />
+                                                <motion.div animate={{ width: raceState?.status === 'RACING' ? '100%' : '50%' }} className="h-full bg-blue-600 rounded-full" />
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="p-4 bg-white/5 rounded-2xl border border-white/5 text-center">
-                                                <div className="text-2xl font-black italic">12.5</div>
-                                                <div className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-1">Avg Speed</div>
+                                                <div className="text-2xl font-black italic">{raceState?.course?.marks?.length || 0}</div>
+                                                <div className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-1">Active Marks</div>
                                             </div>
                                             <div className="p-4 bg-white/5 rounded-2xl border border-white/5 text-center">
-                                                <div className="text-2xl font-black italic">02</div>
-                                                <div className="text-[9px] font-bold text-red-900 uppercase tracking-widest mt-1">Penalties</div>
+                                                <div className="text-2xl font-black italic text-red-500">{Object.keys(raceState?.boats || {}).length}</div>
+                                                <div className="text-[9px] font-bold text-red-900 uppercase tracking-widest mt-1">Live Fleet</div>
                                             </div>
                                         </div>
                                     </div>
@@ -238,10 +257,10 @@ export default function MediaHub({ socket, raceState }: { socket: any, raceState
                                 <div className="text-[11px] font-black text-blue-100 uppercase tracking-[0.4em] opacity-80 border-r border-white/20 pr-6">Broadcast Channel 01</div>
                                 <div className="text-lg font-black italic tracking-tighter text-white uppercase flex items-center gap-3">
                                     <div className="w-2 h-2 rounded-full bg-white glow-active" />
-                                    Fleet approaching rounding mark #1 • Port tackle highly favored
+                                    {raceState?.status === 'RACING' ? 'FLEET IN ACTIVE RACE • TELEMETRY FEED SECURE' : 'PRE-START SEQUENCE SECURE • WAITING FOR PROCEDURAL TRIGGERS'}
                                 </div>
                             </div>
-                            <div className="text-[10px] font-black text-white hover:text-blue-100 uppercase tracking-widest cursor-pointer flex items-center gap-2">
+                            <div className="text-[10px] font-black text-white hover:text-blue-100 uppercase tracking-widest cursor-pointer flex items-center gap-2 pointer-events-auto">
                                 More Angles <ChevronRight size={14} />
                             </div>
                         </motion.div>

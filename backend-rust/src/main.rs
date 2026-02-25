@@ -3,6 +3,7 @@ mod persistence;
 mod auth;
 mod procedure_engine;
 mod state;
+mod flight_engine;
 
 use std::collections::HashSet;
 use std::sync::Arc;

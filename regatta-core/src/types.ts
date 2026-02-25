@@ -83,6 +83,36 @@ export interface TimeLimits {
     tleScoring?: string;
 }
 
+// ─── Fleet & League Modes ───
+
+export interface Team {
+    id: string;
+    name: string;
+    club: string;
+    skipper: string;
+    crewMembers: string[];
+    status: 'ACTIVE' | 'DNS' | 'DNF' | 'WITHDRAWN';
+}
+
+export interface Flight {
+    id: string;
+    flightNumber: number;
+    groupLabel: string;
+    status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED';
+}
+
+export interface Pairing {
+    id: string;
+    flightId: string;
+    teamId: string;
+    boatId: string; // The boat token or assigned physical tracker
+}
+
+export interface FleetSettings {
+    mode: 'OWNER' | 'LEAGUE';
+    providedBoatsCount: number;
+}
+
 export interface RaceState {
     status: RaceStatusType;
     globalOverride?: 'AP' | 'N' | 'GENERAL_RECALL' | 'INDIVIDUAL_RECALL' | null;
@@ -112,4 +142,10 @@ export interface RaceState {
     ocsBoats?: string[];
     penalties?: Penalty[];
     fleetHistory?: Record<string, { timestamp: number, lat: number, lon: number }[]>;
+    // Fleet & League Management
+    fleetSettings?: FleetSettings;
+    teams?: Record<string, Team>;
+    flights?: Record<string, Flight>;
+    pairings?: Pairing[];
+    activeFlightId?: string | null;
 }

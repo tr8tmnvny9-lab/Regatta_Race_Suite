@@ -89,6 +89,9 @@ interface StartingTimelineProps {
     currentNodeId: string | null
     waitingForTrigger?: boolean
     actionLabel?: string
+    activeFlightId?: string | null
+    fleetMode?: string
+    flights?: any[]
 }
 
 function formatTime(seconds: number) {
@@ -108,6 +111,9 @@ export default function StartingTimeline({
     currentNodeId,
     waitingForTrigger,
     actionLabel,
+    activeFlightId,
+    fleetMode,
+    flights,
 }: StartingTimelineProps) {
     const [selectedPrepFlag, setSelectedPrepFlag] = useState<string>(prepFlag || 'P')
     const [showPrepSelector, setShowPrepSelector] = useState(false)
@@ -593,16 +599,36 @@ export default function StartingTimeline({
                     </div>
                 )}
 
-                {/* Start Button */}
-                {isIdle && (
-                    <button
-                        onClick={handleStartSequence}
-                        className="w-full py-4 bg-accent-blue hover:bg-blue-600 text-white rounded-xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(59,130,246,0.3)] hover:shadow-[0_0_50px_rgba(59,130,246,0.5)] hover:scale-[1.02] transition-all duration-300"
-                    >
-                        <Play fill="currentColor" size={14} />
-                        START {currentProcedure ? 'CUSTOM PROCEDURE' : '5-MINUTE SEQUENCE'}
-                    </button>
-                )}
+                {/* Start Button & Context Selectors */}
+                <div className="pt-4 border-t border-white/10 mt-6 space-y-4">
+                    {fleetMode === 'LEAGUE' && isIdle && (
+                        <div className="relative z-10">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-accent-cyan pl-1 block mb-2">Active Flight Context</label>
+                            <select
+                                value={activeFlightId || ''}
+                                onChange={(e) => socket?.emit('set-active-flight', e.target.value || null)}
+                                className="w-full bg-black/60 border border-white/20 rounded-xl px-4 py-3 text-white font-bold cursor-pointer hover:border-accent-cyan/50 outline-none transition-colors appearance-none text-sm shadow-xl"
+                            >
+                                <option value="">-- SELECT ACTIVE FLIGHT --</option>
+                                {flights?.map(f => (
+                                    <option key={f.id} value={f.id}>{f.groupLabel || `Flight ${f.flightNumber}`}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-4 top-[38px] text-gray-500 w-4 h-4 pointer-events-none" />
+                        </div>
+                    )}
+
+                    {isIdle && (
+                        <button
+                            onClick={handleStartSequence}
+                            disabled={fleetMode === 'LEAGUE' && !activeFlightId}
+                            className={`w-full py-4 rounded-xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(59,130,246,0.3)] transition-all duration-300 ${fleetMode === 'LEAGUE' && !activeFlightId ? 'bg-gray-800 text-gray-500 cursor-not-allowed hover:scale-100' : 'bg-accent-blue hover:bg-blue-600 text-white hover:scale-[1.02] hover:shadow-[0_0_50px_rgba(59,130,246,0.5)]'}`}
+                        >
+                            <Play fill="currentColor" size={14} />
+                            START {currentProcedure ? 'CUSTOM PROCEDURE' : '5-MINUTE SEQUENCE'}
+                        </button>
+                    )}
+                </div>
 
                 {/* Special Scenario Buttons */}
                 {(isActive || isRacing) && (

@@ -489,7 +489,10 @@ pub async fn on_connect(
         socket.on("set-prep-flag", move |s: SocketRef, Data::<Value>(data)| {
             let shared = shared.clone();
             async move {
-                let flag_str = data["flag"].as_str().unwrap_or("P");
+                // Accept both bare string ("P") and object ({ flag: "P" })
+                let flag_str = data.as_str()
+                    .or_else(|| data["flag"].as_str())
+                    .unwrap_or("P");
                 let mut state = shared.write().await;
                 state.prep_flag = match flag_str {
                     "I" => PrepFlag::I,
@@ -1238,6 +1241,196 @@ pub async fn on_connect(
                 let state = shared.read().await;
                 let _ = s.broadcast().emit("state-update", &*state);
                 let _ = s.emit("state-update", &*state);
+            }
+        });
+    }
+
+    // ── register-team ─────────────────────────────────────────────────────────
+    {
+        let socket = socket.clone();
+        let shared = shared.clone();
+        socket.on("register-team", move |s: SocketRef, Data::<Value>(data)| {
+            let shared = shared.clone();
+            async move {
+                if let Ok(team) = serde_json::from_value::<crate::state::Team>(data.clone()) {
+                    {
+                        let mut state = shared.write().await;
+                        state.teams.insert(team.id.clone(), team);
+                        let _ = save_state(&state).await;
+                    }
+                    let state = shared.read().await;
+                    let _ = s.broadcast().emit("state-update", &*state);
+                    let _ = s.emit("state-update", &*state);
+                } else {
+                    warn!("Failed to parse register-team payload: {}", data);
+                }
+            }
+        });
+    }
+
+    // ── delete-team ───────────────────────────────────────────────────────────
+    {
+        let socket = socket.clone();
+        let shared = shared.clone();
+        socket.on("delete-team", move |s: SocketRef, Data::<Value>(data)| {
+            let shared = shared.clone();
+            async move {
+                if let Some(team_id) = data.as_str() {
+                    {
+                        let mut state = shared.write().await;
+                        state.teams.remove(team_id);
+                        // Also remove pairings for that team
+                        state.pairings.retain(|p| p.team_id != team_id);
+                        let _ = save_state(&state).await;
+                    }
+                    let state = shared.read().await;
+                    let _ = s.broadcast().emit("state-update", &*state);
+                    let _ = s.emit("state-update", &*state);
+                }
+            }
+        });
+    }
+
+    // ── register-flight ───────────────────────────────────────────────────────
+    {
+        let socket = socket.clone();
+        let shared = shared.clone();
+        socket.on("register-flight", move |s: SocketRef, Data::<Value>(data)| {
+            let shared = shared.clone();
+            async move {
+                if let Ok(flight) = serde_json::from_value::<crate::state::Flight>(data.clone()) {
+                    {
+                        let mut state = shared.write().await;
+                        state.flights.insert(flight.id.clone(), flight);
+                        let _ = save_state(&state).await;
+                    }
+                    let state = shared.read().await;
+                    let _ = s.broadcast().emit("state-update", &*state);
+                    let _ = s.emit("state-update", &*state);
+                } else {
+                    warn!("Failed to parse register-flight payload: {}", data);
+                }
+            }
+        });
+    }
+
+    // ── update-pairings ───────────────────────────────────────────────────────
+    {
+        let socket = socket.clone();
+        let shared = shared.clone();
+        socket.on("update-pairings", move |s: SocketRef, Data::<Value>(data)| {
+            let shared = shared.clone();
+            async move {
+                if let Ok(pairings) = serde_json::from_value::<Vec<crate::state::Pairing>>(data.clone()) {
+                    {
+                        let mut state = shared.write().await;
+                        state.pairings = pairings;
+                        let _ = save_state(&state).await;
+                    }
+                    let state = shared.read().await;
+                    let _ = s.broadcast().emit("state-update", &*state);
+                    let _ = s.emit("state-update", &*state);
+                } else {
+                    warn!("Failed to parse update-pairings payload: {}", data);
+                }
+            }
+        });
+    }
+
+    // ── set-active-flight ─────────────────────────────────────────────────────
+    {
+        let socket = socket.clone();
+        let shared = shared.clone();
+        let auth = auth.clone();
+        socket.on("set-active-flight", move |s: SocketRef, Data::<Value>(data)| {
+            let shared = shared.clone();
+            let auth = auth.clone();
+            async move {
+                // No strict role check — any authenticated director can set the active flight
+                // Accept both bare string (flight id) and null/empty (to clear)
+                let flight_id = if data.is_null() || data.as_str().map(|s| s.is_empty()).unwrap_or(false) {
+                    None
+                } else {
+                    data.as_str().map(|s| s.to_string())
+                };
+                
+                {
+                    let mut state = shared.write().await;
+                    state.active_flight_id = flight_id;
+                    let _ = save_state(&state).await;
+                }
+                
+                let state = shared.read().await;
+                let _ = s.broadcast().emit("state-update", &*state);
+                let _ = s.emit("state-update", &*state);
+            }
+        });
+    }
+
+    // ── generate-flights ──────────────────────────────────────────────────────
+    {
+        let socket = socket.clone();
+        let shared = shared.clone();
+        socket.on("generate-flights", move |s: SocketRef, Data::<Value>(data)| {
+            let shared = shared.clone();
+            async move {
+                let target_races = data["targetRaces"].as_u64().unwrap_or(15) as u32;
+                let boats = data["boats"].as_u64().unwrap_or(6) as u32;
+                
+                let (flights, pairings) = {
+                    let state = shared.read().await;
+                    let teams: Vec<crate::state::Team> = state.teams.values().cloned().collect();
+                    crate::flight_engine::FlightEngine::generate_rotation_schedule(teams, boats, target_races)
+                };
+                
+                if flights.is_empty() {
+                    warn!("Flight generation aborted: Not enough teams or boats (0 flights).");
+                    return;
+                }
+                
+                {
+                    let mut state = shared.write().await;
+                    
+                    // Atomically replace the existing schedule
+                    state.flights.clear();
+                    state.pairings.clear();
+                    
+                    for f in flights {
+                        state.flights.insert(f.id.clone(), f);
+                    }
+                    state.pairings = pairings;
+                    
+                    let _ = save_state(&state).await;
+                }
+                
+                let state = shared.read().await;
+                let _ = s.broadcast().emit("state-update", &*state);
+                let _ = s.emit("state-update", &*state);
+                
+                info!("Generated new fair rotation schedule spanning {} flights.", state.flights.len());
+            }
+        });
+    }
+
+    // ── update-fleet-settings ─────────────────────────────────────────────────
+    {
+        let socket = socket.clone();
+        let shared = shared.clone();
+        socket.on("update-fleet-settings", move |s: SocketRef, Data::<Value>(data)| {
+            let shared = shared.clone();
+            async move {
+                if let Ok(settings) = serde_json::from_value::<crate::state::FleetSettings>(data.clone()) {
+                    {
+                        let mut state = shared.write().await;
+                        state.fleet_settings = Some(settings);
+                        let _ = save_state(&state).await;
+                    }
+                    let state = shared.read().await;
+                    let _ = s.broadcast().emit("state-update", &*state);
+                    let _ = s.emit("state-update", &*state);
+                } else {
+                    warn!("Failed to parse update-fleet-settings payload: {}", data);
+                }
             }
         });
     }
