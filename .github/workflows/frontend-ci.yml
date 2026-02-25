@@ -1,0 +1,77 @@
+name: CI — Frontend
+
+on:
+  push:
+    branches: [main, dev]
+    paths:
+      - 'frontend/**'
+      - 'regatta-core/**'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'regatta-core/**'
+
+jobs:
+  lint-and-typecheck:
+    name: Lint + Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install regatta-core
+        run: npm ci
+        working-directory: regatta-core
+
+      - name: Install frontend deps
+        run: npm ci
+        working-directory: frontend
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+        working-directory: frontend
+
+      - name: ESLint
+        run: npx eslint src --ext .ts,.tsx --max-warnings 0
+        working-directory: frontend
+
+  build:
+    name: Vite Build
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install regatta-core
+        run: npm ci
+        working-directory: regatta-core
+
+      - name: Install frontend deps
+        run: npm ci
+        working-directory: frontend
+
+      - name: Build
+        run: npm run build
+        working-directory: frontend
+
+      - name: Upload dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          retention-days: 7

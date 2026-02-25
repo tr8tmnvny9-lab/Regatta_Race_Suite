@@ -1,0 +1,60 @@
+# Regatta Backend — Fly.io configuration
+# Deploy: fly deploy
+# First time: fly launch (then fly volumes create regatta_data --size 1)
+
+app = "regatta-backend"
+primary_region = "arn"   # Stockholm (closest to Nordic sailing)
+
+[build]
+  # Multi-stage Dockerfile produces ~15MB final image
+  dockerfile = "Dockerfile"
+
+[env]
+  BACKEND_MODE = "cloud"
+  PORT = "3001"
+  BINDADDR = "0.0.0.0"
+  UWB_UDP_PORT = "5555"
+  UWB_MULTICAST_GROUP = "239.255.0.1"
+  UWB_OCS_THRESHOLD_M = "0.10"
+  UWB_MIN_FIX_QUALITY = "60"
+  RUST_LOG = "info,regatta_backend=debug"
+
+[http_service]
+  internal_port = 3001
+  force_https = true
+  auto_stop_machines = false   # NEVER auto-stop — race could be in progress
+  auto_start_machines = true
+  min_machines_running = 1     # Always at least 1 instance (zero data loss invariant)
+
+  # Health check — Fly.io restarts instance if this fails
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "15s"
+    method = "GET"
+    path = "/health"
+    protocol = "http"
+    timeout = "5s"
+
+# UDP port for UWB MeasurementPackets (from Ubiquiti AP relay or cloud tunnel)
+[[services]]
+  protocol = "udp"
+  internal_port = 5555
+
+  [[services.ports]]
+    port = 5555
+
+# Persistent volume for state.json fallback and audit logs
+[[mounts]]
+  source = "regatta_data"
+  destination = "/data"
+  initial_size = "1gb"
+
+[metrics]
+  port = 9091
+  path = "/metrics"
+
+# Scaling: start with 1, burst to 3 during race events
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 2
+  memory_mb = 512

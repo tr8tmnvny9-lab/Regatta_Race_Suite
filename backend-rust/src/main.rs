@@ -7,6 +7,7 @@ mod flight_engine;
 
 use std::collections::HashSet;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use axum::routing::get;
@@ -24,6 +25,9 @@ use persistence::load_state;
 use procedure_engine::{ProcedureEngine, TickResult};
 use state::{RaceStatus, SequenceInfo};
 
+// ─── Global startup time (for uptime reporting) ──────────────────────────────
+static STARTUP_MS: AtomicU64 = AtomicU64::new(0);
+
 // ─── Time Sync Endpoint ───────────────────────────────────────────────────────
 
 async fn time_sync() -> axum::Json<serde_json::Value> {
@@ -32,6 +36,25 @@ async fn time_sync() -> axum::Json<serde_json::Value> {
         .unwrap_or_default()
         .as_millis();
     axum::Json(json!({ "serverTime": now }))
+}
+
+// ─── Health Endpoint (required by Fly.io + cloud deployment) ─────────────────
+// GET /health → { status, version, mode, uptimeSecs }
+// Fly.io restarts the instance if this returns non-200.
+async fn health_check() -> axum::Json<serde_json::Value> {
+    let now_ms = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as u64;
+    let startup = STARTUP_MS.load(Ordering::Relaxed);
+    let uptime_secs = if startup > 0 { (now_ms - startup) / 1000 } else { 0 };
+    let mode = std::env::var("BACKEND_MODE").unwrap_or_else(|_| "local".into());
+    axum::Json(json!({
+        "status": "ok",
+        "version": env!("CARGO_PKG_VERSION"),
+        "mode": mode,
+        "uptimeSecs": uptime_secs,
+    }))
 }
 
 // ─── Procedure Engine Tick Task ───────────────────────────────────────────────
@@ -102,6 +125,13 @@ async fn run_engine_tick(
 
 #[tokio::main]
 async fn main() {
+    // Record startup time for uptime reporting
+    let startup_ms = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as u64;
+    STARTUP_MS.store(startup_ms, Ordering::Relaxed);
+
     // Logging
     tracing_subscriber::fmt()
         .with_env_filter(
@@ -110,7 +140,10 @@ async fn main() {
         )
         .init();
 
-    info!("🏁 Regatta Pro Backend (Rust) starting...");
+    // Log backend mode (local file persistence vs cloud Supabase)
+    let backend_mode = std::env::var("BACKEND_MODE").unwrap_or_else(|_| "local".into());
+    info!("🏁 Regatta Pro Backend (Rust) v{} starting — mode: {backend_mode}",
+        env!("CARGO_PKG_VERSION"));
 
     // Load persisted state
     let race_state = load_state().await;
@@ -167,6 +200,7 @@ async fn main() {
 
     // Build Axum router
     let app = Router::new()
+        .route("/health", get(health_check))   // Fly.io health check
         .route("/sync", get(time_sync))
         .layer(socket_layer)
         .layer(cors);
