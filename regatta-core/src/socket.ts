@@ -64,8 +64,19 @@ export class RegattaEngine {
         // Connection lifecycle
         this.socket.on('connect', () => {
             this._connectionCallback?.(true);
+
+            // Allow native apps (WKWebView) to inject secure JWTs via URL query params
+            let finalToken = this.roleToken;
+            if (typeof window !== 'undefined' && window.location) {
+                const params = new URLSearchParams(window.location.search);
+                const jwt = params.get('jwt');
+                if (jwt) {
+                    finalToken = jwt;
+                }
+            }
+
             // Re-register on reconnect so server knows our role
-            this.socket?.emit('register', { type: this.roleToken });
+            this.socket?.emit('register', { type: finalToken });
         });
 
         this.socket.on('disconnect', () => {

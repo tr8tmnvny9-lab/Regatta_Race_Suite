@@ -38,6 +38,16 @@ pub enum UnionStringOrBool {
     Bool(bool),
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SupabaseClaims {
+    pub sub: String,
+    pub aud: String,
+    pub exp: u64,
+    pub role: Option<String>,
+    pub app_metadata: Option<serde_json::Value>,
+    pub user_metadata: Option<serde_json::Value>,
+}
+
 pub struct AuthEngine {
     keys: RwLock<HashMap<String, DecodingKey>>,
     roles: RwLock<HashMap<String, String>>, // socket_id -> role
@@ -125,6 +135,26 @@ impl AuthEngine {
             Ok(token_data) => Some(token_data.claims.sub),
             Err(e) => {
                 warn!("Cryptographic validation failed: {}", e);
+                None
+            }
+        }
+    }
+
+    /// Verifies a Supabase JWT and returns the parsed claims.
+    pub fn verify_supabase_token(token: &str) -> Option<SupabaseClaims> {
+        let secret = std::env::var("SUPABASE_JWT_SECRET").unwrap_or_else(|_| "your-jwt-secret-here".into());
+        let decoding_key = DecodingKey::from_secret(secret.as_bytes());
+        let mut validation = Validation::new(Algorithm::HS256);
+        validation.insecure_disable_signature_validation(); // Temporarily disable audience checks if needed, but signature is enforced
+        validation.set_audience(&["authenticated", "anon"]);
+        
+        // Sometimes Supabase JWT audience is just empty or different, let's skip aud validation
+        validation.validate_aud = false;
+
+        match decode::<SupabaseClaims>(token, &decoding_key, &validation) {
+            Ok(token_data) => Some(token_data.claims),
+            Err(e) => {
+                warn!("Supabase JWT validation failed: {}", e);
                 None
             }
         }

@@ -2,7 +2,7 @@
 # Deploy: fly deploy
 # First time: fly launch (then fly volumes create regatta_data --size 1)
 
-app = "regatta-backend"
+app = "regatta-backend-oscar"
 primary_region = "arn"   # Stockholm (closest to Nordic sailing)
 
 [build]

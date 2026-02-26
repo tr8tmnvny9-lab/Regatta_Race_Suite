@@ -2,6 +2,7 @@
 members = [
     "backend-rust",
     "packages/uwb-types",
+    "packages/uwb-simulator",
 ]
 resolver = "2"
 

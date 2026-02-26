@@ -15,6 +15,10 @@ dev:
 backend:
     cd backend-rust && cargo run
 
+# Start UWB Hardware Simulator
+sim:
+    cargo run -p uwb-simulator
+
 # Start frontend only
 frontend:
     cd frontend && npm run dev

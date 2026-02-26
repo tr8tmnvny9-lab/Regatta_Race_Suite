@@ -1,0 +1,25 @@
+name: RegattaTracker
+options:
+  bundleIdPrefix: com.regatta
+packages:
+  Supabase:
+    url: https://github.com/supabase/supabase-swift
+    from: 2.4.0
+targets:
+  RegattaTracker:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources: [RegattaTracker]
+    dependencies:
+      - package: Supabase
+    settings:
+      CODE_SIGN_IDENTITY: "-"
+      DEVELOPMENT_TEAM: ""
+    info:
+      path: RegattaTracker/Info.plist
+      properties:
+        NSLocationAlwaysAndWhenInUseUsageDescription: "RegattaTracker uses your location to provide high-frequency telemetry to the race committee."
+        NSLocationWhenInUseUsageDescription: "RegattaTracker uses your location to provide high-frequency telemetry."
+        NSBluetoothAlwaysUsageDescription: "RegattaTracker uses Bluetooth to connect to UWB hardware nodes."
+        UIBackgroundModes: [location, bluetooth-central]

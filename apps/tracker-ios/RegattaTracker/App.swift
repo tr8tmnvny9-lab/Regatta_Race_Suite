@@ -14,6 +14,7 @@ import SwiftUI
 
 @main
 struct RegattaTrackerApp: App {
+    @StateObject private var authManager = SupabaseAuthManager()
     @StateObject private var connection = TrackerConnectionManager()
     @StateObject private var bleClient  = UWBNodeBLEClient()
     @StateObject private var location   = LocationManager()
@@ -23,6 +24,7 @@ struct RegattaTrackerApp: App {
     var body: some Scene {
         WindowGroup {
             TrackerRootView()
+                .environmentObject(authManager)
                 .environmentObject(connection)
                 .environmentObject(bleClient)
                 .environmentObject(location)
@@ -41,13 +43,16 @@ struct RegattaTrackerApp: App {
 // ─── Root view ────────────────────────────────────────────────────────────────
 
 struct TrackerRootView: View {
+    @EnvironmentObject var authManager: SupabaseAuthManager
     @EnvironmentObject var connection: TrackerConnectionManager
     @EnvironmentObject var race: RaceStateModel
     @State private var showJoin = false
 
     var body: some View {
         Group {
-            if connection.sessionId == nil {
+            if !authManager.isAuthenticated {
+                LoginView()
+            } else if connection.sessionId == nil {
                 JoinView(showSheet: $showJoin)
             } else {
                 StartLineView()

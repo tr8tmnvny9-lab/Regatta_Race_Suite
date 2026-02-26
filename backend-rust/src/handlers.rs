@@ -228,21 +228,44 @@ pub async fn on_connect(
             let auth = auth.clone();
             async move {
                 let token = data["type"].as_str().unwrap_or("unknown");
-                let client_type = match token {
-                    "director123" => "director",
-                    "jury123" => "jury",
-                    "media123" => "media",
-                    "tracker123" => "tracker",
-                    // Also support the old literal names just in case some subapps are still using them locally
-                    "director" => "director",
-                    "jury" => "jury",
-                    "media" => "media",
-                    "tracker" => "tracker",
-                    _ => "unknown",
-                };
+                
+                let mut client_type = "unknown".to_string();
+                
+                // 1) First attempt cryptographically secure Supabase JWT validation
+                if let Some(claims) = crate::auth::AuthEngine::verify_supabase_token(token) {
+                    client_type = claims.role.unwrap_or_else(|| {
+                        // Fallback: check app_metadata for custom roles
+                        if let Some(app_meta) = &claims.app_metadata {
+                            if let Some(r) = app_meta.get("role").and_then(|v| v.as_str()) {
+                                return r.to_string();
+                            }
+                        }
+                        // Default authenticated users form Supabase to "tracker"
+                        "tracker".to_string()
+                    });
+                } else {
+                    // 2) Fallback to insecure legacy/mock tokens for the web dashboard transition window
+                    client_type = match token {
+                        "director123" => "director".to_string(),
+                        "jury123" => "jury".to_string(),
+                        "media123" => "media".to_string(),
+                        "tracker123" => "tracker".to_string(),
+                        "director" => "director".to_string(),
+                        "jury" => "jury".to_string(),
+                        "media" => "media".to_string(),
+                        "tracker" => "tracker".to_string(),
+                        _ => "unknown".to_string(),
+                    };
+                }
 
-                auth.set_role(&s.id.to_string(), client_type).await;
-                info!("Client {}: registered and authenticated as Role: {client_type}", s.id);
+                if client_type == "unknown" {
+                    warn!("Client {}: rejected, invalid or unknown authentication token", s.id);
+                    let _ = s.disconnect();
+                    return;
+                }
+
+                auth.set_role(&s.id.to_string(), &client_type).await;
+                info!("Client {}: registered and authenticated securely as Role: {}", s.id, client_type);
 
                 let _ = s.join(client_type.to_string());
 

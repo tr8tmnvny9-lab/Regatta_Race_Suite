@@ -1,0 +1,373 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1161EC24772092E7A280614C /* SupabaseAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11A36B84F1EAF8DD63A6B657 /* SupabaseAuthManager.swift */; };
+		1CFA2E7673F13D2721B5EE8F /* ConnectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B0E45690F3BAC9E2DD60D7E /* ConnectionManager.swift */; };
+		408799B8A2C8D4EF02B14C03 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21344C227C553B3BD939C63E /* NotificationManager.swift */; };
+		451F5BE90EB435C150AEC8C1 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13FDB26F5E86ED6D93DDC066 /* ContentView.swift */; };
+		4650159404D5BFA8EB4331D5 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0E7C3850B6A1DA84B0D9662 /* App.swift */; };
+		6EB6361501517DDC2CB67F5D /* SidecarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9A440B7232131E9DDEEA055 /* SidecarManager.swift */; };
+		730BEC7460FC3BCB53C23E51 /* MenuCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 508CD8752E7BD2EF08CDA59F /* MenuCommands.swift */; };
+		9DA4AF7DD8B34F96912BEF3D /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E08B121AF5178AF2EB5ABA50 /* LoginView.swift */; };
+		B10BD8F8E98B3C1FFE411869 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = DA1E0E06077115D9985625BC /* Supabase */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		11A36B84F1EAF8DD63A6B657 /* SupabaseAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAuthManager.swift; sourceTree = "<group>"; };
+		13FDB26F5E86ED6D93DDC066 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		21344C227C553B3BD939C63E /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		508CD8752E7BD2EF08CDA59F /* MenuCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuCommands.swift; sourceTree = "<group>"; };
+		7B0E45690F3BAC9E2DD60D7E /* ConnectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionManager.swift; sourceTree = "<group>"; };
+		B0E7C3850B6A1DA84B0D9662 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
+		C41EFC555853177BC0418866 /* RegattaPro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RegattaPro.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E08B121AF5178AF2EB5ABA50 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		E9A440B7232131E9DDEEA055 /* SidecarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidecarManager.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		0A605F4E69F862642EBA0BA8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B10BD8F8E98B3C1FFE411869 /* Supabase in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		3343B57BA655C003CA181A7B /* RegattaPro */ = {
+			isa = PBXGroup;
+			children = (
+				B0E7C3850B6A1DA84B0D9662 /* App.swift */,
+				13FDB26F5E86ED6D93DDC066 /* ContentView.swift */,
+				508CD8752E7BD2EF08CDA59F /* MenuCommands.swift */,
+				21344C227C553B3BD939C63E /* NotificationManager.swift */,
+				E9A440B7232131E9DDEEA055 /* SidecarManager.swift */,
+				7FDDB1E384E6D482D0B0DDAF /* Auth */,
+				B6364A1D554856DB3B7EF937 /* Connection */,
+				C711B4057CE505AAFB4EA889 /* Views */,
+			);
+			path = RegattaPro;
+			sourceTree = "<group>";
+		};
+		7264FE9B7D6FA54732C8BF5D = {
+			isa = PBXGroup;
+			children = (
+				3343B57BA655C003CA181A7B /* RegattaPro */,
+				C8DABA9D9F4061FF0CCB313A /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		7FDDB1E384E6D482D0B0DDAF /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				11A36B84F1EAF8DD63A6B657 /* SupabaseAuthManager.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		B6364A1D554856DB3B7EF937 /* Connection */ = {
+			isa = PBXGroup;
+			children = (
+				7B0E45690F3BAC9E2DD60D7E /* ConnectionManager.swift */,
+			);
+			path = Connection;
+			sourceTree = "<group>";
+		};
+		C711B4057CE505AAFB4EA889 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				E08B121AF5178AF2EB5ABA50 /* LoginView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		C8DABA9D9F4061FF0CCB313A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C41EFC555853177BC0418866 /* RegattaPro.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		0396EB4439D6E1500C8A3520 /* RegattaPro */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E6F4D32B53234E2D278E3C96 /* Build configuration list for PBXNativeTarget "RegattaPro" */;
+			buildPhases = (
+				02A9638559B4DECF6E9E1B94 /* Sources */,
+				0A605F4E69F862642EBA0BA8 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = RegattaPro;
+			packageProductDependencies = (
+				DA1E0E06077115D9985625BC /* Supabase */,
+			);
+			productName = RegattaPro;
+			productReference = C41EFC555853177BC0418866 /* RegattaPro.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		B7E15B282B811DEC11C780CE /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					0396EB4439D6E1500C8A3520 = {
+						DevelopmentTeam = "";
+					};
+				};
+			};
+			buildConfigurationList = 2B213D40EB7AB52986DF024B /* Build configuration list for PBXProject "RegattaPro" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 7264FE9B7D6FA54732C8BF5D;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				522D42BC8E78F87B769558ED /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				0396EB4439D6E1500C8A3520 /* RegattaPro */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		02A9638559B4DECF6E9E1B94 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4650159404D5BFA8EB4331D5 /* App.swift in Sources */,
+				1CFA2E7673F13D2721B5EE8F /* ConnectionManager.swift in Sources */,
+				451F5BE90EB435C150AEC8C1 /* ContentView.swift in Sources */,
+				9DA4AF7DD8B34F96912BEF3D /* LoginView.swift in Sources */,
+				730BEC7460FC3BCB53C23E51 /* MenuCommands.swift in Sources */,
+				408799B8A2C8D4EF02B14C03 /* NotificationManager.swift in Sources */,
+				6EB6361501517DDC2CB67F5D /* SidecarManager.swift in Sources */,
+				1161EC24772092E7A280614C /* SupabaseAuthManager.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		5DE72EE9BA3DB56E3B285F4D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.regatta.RegattaPro;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		8CFB3AD50960744AE6880E3D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.regatta.RegattaPro;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		9FDF57172E1DEF018AB03D5E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		F547BE6078A6EB12F63F456E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2B213D40EB7AB52986DF024B /* Build configuration list for PBXProject "RegattaPro" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9FDF57172E1DEF018AB03D5E /* Debug */,
+				F547BE6078A6EB12F63F456E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E6F4D32B53234E2D278E3C96 /* Build configuration list for PBXNativeTarget "RegattaPro" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5DE72EE9BA3DB56E3B285F4D /* Debug */,
+				8CFB3AD50960744AE6880E3D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		522D42BC8E78F87B769558ED /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		DA1E0E06077115D9985625BC /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 522D42BC8E78F87B769558ED /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = B7E15B282B811DEC11C780CE /* Project object */;
+}

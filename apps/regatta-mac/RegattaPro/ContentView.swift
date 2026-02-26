@@ -17,11 +17,12 @@ struct ContentView: View {
     let url: URL
     @EnvironmentObject var connection: ConnectionManager
     @EnvironmentObject var sidecar: SidecarManager
+    @EnvironmentObject var authManager: SupabaseAuthManager
     @State private var loadError: String?
 
     var body: some View {
         ZStack {
-            WebView(url: url, onError: { error in
+            WebView(url: url, authManager: authManager, onError: { error in
                 loadError = error
             })
             .ignoresSafeArea()
@@ -64,7 +65,20 @@ struct ContentView: View {
 
 struct WebView: NSViewRepresentable {
     let url: URL
+    let authManager: SupabaseAuthManager
     var onError: ((String) -> Void)?
+
+    private var urlWithJWT: URL {
+        var finalURL = url
+        if let jwt = authManager.currentJWT {
+            var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
+            var queryItems = components.queryItems ?? []
+            queryItems.append(URLQueryItem(name: "jwt", value: jwt))
+            components.queryItems = queryItems
+            finalURL = components.url ?? url
+        }
+        return finalURL
+    }
 
     func makeNSView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
@@ -84,15 +98,15 @@ struct WebView: NSViewRepresentable {
         webView.configuration.websiteDataStore = .nonPersistent()
 
         // Load initial page
-        webView.load(URLRequest(url: url))
+        webView.load(URLRequest(url: urlWithJWT))
 
         return webView
     }
 
     func updateNSView(_ nsView: WKWebView, context: Context) {
         // URL changes only happen when sidecar restarts — reload
-        if nsView.url != url {
-            nsView.load(URLRequest(url: url))
+        if nsView.url?.absoluteString.starts(with: url.absoluteString) == false {
+            nsView.load(URLRequest(url: urlWithJWT))
         }
     }
 

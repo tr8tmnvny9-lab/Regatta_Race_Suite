@@ -1,0 +1,19 @@
+name: RegattaPro
+options:
+  bundleIdPrefix: com.regatta
+packages:
+  Supabase:
+    url: https://github.com/supabase/supabase-swift
+    from: 2.4.0
+targets:
+  RegattaPro:
+    type: application
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources: [RegattaPro]
+    dependencies:
+      - package: Supabase
+    settings:
+      CODE_SIGN_IDENTITY: "-"
+      DEVELOPMENT_TEAM: ""
+      ENABLE_HARDENED_RUNTIME: YES

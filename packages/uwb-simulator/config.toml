@@ -1,0 +1,82 @@
+# UWB Simulator Configuration
+# All values match real DW3720 hardware defaults where possible.
+# invariant_ref: validation_protocol.json - Invariant #1 (≤1 cm), #5 (UWB Hive mesh)
+
+[race]
+# Start line geometry (ENU frame, origin at line midpoint)
+line_length_m      = 100.0      # MarkA at (-50, 0, 0), MarkB at (50, 0, 0)
+committee_offset_m = [-55.0, -20.0, 3.0]   # x, y, z
+
+# Fleet
+n_boats            = 12         # number of racing boats (nodes 10-21)
+approach_distance_m = 300.0     # boats start this far below line (y = -300)
+
+# Race timing
+t_minus_seconds    = 300        # 5:00 countdown
+gun_time_offset_s  = 0          # 0 = exact T-0
+
+[simulation]
+update_rate_hz     = 20         # epoch rate (50ms per epoch) — real hardware default
+burst_rate_hz      = 40         # rate during batch solve at gun (25ms epochs)
+burst_window_s     = 2.0        # how long batch solve window runs at gun
+
+# Real-time clock: wall-clock seconds per simulated second
+# 1.0 = real-time, 5.0 = 5× speed, 0.2 = slow-motion
+sim_speed          = 1.0
+
+# Ground truth output port for web control panel stats
+ctrl_port          = 9090       # WebSocket control server
+
+[uwb_radio]
+# DS-TWR ranging noise (DW3720 datasheet, typical conditions)
+sigma_los_m        = 0.070      # 7 cm LOS ranging σ (1σ)
+sigma_nlos_m       = 0.200      # 20 cm NLOS ranging σ
+nlos_base_rate     = 0.05       # 5% baseline NLOS probability
+nlos_crowd_radius_m = 5.0       # if boat within this of ranging path → +20% NLOS
+
+# PDoA angle noise (dual-antenna, ~5cm baseline)
+sigma_azimuth_deg  = 4.0
+sigma_elevation_deg = 3.0
+
+# CIR statistics ranges (match DW3720 output)
+snr_los_db_min     = 18.0
+snr_los_db_max     = 32.0
+snr_nlos_db_min    = 5.0
+snr_nlos_db_max    = 12.0
+fp_index_los_min   = 1
+fp_index_los_max   = 6
+fp_index_nlos_min  = 15
+fp_index_nlos_max  = 40
+
+# Max range range (beyond this, NLOS rate increases)
+max_los_range_m    = 150.0
+
+[boat_physics]
+# Sailing model
+wind_direction_deg  = 180.0     # wind from South → boats sail North toward line
+target_speed_mps    = 2.0       # nominal straight-line speed (~4 knots)
+speed_variance      = 0.4       # each boat gets speed ∈ [1.6, 2.4] m/s
+tactical_slowdown_y_m = 30.0    # slow to 60% when within 30m of line
+tactical_slowdown_factor = 0.6
+
+# Wave model (affects antenna height → 3D range variation → lever arm test)
+wave_amplitude_m   = 0.30       # typical inshore chop
+wave_period_s      = 4.0        # ~4s period
+
+# Node lever arm (antenna relative to CoG in body frame)
+lever_arm_body = [0.0, 0.0, 1.2]  # antenna 1.2m above CoG, centerline
+
+# Heel model: heel_rad = (speed / max_speed) * max_heel_rad
+max_heel_rad       = 0.44       # ~25° at hull speed (realistic upwind)
+
+[scenarios]
+# Default: no scenario active (all false at startup)
+ocs_boat_ids       = []         # boat node_ids to push OCS at gun (e.g. [10, 13])
+ocs_offset_m       = 0.15       # how far they cross (15 cm OCS)
+node_dropout_ids   = []         # node_ids to silence for 3 epochs
+high_nlos          = false      # increases NLOS to 40%
+rough_sea          = false      # 2x wave amplitude
+batch_gun          = true       # always run batch solve at gun (default on)
+mark_drift_id      = 255        # node_id of drifting mark (255 = none)
+mark_drift_m       = 0.0        # how far MarkB drifts (stress test anchor health)
+clock_slip_id      = 255        # node to inject a clock slip (255 = none)

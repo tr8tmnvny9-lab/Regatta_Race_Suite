@@ -1,0 +1,27 @@
+[package]
+name = "uwb-simulator"
+version = "0.1.0"
+edition = "2021"
+description = "Hardware-accurate UWB node simulator for Regatta Suite v2 development"
+
+[[bin]]
+name = "uwb-sim"
+path = "src/main.rs"
+
+[dependencies]
+# Workspace shared
+tokio       = { version = "1", features = ["full"] }
+serde       = { version = "1", features = ["derive"] }
+serde_json  = "1"
+tracing     = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+sha2        = "0.10"
+
+# Simulator-specific
+rand        = "0.8"                    # noise generation, NLOS random draws
+rand_distr  = "0.4"                    # Gaussian, Uniform distributions
+clap        = { version = "4", features = ["derive"] }   # CLI args
+toml        = "0.8"                    # config.toml parsing
+axum        = { version = "0.7", features = ["ws"] }     # control WebSocket server
+tower-http  = { version = "0.5", features = ["cors"] }
+socketioxide = { version = "0.15", features = ["state"] }

@@ -1,0 +1,403 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1C95B5418D67FB9EE75E1931 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D71A2C2FA25A17C47E7A44 /* LocationManager.swift */; };
+		2C8BA7D651F24EBE11989890 /* TrackerConnectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67CD6AA02F2B5BE3B120C004 /* TrackerConnectionManager.swift */; };
+		5CA5133C9F035FCE966AC691 /* CountdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68A1933BF6E72C381724E01C /* CountdownView.swift */; };
+		6E709DAC901A1722B940DA61 /* JoinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49E260D58A844987FE11DC74 /* JoinView.swift */; };
+		90A7EAD4DD88791ED136CC2E /* RaceStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB31D4E77D86F6F2322E120A /* RaceStateModel.swift */; };
+		9555B48BC7C98ACAC6950309 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B4D66A288F9D7332088419E /* App.swift */; };
+		C5A64E51CF75ADDB9C566BD9 /* StartLineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1602576B9A1C1595485ADAA4 /* StartLineView.swift */; };
+		E7D9DD40B8F8A79335A53F13 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 20F4AD67AE975BC07336548B /* Supabase */; };
+		FCFDADF78404C6C5690CD6CE /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F772A3509F1E5DAE18F9797 /* HapticManager.swift */; };
+		FE294B4221DC106D4B4FC862 /* UWBNodeBLEClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78154548506C43105EE1420B /* UWBNodeBLEClient.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0B4D66A288F9D7332088419E /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
+		0F772A3509F1E5DAE18F9797 /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
+		1602576B9A1C1595485ADAA4 /* StartLineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartLineView.swift; sourceTree = "<group>"; };
+		49E260D58A844987FE11DC74 /* JoinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoinView.swift; sourceTree = "<group>"; };
+		4E9D0449303145F2205B198F /* RegattaTracker.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = RegattaTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		67CD6AA02F2B5BE3B120C004 /* TrackerConnectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackerConnectionManager.swift; sourceTree = "<group>"; };
+		68A1933BF6E72C381724E01C /* CountdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountdownView.swift; sourceTree = "<group>"; };
+		78154548506C43105EE1420B /* UWBNodeBLEClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UWBNodeBLEClient.swift; sourceTree = "<group>"; };
+		83D71A2C2FA25A17C47E7A44 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
+		AB31D4E77D86F6F2322E120A /* RaceStateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaceStateModel.swift; sourceTree = "<group>"; };
+		F0DCDBA57044E2970612F6C5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		08770F6FAD3124840F8A422E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E7D9DD40B8F8A79335A53F13 /* Supabase in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0E9EEAD34F9EF50FEFCA4ABD /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				4E9D0449303145F2205B198F /* RegattaTracker.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		391A2686A44C723527D34EB3 /* Location */ = {
+			isa = PBXGroup;
+			children = (
+				83D71A2C2FA25A17C47E7A44 /* LocationManager.swift */,
+			);
+			path = Location;
+			sourceTree = "<group>";
+		};
+		3AC24189E7944203D02CA6AF /* BLE */ = {
+			isa = PBXGroup;
+			children = (
+				78154548506C43105EE1420B /* UWBNodeBLEClient.swift */,
+			);
+			path = BLE;
+			sourceTree = "<group>";
+		};
+		3CF5B8C019C5A0BED84650F7 /* Haptics */ = {
+			isa = PBXGroup;
+			children = (
+				0F772A3509F1E5DAE18F9797 /* HapticManager.swift */,
+			);
+			path = Haptics;
+			sourceTree = "<group>";
+		};
+		5A90C381EAA0B87C0A268095 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				68A1933BF6E72C381724E01C /* CountdownView.swift */,
+				49E260D58A844987FE11DC74 /* JoinView.swift */,
+				1602576B9A1C1595485ADAA4 /* StartLineView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		71C0E0655F8D29C584E8C39F /* Connection */ = {
+			isa = PBXGroup;
+			children = (
+				67CD6AA02F2B5BE3B120C004 /* TrackerConnectionManager.swift */,
+			);
+			path = Connection;
+			sourceTree = "<group>";
+		};
+		8EB872F9118B84B2F59421DA /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				AB31D4E77D86F6F2322E120A /* RaceStateModel.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		C713E28343C42B9E23674EC4 /* RegattaTracker */ = {
+			isa = PBXGroup;
+			children = (
+				0B4D66A288F9D7332088419E /* App.swift */,
+				F0DCDBA57044E2970612F6C5 /* Info.plist */,
+				3AC24189E7944203D02CA6AF /* BLE */,
+				71C0E0655F8D29C584E8C39F /* Connection */,
+				3CF5B8C019C5A0BED84650F7 /* Haptics */,
+				391A2686A44C723527D34EB3 /* Location */,
+				8EB872F9118B84B2F59421DA /* Models */,
+				5A90C381EAA0B87C0A268095 /* Views */,
+			);
+			path = RegattaTracker;
+			sourceTree = "<group>";
+		};
+		D06F959E20F83262C9DE4C51 = {
+			isa = PBXGroup;
+			children = (
+				C713E28343C42B9E23674EC4 /* RegattaTracker */,
+				0E9EEAD34F9EF50FEFCA4ABD /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		10B994E451C69276B58C2E87 /* RegattaTracker */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 61406B68D8868419F4933738 /* Build configuration list for PBXNativeTarget "RegattaTracker" */;
+			buildPhases = (
+				9B3B450E2722DAD1B3219A30 /* Sources */,
+				08770F6FAD3124840F8A422E /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = RegattaTracker;
+			packageProductDependencies = (
+				20F4AD67AE975BC07336548B /* Supabase */,
+			);
+			productName = RegattaTracker;
+			productReference = 4E9D0449303145F2205B198F /* RegattaTracker.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		17E4B3473707EF7616249330 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					10B994E451C69276B58C2E87 = {
+						DevelopmentTeam = "";
+					};
+				};
+			};
+			buildConfigurationList = EAECFE97B72C601EEC88332C /* Build configuration list for PBXProject "RegattaTracker" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = D06F959E20F83262C9DE4C51;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				D71E5BD8C9A8ED8D29EF769A /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				10B994E451C69276B58C2E87 /* RegattaTracker */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		9B3B450E2722DAD1B3219A30 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9555B48BC7C98ACAC6950309 /* App.swift in Sources */,
+				5CA5133C9F035FCE966AC691 /* CountdownView.swift in Sources */,
+				FCFDADF78404C6C5690CD6CE /* HapticManager.swift in Sources */,
+				6E709DAC901A1722B940DA61 /* JoinView.swift in Sources */,
+				1C95B5418D67FB9EE75E1931 /* LocationManager.swift in Sources */,
+				90A7EAD4DD88791ED136CC2E /* RaceStateModel.swift in Sources */,
+				C5A64E51CF75ADDB9C566BD9 /* StartLineView.swift in Sources */,
+				2C8BA7D651F24EBE11989890 /* TrackerConnectionManager.swift in Sources */,
+				FE294B4221DC106D4B4FC862 /* UWBNodeBLEClient.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		043334920DA04D54BBAF47A1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		1122A00A939D0223C7973525 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "-";
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = RegattaTracker/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.regatta.RegattaTracker;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		E2319A0889E473060754F58D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		EE304E9400179FF5CA5E08E5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "-";
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = RegattaTracker/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.regatta.RegattaTracker;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		61406B68D8868419F4933738 /* Build configuration list for PBXNativeTarget "RegattaTracker" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EE304E9400179FF5CA5E08E5 /* Debug */,
+				1122A00A939D0223C7973525 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		EAECFE97B72C601EEC88332C /* Build configuration list for PBXProject "RegattaTracker" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				043334920DA04D54BBAF47A1 /* Debug */,
+				E2319A0889E473060754F58D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		D71E5BD8C9A8ED8D29EF769A /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		20F4AD67AE975BC07336548B /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D71E5BD8C9A8ED8D29EF769A /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 17E4B3473707EF7616249330 /* Project object */;
+}

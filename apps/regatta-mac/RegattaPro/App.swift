@@ -20,6 +20,7 @@ private let log = Logger(subsystem: "com.regatta.pro", category: "App")
 
 @main
 struct RegattaProApp: App {
+    @StateObject private var authManager = SupabaseAuthManager()
     @StateObject private var sidecar = SidecarManager()
     @StateObject private var connection = ConnectionManager()
     @StateObject private var notifications = NotificationManager()
@@ -27,6 +28,7 @@ struct RegattaProApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                .environmentObject(authManager)
                 .environmentObject(sidecar)
                 .environmentObject(connection)
                 .environmentObject(notifications)
@@ -43,12 +45,15 @@ struct RegattaProApp: App {
 // ─── Root View (shows loading until sidecar is ready) ────────────────────────
 
 struct RootView: View {
+    @EnvironmentObject var authManager: SupabaseAuthManager
     @EnvironmentObject var sidecar: SidecarManager
     @EnvironmentObject var connection: ConnectionManager
 
     var body: some View {
         Group {
-            if sidecar.status == .ready {
+            if !authManager.isAuthenticated {
+                LoginView()
+            } else if sidecar.status == .ready {
                 ContentView(url: sidecar.frontendURL)
             } else {
                 SidecarLoadingView()

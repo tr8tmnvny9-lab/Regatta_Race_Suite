@@ -11,7 +11,8 @@ import {
     X,
     Lock,
     Sun,
-    Moon
+    Moon,
+    Cpu
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import L from 'leaflet'
@@ -29,6 +30,7 @@ import { WindArrowLayer, LaylineLayer, CourseBoundaryDrawing, CourseDesignerEven
 import { Buoy, RaceState as CoreRaceState, RegattaEngine, LogEntry } from '@regatta/core'
 import RaceOnboarding from './components/RaceOnboarding'
 import FleetControl from './views/FleetControl'
+import UWBSimulator from './views/UWBSimulator'
 
 // --- Icons ---
 const renderBuoyIcon = (mark: Buoy, size: number, autoOrient: boolean = false) => {
@@ -77,7 +79,7 @@ const renderBuoyIcon = (mark: Buoy, size: number, autoOrient: boolean = false) =
 
 export default function App() {
     const [view, setView] = useState<'management' | 'tracker' | 'jury' | 'media'>('management')
-    const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'FLEET' | 'DESIGNER' | 'PROCEDURE' | 'ARCHITECT' | 'LOGS' | 'SETTINGS'>('OVERVIEW')
+    const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'FLEET' | 'DESIGNER' | 'PROCEDURE' | 'ARCHITECT' | 'LOGS' | 'SETTINGS' | 'SIMULATOR'>('OVERVIEW')
     const [onboardingOpen, setOnboardingOpen] = useState(false)
     const [engine, setEngine] = useState<RegattaEngine | null>(null)
     const [mapInstance, setMapInstance] = useState<L.Map | null>(null)
@@ -559,6 +561,7 @@ export default function App() {
                     <NavIcon icon={Activity} active={activeTab === 'LOGS'} onClick={() => setActiveTab('LOGS')} />
                     <NavIcon icon={Flag} active={activeTab === 'PROCEDURE'} onClick={() => setActiveTab('PROCEDURE')} />
                     <NavIcon icon={FileCog} active={activeTab === 'ARCHITECT'} onClick={() => setActiveTab('ARCHITECT')} />
+                    <NavIcon icon={Cpu} active={activeTab === 'SIMULATOR'} onClick={() => setActiveTab('SIMULATOR')} />
 
                     {/* Latency Indicator */}
                     <div className="flex flex-col items-center gap-1 opacity-60 hover:opacity-100 transition-opacity my-4">
@@ -1284,6 +1287,11 @@ export default function App() {
 
                 {/* Procedure Editor Overlay (Outside regular HUD flow) */}
                 <AnimatePresence>
+                    {
+                        activeTab === 'SIMULATOR' && (
+                            <UWBSimulator />
+                        )
+                    }
                     {
                         activeTab === 'ARCHITECT' && (
                             <motion.div
