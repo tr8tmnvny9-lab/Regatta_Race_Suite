@@ -201,17 +201,27 @@ async fn main() {
     // Start engine tick loop
     tokio::spawn(run_engine_tick(engine.clone(), shared.clone(), io.clone()));
 
-    // CORS — configurable origins (defaults to dev localhost)
-    let allowed_origins = std::env::var("CORS_ORIGINS")
-        .unwrap_or_else(|_| "http://localhost:3000".to_string());
-    let origins: Vec<HeaderValue> = allowed_origins
-        .split(',')
-        .filter_map(|o| o.trim().parse::<HeaderValue>().ok())
-        .collect();
-    let cors = CorsLayer::new()
-        .allow_origin(origins)
-        .allow_methods(Any)
-        .allow_headers(Any);
+    // CORS — local dev: http://localhost:3000; cloud: set CORS_ORIGINS=*
+    // Fly.io env sets CORS_ORIGINS=* so native Mac apps, iOS apps, and
+    // browsers from any origin can connect (secure via JWT auth layer).
+    let cors_origins_env = std::env::var("CORS_ORIGINS")
+        .unwrap_or_else(|_| "http://localhost:3000,http://localhost:5173".to_string());
+
+    let cors = if cors_origins_env.trim() == "*" {
+        CorsLayer::new()
+            .allow_origin(tower_http::cors::Any)
+            .allow_methods(Any)
+            .allow_headers(Any)
+    } else {
+        let origins: Vec<HeaderValue> = cors_origins_env
+            .split(',')
+            .filter_map(|o| o.trim().parse::<HeaderValue>().ok())
+            .collect();
+        CorsLayer::new()
+            .allow_origin(origins)
+            .allow_methods(Any)
+            .allow_headers(Any)
+    };
 
     // Build Axum router
     let app = Router::new()

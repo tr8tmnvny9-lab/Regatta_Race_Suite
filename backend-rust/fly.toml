@@ -17,6 +17,8 @@ primary_region = "arn"   # Stockholm (closest to Nordic sailing)
   UWB_MULTICAST_GROUP = "239.255.0.1"
   UWB_OCS_THRESHOLD_M = "0.10"
   UWB_MIN_FIX_QUALITY = "60"
+  # Allow any origin in cloud mode — security enforced by JWT auth, not origin
+  CORS_ORIGINS = "*"
   RUST_LOG = "info,regatta_backend=debug"
 
 [http_service]

@@ -1,0 +1,36 @@
+# ── Rust build artifacts ──────────────────────────────────────────────────────
+target/
+backend-rust/target/
+
+# ── Node / frontend ───────────────────────────────────────────────────────────
+node_modules/
+frontend/node_modules/
+regatta-core/node_modules/
+regatta-tracker-ios/node_modules/
+frontend/dist/
+
+# ── Secrets ───────────────────────────────────────────────────────────────────
+.env
+.env.local
+backend-rust/state.json
+
+# ── VCS / IDE ─────────────────────────────────────────────────────────────────
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# ── macOS ─────────────────────────────────────────────────────────────────────
+.DS_Store
+**/.DS_Store
+
+# ── CI / docs ─────────────────────────────────────────────────────────────────
+.github/
+docs/
+*.md
+infra/
+
+# ── Swift / Xcode ─────────────────────────────────────────────────────────────
+apps/
+DerivedData/
+*.xcuserdata/
