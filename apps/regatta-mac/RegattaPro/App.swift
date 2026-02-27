@@ -56,7 +56,7 @@ struct RootView: View {
             if !authManager.isAuthenticated {
                 LoginView()
             } else if sidecar.status == .ready {
-                ContentView(url: sidecar.frontendURL)
+                ContentView()
             } else {
                 SidecarLoadingView()
             }
