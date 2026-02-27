@@ -32,7 +32,7 @@ struct RegattaTrackerApp: App {
                 .environmentObject(haptics)
                 .preferredColorScheme(.dark)
                 .onAppear {
-                    connection.start()
+                    connection.start(location: location, ble: bleClient)
                     bleClient.start()
                     location.start()
                 }

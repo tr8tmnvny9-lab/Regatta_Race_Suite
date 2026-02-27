@@ -12,7 +12,11 @@ class TrackerConnectionManager: ObservableObject {
     private var monitor = NWPathMonitor()
     private var webSocket: URLSessionWebSocketTask?
     private var pingTimer: Timer?
+    private var telemetryTimer: Timer?
+    
     var authManager: SupabaseAuthManager? // Injected from root
+    private var location: LocationManager?
+    private var ble: UWBNodeBLEClient?
     
     init() {
         if let savedSession = UserDefaults.standard.string(forKey: "lastSessionId") {
@@ -20,13 +24,17 @@ class TrackerConnectionManager: ObservableObject {
         }
     }
     
-    func start() {
+    func start(location: LocationManager? = nil, ble: UWBNodeBLEClient? = nil) {
+        self.location = location
+        self.ble = ble
+        
         monitor.pathUpdateHandler = { [weak self] path in
             DispatchQueue.main.async {
                 if path.status == .satisfied {
                     if self?.currentMode == .offline {
                         self?.currentMode = .finding
                         self?.connect()
+                        self?.flushOfflineBuffer()
                     }
                 } else {
                     self?.currentMode = .offline
@@ -37,6 +45,14 @@ class TrackerConnectionManager: ObservableObject {
         let queue = DispatchQueue(label: "NetworkMonitor")
         monitor.start(queue: queue)
         connect()
+        
+        // Start 10Hz telemetry sampling loop
+        DispatchQueue.main.async {
+            self.telemetryTimer?.invalidate()
+            self.telemetryTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+                self?.sampleAndTransmitTelemetry()
+            }
+        }
     }
     
     func joinSession(id: String) {
@@ -59,6 +75,89 @@ class TrackerConnectionManager: ObservableObject {
         webSocket?.resume()
         
         self.receiveMessage()
+    }
+    
+    private func sampleAndTransmitTelemetry() {
+        guard let sessionId = sessionId else { return }
+        
+        // Build position
+        var lat = location?.currentPosition?.latitude ?? 0.0
+        var lon = location?.currentPosition?.longitude ?? 0.0
+        var course = location?.headingDegrees ?? 0.0
+        var speed = location?.speedKnots ?? 0.0
+        
+        let isUWB = ble?.isConnected ?? false
+        let dtl = ble?.dtlCm
+        
+        // Mock non-zero values if standing still, for Regatta visualization testing
+        if lat == 0 { lat = 59.3293; lon = 18.0686 }
+        
+        let position = BufferedPosition(
+            sessionId: sessionId,
+            timestamp: Date(),
+            latitude: lat,
+            longitude: lon,
+            course: course,
+            speed: speed,
+            isUWB: isUWB,
+            dtlCm: dtl
+        )
+        
+        if isConnected {
+            // Live Push
+            transmit(position: position)
+        } else {
+            // Offline Buffer
+            OfflineBuffer.shared.bufferPosition(position)
+        }
+    }
+    
+    private func transmit(position: BufferedPosition) {
+        let payloadDict: [String: Any] = [
+            "lat": position.latitude,
+            "lng": position.longitude,
+            "course": position.course,
+            "speedKnots": position.speed,
+            "isUwb": position.isUWB,
+            "dtlCm": position.dtlCm as Any
+        ]
+        
+        if let jsonData = try? JSONSerialization.data(withJSONObject: payloadDict),
+           let jsonString = String(data: jsonData, encoding: .utf8) {
+            
+            let ioPayload = "42[\"track-update\", \(jsonString)]"
+            webSocket?.send(.string(ioPayload)) { _ in }
+        }
+    }
+    
+    private func flushOfflineBuffer() {
+        let buffered = OfflineBuffer.shared.fetchAllBuffered()
+        if buffered.isEmpty { return }
+        
+        print("Flushing \\(buffered.count) offline positions to backend...")
+        
+        let dicts = buffered.map { pos -> [String: Any] in
+            return [
+                "lat": pos.latitude,
+                "lng": pos.longitude,
+                "course": pos.course,
+                "speedKnots": pos.speed,
+                "timestamp": pos.timestamp.timeIntervalSince1970 * 1000,
+                "isUwb": pos.isUWB,
+                "dtlCm": pos.dtlCm as Any
+            ]
+        }
+        
+        if let jsonData = try? JSONSerialization.data(withJSONObject: dicts),
+           let jsonString = String(data: jsonData, encoding: .utf8) {
+            
+            let ioPayload = "42[\"track-update-bulk\", \(jsonString)]"
+            webSocket?.send(.string(ioPayload)) { _ in }
+        }
+        
+        if let maxId = buffered.last?.id {
+            OfflineBuffer.shared.clearBuffered(upTo: maxId)
+        }
     }
     
     private func receiveMessage() {

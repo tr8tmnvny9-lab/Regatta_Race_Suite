@@ -24,6 +24,7 @@ struct RegattaProApp: App {
     @StateObject private var sidecar = SidecarManager()
     @StateObject private var connection = ConnectionManager()
     @StateObject private var notifications = NotificationManager()
+    @StateObject private var udpListener = UDPListener()
 
     var body: some Scene {
         WindowGroup {
@@ -32,6 +33,7 @@ struct RegattaProApp: App {
                 .environmentObject(sidecar)
                 .environmentObject(connection)
                 .environmentObject(notifications)
+                .environmentObject(udpListener)
                 .frame(minWidth: 1200, minHeight: 800)
         }
         .windowStyle(.hiddenTitleBar)
@@ -62,6 +64,7 @@ struct RootView: View {
         .onAppear {
             sidecar.start()
             connection.start()
+            udpListener.start()
         }
     }
 }

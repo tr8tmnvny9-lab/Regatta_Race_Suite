@@ -9,13 +9,16 @@
 /* Begin PBXBuildFile section */
 		1C95B5418D67FB9EE75E1931 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D71A2C2FA25A17C47E7A44 /* LocationManager.swift */; };
 		2C8BA7D651F24EBE11989890 /* TrackerConnectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67CD6AA02F2B5BE3B120C004 /* TrackerConnectionManager.swift */; };
+		5554EAB45FD991797DA9958B /* SupabaseAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9500443F285D77BE47381447 /* SupabaseAuthManager.swift */; };
 		5CA5133C9F035FCE966AC691 /* CountdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68A1933BF6E72C381724E01C /* CountdownView.swift */; };
 		6E709DAC901A1722B940DA61 /* JoinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49E260D58A844987FE11DC74 /* JoinView.swift */; };
 		90A7EAD4DD88791ED136CC2E /* RaceStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB31D4E77D86F6F2322E120A /* RaceStateModel.swift */; };
 		9555B48BC7C98ACAC6950309 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B4D66A288F9D7332088419E /* App.swift */; };
+		9F9A86CC1E344FCBD7E612E7 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F298DB48CCA513F2560713 /* LoginView.swift */; };
 		C5A64E51CF75ADDB9C566BD9 /* StartLineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1602576B9A1C1595485ADAA4 /* StartLineView.swift */; };
 		E7D9DD40B8F8A79335A53F13 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 20F4AD67AE975BC07336548B /* Supabase */; };
 		FCFDADF78404C6C5690CD6CE /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F772A3509F1E5DAE18F9797 /* HapticManager.swift */; };
+		FDFA2F70BF451E139B148E95 /* GRDB.swift in Frameworks */ = {isa = PBXBuildFile; productRef = A3A797C3F38038C4E6DCDD4C /* GRDB.swift */; };
 		FE294B4221DC106D4B4FC862 /* UWBNodeBLEClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78154548506C43105EE1420B /* UWBNodeBLEClient.swift */; };
 /* End PBXBuildFile section */
 
@@ -29,6 +32,8 @@
 		68A1933BF6E72C381724E01C /* CountdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountdownView.swift; sourceTree = "<group>"; };
 		78154548506C43105EE1420B /* UWBNodeBLEClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UWBNodeBLEClient.swift; sourceTree = "<group>"; };
 		83D71A2C2FA25A17C47E7A44 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
+		9500443F285D77BE47381447 /* SupabaseAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAuthManager.swift; sourceTree = "<group>"; };
+		A1F298DB48CCA513F2560713 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		AB31D4E77D86F6F2322E120A /* RaceStateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaceStateModel.swift; sourceTree = "<group>"; };
 		F0DCDBA57044E2970612F6C5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -39,6 +44,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E7D9DD40B8F8A79335A53F13 /* Supabase in Frameworks */,
+				FDFA2F70BF451E139B148E95 /* GRDB.swift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -77,11 +83,20 @@
 			path = Haptics;
 			sourceTree = "<group>";
 		};
+		43972A1EF63E5CD670B61F1C /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				9500443F285D77BE47381447 /* SupabaseAuthManager.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
 		5A90C381EAA0B87C0A268095 /* Views */ = {
 			isa = PBXGroup;
 			children = (
 				68A1933BF6E72C381724E01C /* CountdownView.swift */,
 				49E260D58A844987FE11DC74 /* JoinView.swift */,
+				A1F298DB48CCA513F2560713 /* LoginView.swift */,
 				1602576B9A1C1595485ADAA4 /* StartLineView.swift */,
 			);
 			path = Views;
@@ -108,6 +123,7 @@
 			children = (
 				0B4D66A288F9D7332088419E /* App.swift */,
 				F0DCDBA57044E2970612F6C5 /* Info.plist */,
+				43972A1EF63E5CD670B61F1C /* Auth */,
 				3AC24189E7944203D02CA6AF /* BLE */,
 				71C0E0655F8D29C584E8C39F /* Connection */,
 				3CF5B8C019C5A0BED84650F7 /* Haptics */,
@@ -143,6 +159,7 @@
 			name = RegattaTracker;
 			packageProductDependencies = (
 				20F4AD67AE975BC07336548B /* Supabase */,
+				A3A797C3F38038C4E6DCDD4C /* GRDB.swift */,
 			);
 			productName = RegattaTracker;
 			productReference = 4E9D0449303145F2205B198F /* RegattaTracker.app */;
@@ -173,6 +190,7 @@
 			mainGroup = D06F959E20F83262C9DE4C51;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				F4995148CC881755F7262C13 /* XCRemoteSwiftPackageReference "GRDB.swift" */,
 				D71E5BD8C9A8ED8D29EF769A /* XCRemoteSwiftPackageReference "supabase-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -194,8 +212,10 @@
 				FCFDADF78404C6C5690CD6CE /* HapticManager.swift in Sources */,
 				6E709DAC901A1722B940DA61 /* JoinView.swift in Sources */,
 				1C95B5418D67FB9EE75E1931 /* LocationManager.swift in Sources */,
+				9F9A86CC1E344FCBD7E612E7 /* LoginView.swift in Sources */,
 				90A7EAD4DD88791ED136CC2E /* RaceStateModel.swift in Sources */,
 				C5A64E51CF75ADDB9C566BD9 /* StartLineView.swift in Sources */,
+				5554EAB45FD991797DA9958B /* SupabaseAuthManager.swift in Sources */,
 				2C8BA7D651F24EBE11989890 /* TrackerConnectionManager.swift in Sources */,
 				FE294B4221DC106D4B4FC862 /* UWBNodeBLEClient.swift in Sources */,
 			);
@@ -389,6 +409,14 @@
 				minimumVersion = 2.4.0;
 			};
 		};
+		F4995148CC881755F7262C13 /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/groue/GRDB.swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.20.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -396,6 +424,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = D71E5BD8C9A8ED8D29EF769A /* XCRemoteSwiftPackageReference "supabase-swift" */;
 			productName = Supabase;
+		};
+		A3A797C3F38038C4E6DCDD4C /* GRDB.swift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F4995148CC881755F7262C13 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
+			productName = GRDB.swift;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
