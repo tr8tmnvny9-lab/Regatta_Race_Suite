@@ -50,9 +50,7 @@ struct MainLayoutView: View {
                 case .log:
                     LogView()
                 case .startProcedure:
-                    Text("Mac Native: \(selectedSection.rawValue) coming soon")
-                        .font(.largeTitle)
-                        .foregroundStyle(.secondary)
+                    StartProcedureView()
                 case .procedureArchitect:
                     Text("Mac Native: \(selectedSection.rawValue) coming soon")
                         .font(.largeTitle)
