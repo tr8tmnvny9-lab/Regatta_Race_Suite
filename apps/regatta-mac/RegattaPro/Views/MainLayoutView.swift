@@ -52,9 +52,7 @@ struct MainLayoutView: View {
                 case .startProcedure:
                     StartProcedureView()
                 case .procedureArchitect:
-                    Text("Mac Native: \(selectedSection.rawValue) coming soon")
-                        .font(.largeTitle)
-                        .foregroundStyle(.secondary)
+                    ProcedureArchitectView()
                 case .courseBuilder:
                     CourseBuilderView()
                 case .fleetControl:
