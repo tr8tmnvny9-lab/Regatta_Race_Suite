@@ -25,6 +25,10 @@ struct RegattaProApp: App {
     @StateObject private var connection = ConnectionManager()
     @StateObject private var notifications = NotificationManager()
     @StateObject private var udpListener = UDPListener()
+    
+    // Core Engine State
+    @StateObject private var raceState = RaceStateModel()
+    @StateObject private var raceEngine = RaceEngineClient()
 
     var body: some Scene {
         WindowGroup {
@@ -34,7 +38,13 @@ struct RegattaProApp: App {
                 .environmentObject(connection)
                 .environmentObject(notifications)
                 .environmentObject(udpListener)
+                .environmentObject(raceState)
+                .environmentObject(raceEngine)
                 .frame(minWidth: 1200, minHeight: 800)
+                .onAppear {
+                    // Hook engine client to the state model
+                    raceEngine.stateModel = raceState
+                }
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentMinSize)
@@ -50,6 +60,7 @@ struct RootView: View {
     @EnvironmentObject var authManager: SupabaseAuthManager
     @EnvironmentObject var sidecar: SidecarManager
     @EnvironmentObject var connection: ConnectionManager
+    @EnvironmentObject var raceEngine: RaceEngineClient
 
     var body: some View {
         Group {
@@ -65,6 +76,13 @@ struct RootView: View {
             sidecar.start()
             connection.start()
             udpListener.start()
+        }
+        .onChange(of: connection.backendURL) { newURL in
+            if let url = newURL {
+                raceEngine.connect(to: url)
+            } else {
+                raceEngine.disconnect()
+            }
         }
     }
 }

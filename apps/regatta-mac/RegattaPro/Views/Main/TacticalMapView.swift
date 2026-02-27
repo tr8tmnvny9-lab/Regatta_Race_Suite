@@ -3,7 +3,7 @@ import MapKit
 
 struct TacticalMapView: View {
     @EnvironmentObject var connection: ConnectionManager
-    // TODO: Inject RaceStateModel to pull live boats and geometry
+    @EnvironmentObject var raceState: RaceStateModel
     
     // We'll use a local position matching the typical regatta location for now
     @State private var position = MapCameraPosition.region(
@@ -19,6 +19,13 @@ struct TacticalMapView: View {
                 // Here we will use MapAnnotation for each boat
                 // MapPolyline for ghost predictions
                 // MapPolygon for the course boundary
+                ForEach(raceState.boats) { boat in
+                    Annotation(boat.id, coordinate: boat.position) {
+                        Image(systemName: "location.north.fill")
+                            .foregroundStyle(.blue)
+                            .rotationEffect(.degrees(boat.heading))
+                    }
+                }
             }
             .mapStyle(.standard(elevation: .realistic))
             .mapControlVisibility(.visible)
@@ -27,7 +34,7 @@ struct TacticalMapView: View {
             VStack {
                 HStack {
                     Spacer()
-                    WindWidget()
+                    WindWidget(tws: raceState.tws, twd: raceState.twd)
                         .padding()
                 }
                 Spacer()
@@ -40,9 +47,8 @@ struct TacticalMapView: View {
 // ─── Wind Info Overlay ───────────────────────────────────────────────────────
 
 struct WindWidget: View {
-    // Dummy values until connected to RaceState
-    let tws = 14.5
-    let twd = 210.0
+    var tws: Double
+    var twd: Double
     
     var body: some View {
         VStack(spacing: 4) {

@@ -10,9 +10,8 @@ enum ProtocolState {
 }
 
 struct StartProcedureView: View {
-    @State private var currentState: ProtocolState = .standby
-    @State private var timeRemaining: TimeInterval = 0
-    @State private var activeFlags: [String] = []
+    @EnvironmentObject var raceState: RaceStateModel
+    @EnvironmentObject var raceEngine: RaceEngineClient
 
     var body: some View {
         VStack(spacing: 0) {
@@ -24,7 +23,7 @@ struct StartProcedureView: View {
                     .textCase(.uppercase)
                     .tracking(4)
                 
-                Text(formatTime(timeRemaining))
+                Text(formatTime(raceState.timeRemaining))
                     .font(.system(size: 160, weight: .bold, design: .monospaced))
                     .foregroundStyle(phaseColor)
                     .monospacedDigit()
@@ -32,11 +31,8 @@ struct StartProcedureView: View {
                 
                 // Active Flags Display
                 HStack(spacing: 24) {
-                    if currentState != .standby {
-                        FlagView(name: "Class Flag", color: .yellow)
-                    }
-                    if currentState == .prep || currentState == .oneMinute {
-                        FlagView(name: "P Flag", color: .blue)
+                    ForEach(raceState.activeFlags, id: \.self) { flag in
+                        FlagView(name: flag, color: .orange)
                     }
                 }
                 .frame(height: 80)
@@ -99,22 +95,20 @@ struct StartProcedureView: View {
     
     // --- Accessors & Logic Stub ---
     private var phaseTitle: String {
-        switch currentState {
-        case .standby: return "Standby"
-        case .warning: return "Warning"
-        case .prep: return "Preparatory"
-        case .oneMinute: return "One Minute"
+        switch raceState.currentPhase {
+        case .idle: return "Standby"
+        case .sequences: return "Sequences"
         case .racing: return "Racing"
+        case .complete: return "Complete"
         }
     }
     
     private var phaseColor: Color {
-        switch currentState {
-        case .standby: return .gray
-        case .warning: return .primary
-        case .prep: return .yellow
-        case .oneMinute: return .orange
+        switch raceState.currentPhase {
+        case .idle: return .gray
+        case .sequences: return .yellow
         case .racing: return .green
+        case .complete: return .blue
         }
     }
     
@@ -127,18 +121,16 @@ struct StartProcedureView: View {
     
     // --- Actions ---
     private func startWarning() {
-        currentState = .warning
-        timeRemaining = 300
+        // Send command through engine or an API client
+        // raceEngine.webSocketTask?.send(String) ...
     }
     
     private func generalRecall() {
-        currentState = .standby
-        timeRemaining = 0
+        // Send recall
     }
     
     private func abandon() {
-        currentState = .standby
-        timeRemaining = 0
+        // Send abandon
     }
 }
 
