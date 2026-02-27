@@ -12,101 +12,135 @@ struct LoginView: View {
     
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            // Sailing / Ocean Themed Background
+            LinearGradient(gradient: Gradient(colors: [Color(red: 0.0, green: 0.2, blue: 0.4), Color.cyan]), startPoint: .topLeading, endPoint: .bottomTrailing)
+                .ignoresSafeArea()
             
-            VStack(spacing: 40) {
-                Image(systemName: "lock.shield.fill")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 80)
-                    .foregroundColor(.cyan)
-                    .shadow(color: .cyan.opacity(0.5), radius: 20)
+            // Decorative elements
+            Circle()
+                .fill(Color.white.opacity(0.1))
+                .frame(width: 300, height: 300)
+                .blur(radius: 50)
+                .offset(x: -200, y: -200)
+            
+            Circle()
+                .fill(Color.cyan.opacity(0.2))
+                .frame(width: 400, height: 400)
+                .blur(radius: 80)
+                .offset(x: 200, y: 200)
+            
+            VStack {
+                Spacer()
                 
-                VStack(spacing: 8) {
-                    Text(isSignUp ? "Create Account" : "Secure Login")
-                        .font(.largeTitle)
-                        .fontWeight(.black)
-                        .foregroundColor(.white)
-                    Text("Regatta Tracker Access")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                }
-                
-                VStack(spacing: 20) {
-                    TextField("Email", text: $email)
-                        .padding()
-                        .background(Color.white.opacity(0.1))
-                        .cornerRadius(12)
-                        .foregroundColor(.white)
-                    
-                    SecureField("Password", text: $password)
-                        .padding()
-                        .background(Color.white.opacity(0.1))
-                        .cornerRadius(12)
-                        .foregroundColor(.white)
-                    
-                    if let error = authManager.authError {
-                        Text(error)
-                            .foregroundColor(.red)
-                            .font(.caption)
-                            .multilineTextAlignment(.center)
+                // Liquid Glass Card
+                VStack(spacing: 30) {
+                    // Logo Header
+                    VStack(spacing: 12) {
+                        Image(systemName: "sailboat.fill")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 60)
+                            .foregroundColor(.white)
+                            .shadow(color: .cyan.opacity(0.8), radius: 10)
+                        
+                        Text(isSignUp ? "Join the Fleet" : "RegattaPro")
+                            .font(.system(size: 32, weight: .black, design: .rounded))
+                            .foregroundColor(.white)
+                        
+                        Text("Elite Tactical Racing")
+                            .font(.system(size: 14, weight: .medium, design: .monospaced))
+                            .foregroundColor(Color.white.opacity(0.7))
                     }
+                    .padding(.bottom, 10)
                     
-                    Button(action: {
-                        Task {
-                            isLoading = true
-                            if isSignUp {
-                                let success = await authManager.signUp(email: email, password: password)
-                                if success {
-                                    authManager.authError = "Account created! Please check your email to verify your account."
+                    VStack(spacing: 16) {
+                        // Custom Styled Inputs
+                        HStack {
+                            Image(systemName: "envelope.fill")
+                                .foregroundColor(.white.opacity(0.7))
+                            TextField("Email", text: $email)
+                                .textFieldStyle(PlainTextFieldStyle())
+                                .foregroundColor(.white)
+                        }
+                        .padding()
+                        .background(Color.white.opacity(0.1))
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.2), lineWidth: 1))
+                        .cornerRadius(12)
+                        
+                        HStack {
+                            Image(systemName: "lock.fill")
+                                .foregroundColor(.white.opacity(0.7))
+                            SecureField("Password", text: $password)
+                                .textFieldStyle(PlainTextFieldStyle())
+                                .foregroundColor(.white)
+                        }
+                        .padding()
+                        .background(Color.white.opacity(0.1))
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.2), lineWidth: 1))
+                        .cornerRadius(12)
+                        
+                        if let error = authManager.authError {
+                            Text(error)
+                                .foregroundColor(error.contains("check your email") ? .green : .red)
+                                .font(.caption)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                        }
+                        
+                        Button(action: {
+                            Task {
+                                isLoading = true
+                                if isSignUp {
+                                    let success = await authManager.signUp(email: email, password: password)
+                                    if success {
+                                        authManager.authError = "Account created! Please check your email to verify your account."
+                                    }
+                                } else {
+                                    let _ = await authManager.signIn(email: email, password: password)
                                 }
-                            } else {
-                                let _ = await authManager.signIn(email: email, password: password)
+                                isLoading = false
                             }
-                            isLoading = false
+                        }) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.white)
+                                    .frame(height: 50)
+                                    .shadow(color: .black.opacity(0.1), radius: 5)
+                                
+                                if isLoading {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .black))
+                                } else {
+                                    Text(isSignUp ? "SET SAIL" : "EMBARK")
+                                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                                        .foregroundColor(.black)
+                                }
+                            }
                         }
-                    }) {
-                        if isLoading {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .black))
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.cyan)
-                                .cornerRadius(16)
-                        } else {
-                            Text(isSignUp ? "CREATE ACCOUNT" : "AUTHENTICATE")
-                                .font(.headline)
-                                .fontWeight(.black)
-                                .foregroundColor(.black)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.cyan)
-                                .cornerRadius(16)
+                        .buttonStyle(.plain)
+                        .disabled(email.isEmpty || password.isEmpty || isLoading)
+                        .opacity((email.isEmpty || password.isEmpty) ? 0.6 : 1.0)
+                        
+                        Button(action: {
+                            withAnimation(.easeInOut) {
+                                isSignUp.toggle()
+                            }
+                        }) {
+                            Text(isSignUp ? "Already a captain? Dock here" : "New to the Yacht Club? Enlist")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 13, weight: .medium, design: .rounded))
                         }
+                        .buttonStyle(.plain)
                     }
-                    .disabled(email.isEmpty || password.isEmpty || isLoading)
-                    .opacity((email.isEmpty || password.isEmpty) ? 0.5 : 1.0)
-                    
-                    Button(action: {
-                        withAnimation {
-                            isSignUp.toggle()
-                        }
-                    }) {
-                        Text(isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up")
-                            .foregroundColor(.cyan)
-                            .font(.callout)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.top, 10)
                     
                     HStack {
-                        VStack { Divider().background(Color.gray) }
+                        VStack { Divider().background(Color.white.opacity(0.3)) }
                         Text("OR")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                        VStack { Divider().background(Color.gray) }
+                            .font(.caption2)
+                            .foregroundColor(.white.opacity(0.5))
+                        VStack { Divider().background(Color.white.opacity(0.3)) }
                     }
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 4)
                     
                     SignInWithAppleButton(
                         .signIn,
@@ -141,10 +175,18 @@ struct LoginView: View {
                         }
                     )
                     .signInWithAppleButtonStyle(.white)
-                    .frame(height: 45)
+                    .frame(height: 50)
                     .cornerRadius(12)
+                    .shadow(color: .black.opacity(0.1), radius: 5)
                 }
-                .padding(.horizontal, 40)
+                .padding(40)
+                .background(.ultraThinMaterial)
+                .cornerRadius(30)
+                .shadow(color: .black.opacity(0.3), radius: 30, x: 0, y: 15)
+                .overlay(RoundedRectangle(cornerRadius: 30).stroke(Color.white.opacity(0.2), lineWidth: 1))
+                .frame(maxWidth: 400)
+                
+                Spacer()
             }
         }
     }

@@ -7,37 +7,39 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1C95B5418D67FB9EE75E1931 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D71A2C2FA25A17C47E7A44 /* LocationManager.swift */; };
-		2C8BA7D651F24EBE11989890 /* TrackerConnectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67CD6AA02F2B5BE3B120C004 /* TrackerConnectionManager.swift */; };
-		5554EAB45FD991797DA9958B /* SupabaseAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9500443F285D77BE47381447 /* SupabaseAuthManager.swift */; };
-		5CA5133C9F035FCE966AC691 /* CountdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68A1933BF6E72C381724E01C /* CountdownView.swift */; };
-		6E709DAC901A1722B940DA61 /* JoinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49E260D58A844987FE11DC74 /* JoinView.swift */; };
-		90A7EAD4DD88791ED136CC2E /* RaceStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB31D4E77D86F6F2322E120A /* RaceStateModel.swift */; };
-		9555B48BC7C98ACAC6950309 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B4D66A288F9D7332088419E /* App.swift */; };
-		9BF8BC8A8AAEEB5E5E82317A /* OfflineBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07E5CB81AA92F1438E5A84B2 /* OfflineBuffer.swift */; };
-		9F9A86CC1E344FCBD7E612E7 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F298DB48CCA513F2560713 /* LoginView.swift */; };
-		C5A64E51CF75ADDB9C566BD9 /* StartLineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1602576B9A1C1595485ADAA4 /* StartLineView.swift */; };
+		3907B03FED8A5C7D6A6FF648 /* LiveStreamManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13C99CBFEFDDFFA90B82DED3 /* LiveStreamManager.swift */; };
+		3DA541DD18818A6145395AA7 /* SupabaseAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60790572F9770E89CC27BE8 /* SupabaseAuthManager.swift */; };
+		3E2D16A907DB6737CA00962F /* UWBNodeBLEClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0200D1C01FE4CBA1FA0CAFE6 /* UWBNodeBLEClient.swift */; };
+		4B43D0630C6B517DAACAE0FC /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 293895574056705FDD2668B2 /* LocationManager.swift */; };
+		60D082FAF48E1131FD3F719F /* StartLineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1292276C971C2BDE9EB29A5 /* StartLineView.swift */; };
+		6D5D110978FE9F38A9C82AA8 /* TrackerConnectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 675EFD6BEA7C20B8740E3BFE /* TrackerConnectionManager.swift */; };
+		9B17D50FD89112C1CEFED2A5 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDA80F5F348CF70FC7E3B9C4 /* LoginView.swift */; };
+		A3440F52258C81AF8F70DA81 /* JoinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3160AEBD964621BEC14C1A1 /* JoinView.swift */; };
+		A9BA7DA70F4EE65D028E039B /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0E54C0291D6333D8F2B1CE5 /* App.swift */; };
+		AB0FB59FAB02DE43749444C8 /* OfflineBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8A940F260343A1DD83DE26B /* OfflineBuffer.swift */; };
+		B890B8BA1BC7AC6241DA5BF2 /* CountdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37C3263F4B669B8B72DBC799 /* CountdownView.swift */; };
 		D1537F373399F958F8BF93A3 /* LiveKit in Frameworks */ = {isa = PBXBuildFile; productRef = 59612CE35C60068A9FF5A40A /* LiveKit */; };
 		E7D9DD40B8F8A79335A53F13 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 20F4AD67AE975BC07336548B /* Supabase */; };
-		FCFDADF78404C6C5690CD6CE /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F772A3509F1E5DAE18F9797 /* HapticManager.swift */; };
-		FDFA2F70BF451E139B148E95 /* GRDB.swift in Frameworks */ = {isa = PBXBuildFile; productRef = A3A797C3F38038C4E6DCDD4C /* GRDB.swift */; };
-		FE294B4221DC106D4B4FC862 /* UWBNodeBLEClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78154548506C43105EE1420B /* UWBNodeBLEClient.swift */; };
+		EC9AA56B331A306E9D6F545C /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 851B9CBF93F27BCE414FE0F5 /* HapticManager.swift */; };
+		EE5F63FC4F2356AAD23441F3 /* RaceStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8D6814919F9BE1BFF81EE09 /* RaceStateModel.swift */; };
+		FDFA2F70BF451E139B148E95 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = A3A797C3F38038C4E6DCDD4C /* GRDB */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		07E5CB81AA92F1438E5A84B2 /* OfflineBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineBuffer.swift; sourceTree = "<group>"; };
-		0B4D66A288F9D7332088419E /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
-		0F772A3509F1E5DAE18F9797 /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
-		1602576B9A1C1595485ADAA4 /* StartLineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartLineView.swift; sourceTree = "<group>"; };
-		49E260D58A844987FE11DC74 /* JoinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoinView.swift; sourceTree = "<group>"; };
+		0200D1C01FE4CBA1FA0CAFE6 /* UWBNodeBLEClient.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UWBNodeBLEClient.swift; sourceTree = "<group>"; };
+		13C99CBFEFDDFFA90B82DED3 /* LiveStreamManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LiveStreamManager.swift; sourceTree = "<group>"; };
+		293895574056705FDD2668B2 /* LocationManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
+		37C3263F4B669B8B72DBC799 /* CountdownView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CountdownView.swift; sourceTree = "<group>"; };
 		4E9D0449303145F2205B198F /* RegattaTracker.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = RegattaTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		67CD6AA02F2B5BE3B120C004 /* TrackerConnectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackerConnectionManager.swift; sourceTree = "<group>"; };
-		68A1933BF6E72C381724E01C /* CountdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountdownView.swift; sourceTree = "<group>"; };
-		78154548506C43105EE1420B /* UWBNodeBLEClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UWBNodeBLEClient.swift; sourceTree = "<group>"; };
-		83D71A2C2FA25A17C47E7A44 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
-		9500443F285D77BE47381447 /* SupabaseAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAuthManager.swift; sourceTree = "<group>"; };
-		A1F298DB48CCA513F2560713 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
-		AB31D4E77D86F6F2322E120A /* RaceStateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaceStateModel.swift; sourceTree = "<group>"; };
+		675EFD6BEA7C20B8740E3BFE /* TrackerConnectionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrackerConnectionManager.swift; sourceTree = "<group>"; };
+		851B9CBF93F27BCE414FE0F5 /* HapticManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
+		A0E54C0291D6333D8F2B1CE5 /* App.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
+		A3160AEBD964621BEC14C1A1 /* JoinView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JoinView.swift; sourceTree = "<group>"; };
+		B1292276C971C2BDE9EB29A5 /* StartLineView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StartLineView.swift; sourceTree = "<group>"; };
+		B60790572F9770E89CC27BE8 /* SupabaseAuthManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SupabaseAuthManager.swift; sourceTree = "<group>"; };
+		B8A940F260343A1DD83DE26B /* OfflineBuffer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OfflineBuffer.swift; sourceTree = "<group>"; };
+		BDA80F5F348CF70FC7E3B9C4 /* LoginView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		D8D6814919F9BE1BFF81EE09 /* RaceStateModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RaceStateModel.swift; sourceTree = "<group>"; };
 		F0DCDBA57044E2970612F6C5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -47,7 +49,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E7D9DD40B8F8A79335A53F13 /* Supabase in Frameworks */,
-				FDFA2F70BF451E139B148E95 /* GRDB.swift in Frameworks */,
+				FDFA2F70BF451E139B148E95 /* GRDB in Frameworks */,
 				D1537F373399F958F8BF93A3 /* LiveKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -66,7 +68,7 @@
 		391A2686A44C723527D34EB3 /* Location */ = {
 			isa = PBXGroup;
 			children = (
-				83D71A2C2FA25A17C47E7A44 /* LocationManager.swift */,
+				293895574056705FDD2668B2 /* LocationManager.swift */,
 			);
 			path = Location;
 			sourceTree = "<group>";
@@ -74,7 +76,7 @@
 		3AC24189E7944203D02CA6AF /* BLE */ = {
 			isa = PBXGroup;
 			children = (
-				78154548506C43105EE1420B /* UWBNodeBLEClient.swift */,
+				0200D1C01FE4CBA1FA0CAFE6 /* UWBNodeBLEClient.swift */,
 			);
 			path = BLE;
 			sourceTree = "<group>";
@@ -82,7 +84,7 @@
 		3CF5B8C019C5A0BED84650F7 /* Haptics */ = {
 			isa = PBXGroup;
 			children = (
-				0F772A3509F1E5DAE18F9797 /* HapticManager.swift */,
+				851B9CBF93F27BCE414FE0F5 /* HapticManager.swift */,
 			);
 			path = Haptics;
 			sourceTree = "<group>";
@@ -90,7 +92,7 @@
 		43972A1EF63E5CD670B61F1C /* Auth */ = {
 			isa = PBXGroup;
 			children = (
-				9500443F285D77BE47381447 /* SupabaseAuthManager.swift */,
+				B60790572F9770E89CC27BE8 /* SupabaseAuthManager.swift */,
 			);
 			path = Auth;
 			sourceTree = "<group>";
@@ -98,10 +100,10 @@
 		5A90C381EAA0B87C0A268095 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				68A1933BF6E72C381724E01C /* CountdownView.swift */,
-				49E260D58A844987FE11DC74 /* JoinView.swift */,
-				A1F298DB48CCA513F2560713 /* LoginView.swift */,
-				1602576B9A1C1595485ADAA4 /* StartLineView.swift */,
+				B1292276C971C2BDE9EB29A5 /* StartLineView.swift */,
+				A3160AEBD964621BEC14C1A1 /* JoinView.swift */,
+				BDA80F5F348CF70FC7E3B9C4 /* LoginView.swift */,
+				37C3263F4B669B8B72DBC799 /* CountdownView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -109,15 +111,23 @@
 		71C0E0655F8D29C584E8C39F /* Connection */ = {
 			isa = PBXGroup;
 			children = (
-				67CD6AA02F2B5BE3B120C004 /* TrackerConnectionManager.swift */,
+				675EFD6BEA7C20B8740E3BFE /* TrackerConnectionManager.swift */,
 			);
 			path = Connection;
+			sourceTree = "<group>";
+		};
+		82B9AA10F041BD73A45265E9 /* Media */ = {
+			isa = PBXGroup;
+			children = (
+				13C99CBFEFDDFFA90B82DED3 /* LiveStreamManager.swift */,
+			);
+			name = Media;
 			sourceTree = "<group>";
 		};
 		8EB872F9118B84B2F59421DA /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				AB31D4E77D86F6F2322E120A /* RaceStateModel.swift */,
+				D8D6814919F9BE1BFF81EE09 /* RaceStateModel.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -125,7 +135,7 @@
 		A82D315E5DD54BEA451C8328 /* Storage */ = {
 			isa = PBXGroup;
 			children = (
-				07E5CB81AA92F1438E5A84B2 /* OfflineBuffer.swift */,
+				B8A940F260343A1DD83DE26B /* OfflineBuffer.swift */,
 			);
 			path = Storage;
 			sourceTree = "<group>";
@@ -133,7 +143,6 @@
 		C713E28343C42B9E23674EC4 /* RegattaTracker */ = {
 			isa = PBXGroup;
 			children = (
-				0B4D66A288F9D7332088419E /* App.swift */,
 				F0DCDBA57044E2970612F6C5 /* Info.plist */,
 				43972A1EF63E5CD670B61F1C /* Auth */,
 				3AC24189E7944203D02CA6AF /* BLE */,
@@ -143,6 +152,8 @@
 				8EB872F9118B84B2F59421DA /* Models */,
 				A82D315E5DD54BEA451C8328 /* Storage */,
 				5A90C381EAA0B87C0A268095 /* Views */,
+				82B9AA10F041BD73A45265E9 /* Media */,
+				A0E54C0291D6333D8F2B1CE5 /* App.swift */,
 			);
 			path = RegattaTracker;
 			sourceTree = "<group>";
@@ -172,7 +183,7 @@
 			name = RegattaTracker;
 			packageProductDependencies = (
 				20F4AD67AE975BC07336548B /* Supabase */,
-				A3A797C3F38038C4E6DCDD4C /* GRDB.swift */,
+				A3A797C3F38038C4E6DCDD4C /* GRDB */,
 				59612CE35C60068A9FF5A40A /* LiveKit */,
 			);
 			productName = RegattaTracker;
@@ -223,18 +234,19 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9555B48BC7C98ACAC6950309 /* App.swift in Sources */,
-				5CA5133C9F035FCE966AC691 /* CountdownView.swift in Sources */,
-				FCFDADF78404C6C5690CD6CE /* HapticManager.swift in Sources */,
-				6E709DAC901A1722B940DA61 /* JoinView.swift in Sources */,
-				1C95B5418D67FB9EE75E1931 /* LocationManager.swift in Sources */,
-				9F9A86CC1E344FCBD7E612E7 /* LoginView.swift in Sources */,
-				9BF8BC8A8AAEEB5E5E82317A /* OfflineBuffer.swift in Sources */,
-				90A7EAD4DD88791ED136CC2E /* RaceStateModel.swift in Sources */,
-				C5A64E51CF75ADDB9C566BD9 /* StartLineView.swift in Sources */,
-				5554EAB45FD991797DA9958B /* SupabaseAuthManager.swift in Sources */,
-				2C8BA7D651F24EBE11989890 /* TrackerConnectionManager.swift in Sources */,
-				FE294B4221DC106D4B4FC862 /* UWBNodeBLEClient.swift in Sources */,
+				EC9AA56B331A306E9D6F545C /* HapticManager.swift in Sources */,
+				3E2D16A907DB6737CA00962F /* UWBNodeBLEClient.swift in Sources */,
+				6D5D110978FE9F38A9C82AA8 /* TrackerConnectionManager.swift in Sources */,
+				3DA541DD18818A6145395AA7 /* SupabaseAuthManager.swift in Sources */,
+				4B43D0630C6B517DAACAE0FC /* LocationManager.swift in Sources */,
+				EE5F63FC4F2356AAD23441F3 /* RaceStateModel.swift in Sources */,
+				AB0FB59FAB02DE43749444C8 /* OfflineBuffer.swift in Sources */,
+				A9BA7DA70F4EE65D028E039B /* App.swift in Sources */,
+				60D082FAF48E1131FD3F719F /* StartLineView.swift in Sources */,
+				A3440F52258C81AF8F70DA81 /* JoinView.swift in Sources */,
+				9B17D50FD89112C1CEFED2A5 /* LoginView.swift in Sources */,
+				B890B8BA1BC7AC6241DA5BF2 /* CountdownView.swift in Sources */,
+				3907B03FED8A5C7D6A6FF648 /* LiveStreamManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -457,10 +469,10 @@
 			package = BF270EB8E85C1D286C25BC3A /* XCRemoteSwiftPackageReference "client-sdk-swift" */;
 			productName = LiveKit;
 		};
-		A3A797C3F38038C4E6DCDD4C /* GRDB.swift */ = {
+		A3A797C3F38038C4E6DCDD4C /* GRDB */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = F4995148CC881755F7262C13 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
-			productName = GRDB.swift;
+			productName = GRDB;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
