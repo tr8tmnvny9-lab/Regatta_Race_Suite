@@ -1,6 +1,7 @@
 import Foundation
 import OSLog
 import Combine
+import CoreLocation
 
 private let log = Logger(subsystem: "com.regatta.pro", category: "RaceEngine")
 
@@ -102,7 +103,7 @@ final class RaceEngineClient: ObservableObject {
                            let lng = dict["lng"] as? Double {
                             activeBoats.append(LiveBoat(
                                 id: nodeId,
-                                position: CGPoint(x: lat, y: lng), // In reality, map converting
+                                position: CLLocationCoordinate2D(latitude: lat, longitude: lng),
                                 speed: (dict["speedKnots"] as? Double) ?? 0,
                                 heading: (dict["course"] as? Double) ?? 0
                             ))

@@ -85,7 +85,7 @@ final class ConnectionManager: ObservableObject {
             for change in changes {
                 switch change {
                 case .added(let result):
-                    log.info("Bonjour: found Regatta Pro service: \(result.endpoint)")
+                    log.info("Bonjour: found Regatta Pro service: \(String(describing: result.endpoint))")
                     self?.evaluateConnectionMode()
                 case .removed:
                     log.info("Bonjour: Regatta Pro service disappeared")

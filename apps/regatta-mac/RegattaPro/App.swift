@@ -61,6 +61,7 @@ struct RootView: View {
     @EnvironmentObject var sidecar: SidecarManager
     @EnvironmentObject var connection: ConnectionManager
     @EnvironmentObject var raceEngine: RaceEngineClient
+    @EnvironmentObject var udpListener: UDPListener
 
     var body: some View {
         Group {

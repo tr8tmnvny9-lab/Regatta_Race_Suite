@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import SwiftUI
+import CoreLocation
 
 // Aligning with standard Apple patterns
 enum RacePhase: String, Codable {
@@ -13,7 +14,7 @@ enum RacePhase: String, Codable {
 // Temporary data structure
 struct LiveBoat: Identifiable {
     let id: String
-    var position: CGPoint // Just plotting arbitrarily for now
+    var position: CLLocationCoordinate2D // Live GPS
     var speed: Double
     var heading: Double
 }

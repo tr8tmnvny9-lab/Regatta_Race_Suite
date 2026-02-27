@@ -3,31 +3,53 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		1161EC24772092E7A280614C /* SupabaseAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11A36B84F1EAF8DD63A6B657 /* SupabaseAuthManager.swift */; };
 		1CFA2E7673F13D2721B5EE8F /* ConnectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B0E45690F3BAC9E2DD60D7E /* ConnectionManager.swift */; };
+		314C71F648290D15D1D3E5AB /* UDPListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = F54AC5A2E4077903417ED9B8 /* UDPListener.swift */; };
+		323C21FB09AE3AA363082271 /* FleetControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE4A132C0441C861C9C6A407 /* FleetControlView.swift */; };
+		388F2D4159A42C3CAB657EB0 /* TacticalMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B322B7EE68A1FD2988DA5CAB /* TacticalMapView.swift */; };
 		408799B8A2C8D4EF02B14C03 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21344C227C553B3BD939C63E /* NotificationManager.swift */; };
 		451F5BE90EB435C150AEC8C1 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13FDB26F5E86ED6D93DDC066 /* ContentView.swift */; };
 		4650159404D5BFA8EB4331D5 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0E7C3850B6A1DA84B0D9662 /* App.swift */; };
+		4F23674A1F5DAFF137C55125 /* RegattaLiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60F058CA277F0ACB5F04F516 /* RegattaLiveView.swift */; };
+		5917E877A34879C6A745C0AF /* ProcedureArchitectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1612EA0FFBC992EB19E9E3F9 /* ProcedureArchitectView.swift */; };
+		59BFE401A2A7CB21FC0D4C34 /* MainLayoutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA70CE04A892A1060CA6CF6 /* MainLayoutView.swift */; };
+		680DBD81184621324E83CBEA /* StartProcedureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D97B6FC66FF7D2A3EC71446 /* StartProcedureView.swift */; };
+		6D28A7A2B841169E602B5210 /* CourseBuilderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B080EC9FE2CB45C1EB2A243 /* CourseBuilderView.swift */; };
 		6EB6361501517DDC2CB67F5D /* SidecarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9A440B7232131E9DDEEA055 /* SidecarManager.swift */; };
 		730BEC7460FC3BCB53C23E51 /* MenuCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 508CD8752E7BD2EF08CDA59F /* MenuCommands.swift */; };
 		9DA4AF7DD8B34F96912BEF3D /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E08B121AF5178AF2EB5ABA50 /* LoginView.swift */; };
 		B10BD8F8E98B3C1FFE411869 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = DA1E0E06077115D9985625BC /* Supabase */; };
+		C670652AD439BEDFB70FB532 /* RaceStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DE01EFD9EEAFF056410441A /* RaceStateModel.swift */; };
+		D6323B821DED94E159F2BFE3 /* RaceEngineClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00D8A9CEAD272B355300A106 /* RaceEngineClient.swift */; };
+		E6DA80A1636F25DA7401F445 /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19817C60ED2157129A4AC45F /* LogView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		00D8A9CEAD272B355300A106 /* RaceEngineClient.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RaceEngineClient.swift; sourceTree = "<group>"; };
 		11A36B84F1EAF8DD63A6B657 /* SupabaseAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAuthManager.swift; sourceTree = "<group>"; };
 		13FDB26F5E86ED6D93DDC066 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		1612EA0FFBC992EB19E9E3F9 /* ProcedureArchitectView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ProcedureArchitectView.swift; path = Views/Main/ProcedureArchitectView.swift; sourceTree = "<group>"; };
+		19817C60ED2157129A4AC45F /* LogView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LogView.swift; path = Views/Main/LogView.swift; sourceTree = "<group>"; };
+		1D97B6FC66FF7D2A3EC71446 /* StartProcedureView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StartProcedureView.swift; path = Views/Main/StartProcedureView.swift; sourceTree = "<group>"; };
 		21344C227C553B3BD939C63E /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		3DE01EFD9EEAFF056410441A /* RaceStateModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RaceStateModel.swift; path = Models/RaceStateModel.swift; sourceTree = "<group>"; };
 		508CD8752E7BD2EF08CDA59F /* MenuCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuCommands.swift; sourceTree = "<group>"; };
+		5FA70CE04A892A1060CA6CF6 /* MainLayoutView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MainLayoutView.swift; path = Views/MainLayoutView.swift; sourceTree = "<group>"; };
+		60F058CA277F0ACB5F04F516 /* RegattaLiveView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RegattaLiveView.swift; path = Views/Main/RegattaLiveView.swift; sourceTree = "<group>"; };
 		7B0E45690F3BAC9E2DD60D7E /* ConnectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionManager.swift; sourceTree = "<group>"; };
+		8B080EC9FE2CB45C1EB2A243 /* CourseBuilderView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CourseBuilderView.swift; path = Views/Main/CourseBuilderView.swift; sourceTree = "<group>"; };
 		B0E7C3850B6A1DA84B0D9662 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
+		B322B7EE68A1FD2988DA5CAB /* TacticalMapView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TacticalMapView.swift; path = Views/Main/TacticalMapView.swift; sourceTree = "<group>"; };
+		BE4A132C0441C861C9C6A407 /* FleetControlView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = FleetControlView.swift; path = Views/Main/FleetControlView.swift; sourceTree = "<group>"; };
 		C41EFC555853177BC0418866 /* RegattaPro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RegattaPro.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E08B121AF5178AF2EB5ABA50 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		E9A440B7232131E9DDEEA055 /* SidecarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidecarManager.swift; sourceTree = "<group>"; };
+		F54AC5A2E4077903417ED9B8 /* UDPListener.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UDPListener.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -53,6 +75,15 @@
 				7FDDB1E384E6D482D0B0DDAF /* Auth */,
 				B6364A1D554856DB3B7EF937 /* Connection */,
 				C711B4057CE505AAFB4EA889 /* Views */,
+				8A4941DBBA8F4D71DBD4D021 /* Models */,
+				5FA70CE04A892A1060CA6CF6 /* MainLayoutView.swift */,
+				60F058CA277F0ACB5F04F516 /* RegattaLiveView.swift */,
+				BE4A132C0441C861C9C6A407 /* FleetControlView.swift */,
+				8B080EC9FE2CB45C1EB2A243 /* CourseBuilderView.swift */,
+				1D97B6FC66FF7D2A3EC71446 /* StartProcedureView.swift */,
+				B322B7EE68A1FD2988DA5CAB /* TacticalMapView.swift */,
+				1612EA0FFBC992EB19E9E3F9 /* ProcedureArchitectView.swift */,
+				19817C60ED2157129A4AC45F /* LogView.swift */,
 			);
 			path = RegattaPro;
 			sourceTree = "<group>";
@@ -73,10 +104,20 @@
 			path = Auth;
 			sourceTree = "<group>";
 		};
+		8A4941DBBA8F4D71DBD4D021 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				3DE01EFD9EEAFF056410441A /* RaceStateModel.swift */,
+			);
+			name = Models;
+			sourceTree = "<group>";
+		};
 		B6364A1D554856DB3B7EF937 /* Connection */ = {
 			isa = PBXGroup;
 			children = (
 				7B0E45690F3BAC9E2DD60D7E /* ConnectionManager.swift */,
+				F54AC5A2E4077903417ED9B8 /* UDPListener.swift */,
+				00D8A9CEAD272B355300A106 /* RaceEngineClient.swift */,
 			);
 			path = Connection;
 			sourceTree = "<group>";
@@ -126,7 +167,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					0396EB4439D6E1500C8A3520 = {
 						DevelopmentTeam = "";
@@ -146,7 +187,7 @@
 			packageReferences = (
 				522D42BC8E78F87B769558ED /* XCRemoteSwiftPackageReference "supabase-swift" */,
 			);
-			preferredProjectObjectVersion = 77;
+			productRefGroup = C8DABA9D9F4061FF0CCB313A /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -168,6 +209,17 @@
 				408799B8A2C8D4EF02B14C03 /* NotificationManager.swift in Sources */,
 				6EB6361501517DDC2CB67F5D /* SidecarManager.swift in Sources */,
 				1161EC24772092E7A280614C /* SupabaseAuthManager.swift in Sources */,
+				314C71F648290D15D1D3E5AB /* UDPListener.swift in Sources */,
+				D6323B821DED94E159F2BFE3 /* RaceEngineClient.swift in Sources */,
+				C670652AD439BEDFB70FB532 /* RaceStateModel.swift in Sources */,
+				59BFE401A2A7CB21FC0D4C34 /* MainLayoutView.swift in Sources */,
+				4F23674A1F5DAFF137C55125 /* RegattaLiveView.swift in Sources */,
+				323C21FB09AE3AA363082271 /* FleetControlView.swift in Sources */,
+				6D28A7A2B841169E602B5210 /* CourseBuilderView.swift in Sources */,
+				680DBD81184621324E83CBEA /* StartProcedureView.swift in Sources */,
+				388F2D4159A42C3CAB657EB0 /* TacticalMapView.swift in Sources */,
+				5917E877A34879C6A745C0AF /* ProcedureArchitectView.swift in Sources */,
+				E6DA80A1636F25DA7401F445 /* LogView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -180,8 +232,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -198,8 +252,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -244,9 +300,11 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -266,6 +324,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -306,9 +365,11 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -321,6 +382,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;

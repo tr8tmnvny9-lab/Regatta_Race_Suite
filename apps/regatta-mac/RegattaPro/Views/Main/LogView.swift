@@ -77,7 +77,7 @@ struct LogView: View {
                     }
                 }
             }
-            .onChange(of: sortOrder) { newOrder in
+            .onChange(of: sortOrder) { oldOrder, newOrder in
                 logs.sort(using: newOrder)
             }
             .contextMenu(forSelectionType: LogEntry.ID.self) { items in

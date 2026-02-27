@@ -62,7 +62,7 @@ struct ConnectionStatusBar: View {
                 Image(systemName: "exclamationmark.triangle.fill")
                 Text("No connection — data may be stale")
                 Spacer()
-                Button("Retry") { Task { await connection.evaluateConnectionModePublic() } }
+                Button("Retry") { connection.start() }
                     .buttonStyle(.borderless)
             }
             .padding(.horizontal, 12)
