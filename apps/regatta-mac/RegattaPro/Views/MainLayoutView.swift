@@ -62,9 +62,7 @@ struct MainLayoutView: View {
                         .font(.largeTitle)
                         .foregroundStyle(.secondary)
                 case .regattaLive:
-                    Text("Mac Native: \(selectedSection.rawValue) coming soon")
-                        .font(.largeTitle)
-                        .foregroundStyle(.secondary)
+                    RegattaLiveView()
                 }
             } else {
                 Text("Select a section from the sidebar")
