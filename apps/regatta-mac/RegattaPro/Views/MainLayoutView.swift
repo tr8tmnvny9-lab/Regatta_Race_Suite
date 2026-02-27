@@ -48,9 +48,7 @@ struct MainLayoutView: View {
                 case .overview:
                     TacticalMapView()
                 case .log:
-                    Text("Mac Native: \(selectedSection.rawValue) coming soon")
-                        .font(.largeTitle)
-                        .foregroundStyle(.secondary)
+                    LogView()
                 case .startProcedure:
                     Text("Mac Native: \(selectedSection.rawValue) coming soon")
                         .font(.largeTitle)
