@@ -21,6 +21,8 @@ final class RaceStateModel: ObservableObject {
 
     // ── Fleet ─────────────────────────────────────────────────────────────────
     @Published var assignedBoatNumber: String = ""
+    @Published var assignedTeamName: String? 
+    @Published var isLeagueMode: Bool = false
     @Published var sessionId: String?
 
     var cancellables = Set<AnyCancellable>()
@@ -36,6 +38,38 @@ final class RaceStateModel: ObservableObject {
         if let seqInfo = json["currentSequence"] as? [String: Any],
            let flags = seqInfo["flags"] as? [String] {
             activeFlags = flags
+        }
+        
+        // Fleet parsing for League formats
+        if let fleetSettings = json["fleetSettings"] as? [String: Any],
+           let mode = fleetSettings["mode"] as? String {
+            isLeagueMode = (mode == "LEAGUE")
+        } else {
+            isLeagueMode = false
+        }
+        
+        if isLeagueMode {
+            var currentTeam: String? = nil
+            if let activeFlightId = json["activeFlightId"] as? String,
+               let pairings = json["pairings"] as? [[String: Any]],
+               let teams = json["teams"] as? [String: Any] {
+                
+                // Find pairing for this boat in the active flight
+                if let pairing = pairings.first(where: { 
+                    ($0["flightId"] as? String) == activeFlightId &&
+                    ($0["boatId"] as? String) == assignedBoatNumber
+                }), let teamId = pairing["teamId"] as? String {
+                    
+                    // Lookup team name
+                    if let teamMap = teams[teamId] as? [String: Any],
+                       let teamName = teamMap["name"] as? String {
+                        currentTeam = teamName
+                    }
+                }
+            }
+            assignedTeamName = currentTeam
+        } else {
+            assignedTeamName = nil
         }
     }
 }

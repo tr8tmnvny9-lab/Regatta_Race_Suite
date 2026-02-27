@@ -27,31 +27,49 @@ struct StartLineView: View {
                 
                 Spacer()
                 
-                // DTL HUD (Distance To Line)
+                // DTL HUD (Distance To Line) or Team Assignment
                 VStack(spacing: 12) {
-                    Text("DISTANCE TO LINE")
-                        .font(.caption)
-                        .fontWeight(.black)
-                        .foregroundColor(.gray)
-                        .tracking(2)
-                    
-                    if let dtl = bleClient.dtlCm {
-                        HStack(alignment: .lastTextBaseline, spacing: 4) {
-                            Text(dtl > 0 ? "+" : "")
-                                .font(.system(size: 60, weight: .black, design: .monospaced))
-                                .foregroundColor(dtl > 10 ? .red : .white)
-                            Text(String(format: "%.1f", dtl))
-                                .font(.system(size: 100, weight: .black, design: .monospaced))
-                                .foregroundColor(dtl > 10 ? .red : .white)
-                            Text("cm")
-                                .font(.title)
-                                .fontWeight(.bold)
-                                .foregroundColor(dtl > 10 ? .red : .white)
-                        }
-                    } else {
-                        Text("---")
-                            .font(.system(size: 100, weight: .black, design: .monospaced))
+                    if race.currentPhase == .idle && race.isLeagueMode, let teamName = race.assignedTeamName {
+                        // Idle Mode: Show Assigned Team
+                        Text("TEAM ASSIGNMENT")
+                            .font(.caption)
+                            .fontWeight(.black)
                             .foregroundColor(.gray)
+                            .tracking(2)
+                        
+                        Text(teamName)
+                            .font(.system(size: 64, weight: .black, design: .rounded))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.5)
+                            .padding(.horizontal)
+                    } else {
+                        // Active Racing: Show DTL
+                        Text("DISTANCE TO LINE")
+                            .font(.caption)
+                            .fontWeight(.black)
+                            .foregroundColor(.gray)
+                            .tracking(2)
+                        
+                        if let dtl = bleClient.dtlCm {
+                            HStack(alignment: .lastTextBaseline, spacing: 4) {
+                                Text(dtl > 0 ? "+" : "")
+                                    .font(.system(size: 60, weight: .black, design: .monospaced))
+                                    .foregroundColor(dtl > 10 ? .red : .white)
+                                Text(String(format: "%.1f", dtl))
+                                    .font(.system(size: 100, weight: .black, design: .monospaced))
+                                    .foregroundColor(dtl > 10 ? .red : .white)
+                                Text("cm")
+                                    .font(.title)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(dtl > 10 ? .red : .white)
+                            }
+                        } else {
+                            Text("---")
+                                .font(.system(size: 100, weight: .black, design: .monospaced))
+                                .foregroundColor(.gray)
+                        }
                     }
                 }
                 
