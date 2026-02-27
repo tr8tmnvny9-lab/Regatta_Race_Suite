@@ -14,7 +14,9 @@ class TrackerConnectionManager: ObservableObject {
     private var pingTimer: Timer?
     private var telemetryTimer: Timer?
     
+    
     var authManager: SupabaseAuthManager? // Injected from root
+    var liveStreamManager: LiveStreamManager? // For WebRTC Control
     private var location: LocationManager?
     private var ble: UWBNodeBLEClient?
     
@@ -217,8 +219,22 @@ class TrackerConnectionManager: ObservableObject {
             }
         }
         else if text.hasPrefix("42") {
-            // Handle incoming events (e.g., init-state, sequence-update)
-            // Parse JSON array after the "42" prefix
+            let jsonString = String(text.dropFirst(2))
+            if let data = jsonString.data(using: .utf8),
+               let array = try? JSONSerialization.jsonObject(with: data) as? [Any],
+               let eventName = array.first as? String {
+                
+                if eventName == "focus_boats_changed" {
+                    if let focusData = array.last as? [String: Any],
+                       let focusBoats = focusData["focus_boats"] as? [String] {
+                        
+                        // If this device's auth id isn't in the focus list, pause high-res
+                        // We mock our identity as "boat-1" for development
+                        let isFocused = focusBoats.contains("boat-1") 
+                        self.liveStreamManager?.setBandwidthThrottling(pauseHighRes: !isFocused)
+                    }
+                }
+            }
         }
     }
     

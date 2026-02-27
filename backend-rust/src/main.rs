@@ -7,6 +7,7 @@ mod flight_engine;
 mod audit;
 mod uwb_hub;
 mod trilateration;
+mod auto_director;
 
 use std::collections::HashSet;
 use std::sync::Arc;
@@ -29,6 +30,7 @@ use persistence::load_state;
 use procedure_engine::{ProcedureEngine, TickResult};
 use state::{RaceStatus, SequenceInfo};
 use uwb_hub::{start_uwb_hub, UwbHubConfig};
+use auto_director::start_auto_director;
 
 // ─── Global startup time (for uptime reporting) ──────────────────────────────
 static STARTUP_MS: AtomicU64 = AtomicU64::new(0);
@@ -201,6 +203,9 @@ async fn main() {
 
     // Start engine tick loop
     tokio::spawn(run_engine_tick(engine.clone(), shared.clone(), io.clone()));
+
+    // Start Auto-Director (SRS) loop
+    tokio::spawn(start_auto_director(shared.clone(), io.clone()));
 
     // CORS — local dev: http://localhost:3000; cloud: set CORS_ORIGINS=*
     // Fly.io env sets CORS_ORIGINS=* so native Mac apps, iOS apps, and

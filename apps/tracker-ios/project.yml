@@ -8,6 +8,9 @@ packages:
   GRDB.swift:
     url: https://github.com/groue/GRDB.swift
     from: 6.20.0
+  LiveKit:
+    url: https://github.com/livekit/client-sdk-swift.git
+    from: 2.0.0
 targets:
   RegattaTracker:
     type: application
@@ -17,6 +20,7 @@ targets:
     dependencies:
       - package: Supabase
       - package: GRDB.swift
+      - package: LiveKit
     settings:
       CODE_SIGN_IDENTITY: "-"
       DEVELOPMENT_TEAM: ""

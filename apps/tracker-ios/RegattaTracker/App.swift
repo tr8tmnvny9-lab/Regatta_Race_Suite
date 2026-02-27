@@ -20,6 +20,7 @@ struct RegattaTrackerApp: App {
     @StateObject private var location   = LocationManager()
     @StateObject private var race       = RaceStateModel()
     @StateObject private var haptics    = HapticManager()
+    @StateObject private var liveStream = LiveStreamManager()
 
     var body: some Scene {
         WindowGroup {
@@ -30,11 +31,15 @@ struct RegattaTrackerApp: App {
                 .environmentObject(location)
                 .environmentObject(race)
                 .environmentObject(haptics)
+                .environmentObject(liveStream)
                 .preferredColorScheme(.dark)
                 .onAppear {
+                    connection.liveStreamManager = liveStream
                     connection.start(location: location, ble: bleClient)
                     bleClient.start()
                     location.start()
+                    // Mock joining the WebRTC Room when app opens
+                    liveStream.connect(token: "mock-ios-token")
                 }
         }
     }

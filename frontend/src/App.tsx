@@ -19,7 +19,7 @@ import L from 'leaflet'
 
 import TrackerMock from './TrackerMock'
 import JuryApp from './JuryApp'
-import MediaHub from './MediaHub'
+import MediaSuite from './MediaSuite'
 import StartingTimeline from './components/StartingTimeline'
 import ErrorBoundary from './components/ErrorBoundary'
 import ProcedureEditor from './components/ProcedureEditor'
@@ -545,7 +545,7 @@ export default function App() {
     if (!engine || !raceState) return <div className="min-h-screen bg-[#050507] flex items-center justify-center"><div className="w-12 h-12 border-4 border-accent-blue border-t-transparent flex items-center justify-center rounded-full animate-spin" /></div>;
 
     if (view === 'jury') return <JuryApp socket={engine.socket} raceState={raceState} />;
-    if (view === 'media') return <MediaHub socket={engine.socket} raceState={raceState} />;
+    if (view === 'media') return <MediaSuite socket={engine.socket} raceState={raceState} onHome={() => setView('management')} />;
     return (
         <div className={`flex h-screen w-screen bg-regatta-dark text-white overflow-hidden selection:bg-accent-blue/30 transition-colors duration-700 ${isDaylight ? 'daylight-theme' : ''}`}>
 
