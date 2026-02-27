@@ -58,9 +58,7 @@ struct MainLayoutView: View {
                 case .courseBuilder:
                     CourseBuilderView()
                 case .fleetControl:
-                    Text("Mac Native: \(selectedSection.rawValue) coming soon")
-                        .font(.largeTitle)
-                        .foregroundStyle(.secondary)
+                    FleetControlView()
                 case .settings:
                     Text("Mac Native: \(selectedSection.rawValue) coming soon")
                         .font(.largeTitle)
