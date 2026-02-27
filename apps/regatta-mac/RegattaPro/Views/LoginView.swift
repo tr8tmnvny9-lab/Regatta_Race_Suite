@@ -1,10 +1,14 @@
 import SwiftUI
+import AuthenticationServices
+import CryptoKit
 
 struct LoginView: View {
     @EnvironmentObject var authManager: SupabaseAuthManager
     @State private var email = ""
     @State private var password = ""
     @State private var isLoading = false
+    @State private var isSignUp = false
+    @State private var currentNonce: String?
     
     var body: some View {
         ZStack {
@@ -19,7 +23,7 @@ struct LoginView: View {
                     .shadow(color: .cyan.opacity(0.5), radius: 20)
                 
                 VStack(spacing: 8) {
-                    Text("Secure Login")
+                    Text(isSignUp ? "Create Account" : "Secure Login")
                         .font(.largeTitle)
                         .fontWeight(.black)
                         .foregroundColor(.white)
@@ -51,7 +55,15 @@ struct LoginView: View {
                     Button(action: {
                         Task {
                             isLoading = true
-                            await authManager.signIn(email: email, password: password)
+                            if isSignUp {
+                                let success = await authManager.signUp(email: email, password: password)
+                                if success {
+                                    // Explicitly sign in after sign up to obtain session if unconfirmed
+                                    let _ = await authManager.signIn(email: email, password: password)
+                                }
+                            } else {
+                                let _ = await authManager.signIn(email: email, password: password)
+                            }
                             isLoading = false
                         }
                     }) {
@@ -63,7 +75,7 @@ struct LoginView: View {
                                 .background(Color.cyan)
                                 .cornerRadius(16)
                         } else {
-                            Text("AUTHENTICATE")
+                            Text(isSignUp ? "CREATE ACCOUNT" : "AUTHENTICATE")
                                 .font(.headline)
                                 .fontWeight(.black)
                                 .foregroundColor(.black)
@@ -75,9 +87,98 @@ struct LoginView: View {
                     }
                     .disabled(email.isEmpty || password.isEmpty || isLoading)
                     .opacity((email.isEmpty || password.isEmpty) ? 0.5 : 1.0)
+                    
+                    Button(action: {
+                        withAnimation {
+                            isSignUp.toggle()
+                        }
+                    }) {
+                        Text(isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up")
+                            .foregroundColor(.cyan)
+                            .font(.callout)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 10)
+                    
+                    HStack {
+                        VStack { Divider().background(Color.gray) }
+                        Text("OR")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                        VStack { Divider().background(Color.gray) }
+                    }
+                    .padding(.vertical, 8)
+                    
+                    SignInWithAppleButton(
+                        .signIn,
+                        onRequest: { request in
+                            let nonce = randomNonceString()
+                            currentNonce = nonce
+                            request.requestedScopes = [.fullName, .email]
+                            request.nonce = sha256(nonce)
+                        },
+                        onCompletion: { result in
+                            switch result {
+                            case .success(let authResults):
+                                switch authResults.credential {
+                                case let appleIDCredential as ASAuthorizationAppleIDCredential:
+                                    guard let nonce = currentNonce,
+                                          let appleIDToken = appleIDCredential.identityToken,
+                                          let idTokenString = String(data: appleIDToken, encoding: .utf8) else {
+                                        print("Error generating token pieces from Apple ASAuthorization")
+                                        return
+                                    }
+                                    Task {
+                                        isLoading = true
+                                        let _ = await authManager.signInWithApple(idToken: idTokenString, nonce: nonce)
+                                        isLoading = false
+                                    }
+                                default:
+                                    break
+                                }
+                            case .failure(let error):
+                                print("Apple Sign In error: \(error.localizedDescription)")
+                            }
+                        }
+                    )
+                    .signInWithAppleButtonStyle(.white)
+                    .frame(height: 45)
+                    .cornerRadius(12)
                 }
                 .padding(.horizontal, 40)
             }
         }
+    }
+    
+    // --- Cryptography Helpers for Apple Sign In Nonce ---
+    private func randomNonceString(length: Int = 32) -> String {
+        precondition(length > 0)
+        let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
+        var result = ""
+        var remainingLength = length
+
+        while remainingLength > 0 {
+            let randoms: [UInt8] = (0 ..< 16).map { _ in
+                var random: UInt8 = 0
+                let errorCode = SecRandomCopyBytes(kSecRandomDefault, 1, &random)
+                if errorCode != errSecSuccess { fatalError("Unable to generate nonce") }
+                return random
+            }
+
+            randoms.forEach { random in
+                if remainingLength == 0 { return }
+                if random < charset.count {
+                    result.append(charset[Int(random)])
+                    remainingLength -= 1
+                }
+            }
+        }
+        return result
+    }
+
+    private func sha256(_ input: String) -> String {
+        let inputData = Data(input.utf8)
+        let hashedData = SHA256.hash(data: inputData)
+        return hashedData.compactMap { String(format: "%02x", $0) }.joined()
     }
 }
