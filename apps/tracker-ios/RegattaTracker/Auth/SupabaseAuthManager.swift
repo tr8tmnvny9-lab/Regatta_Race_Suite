@@ -45,6 +45,30 @@ class SupabaseAuthManager: ObservableObject {
         }
     }
 
+    func signUp(email: String, password: String) async -> Bool {
+        do {
+            let _ = try await supabase.auth.signUp(email: email, password: password)
+            self.authError = nil
+            return true
+        } catch {
+            self.authError = "Sign Up Failed: \(error.localizedDescription)"
+            return false
+        }
+    }
+
+    func signInWithApple(idToken: String, nonce: String) async -> Bool {
+        do {
+            let _ = try await supabase.auth.signInWithIdToken(
+                credentials: .init(provider: .apple, idToken: idToken, nonce: nonce)
+            )
+            self.authError = nil
+            return true
+        } catch {
+            self.authError = "Apple Sign In Failed: \(error.localizedDescription)"
+            return false
+        }
+    }
+
     func signOut() async {
         do {
             try await supabase.auth.signOut()

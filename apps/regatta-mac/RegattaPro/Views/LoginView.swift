@@ -58,8 +58,7 @@ struct LoginView: View {
                             if isSignUp {
                                 let success = await authManager.signUp(email: email, password: password)
                                 if success {
-                                    // Explicitly sign in after sign up to obtain session if unconfirmed
-                                    let _ = await authManager.signIn(email: email, password: password)
+                                    authManager.authError = "Account created! Please check your email to verify your account."
                                 }
                             } else {
                                 let _ = await authManager.signIn(email: email, password: password)
