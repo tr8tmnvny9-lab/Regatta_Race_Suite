@@ -14,6 +14,18 @@ struct BufferedPosition: Codable, FetchableRecord, PersistableRecord, Equatable 
     var isUWB: Bool
     var dtlCm: Double?
     
+    init(id: Int64? = nil, sessionId: String, timestamp: Date, latitude: Double, longitude: Double, course: Double, speed: Double, isUWB: Bool, dtlCm: Double? = nil) {
+        self.id = id
+        self.sessionId = sessionId
+        self.timestamp = timestamp
+        self.latitude = latitude
+        self.longitude = longitude
+        self.course = course
+        self.speed = speed
+        self.isUWB = isUWB
+        self.dtlCm = dtlCm
+    }
+    
     // Auto-incrementing ID
     mutating func didInsert(with rowID: Int64, for column: String?) {
         id = rowID

@@ -37,7 +37,7 @@ class FailsafeManager: ObservableObject {
     }
     
     func stopRecording() {
-        logFileHandle?.closeFile()
+        try? logFileHandle?.close()
         logFileHandle = nil
         isRecordingLocal = false
         print("Failsafe: Stopped local recording")
@@ -53,7 +53,7 @@ class FailsafeManager: ObservableObject {
            let jsonString = String(data: data, encoding: .utf8) {
             let line = jsonString + "\n"
             if let lineData = line.data(using: .utf8) {
-                handle.write(lineData)
+                try? handle.write(contentsOf: lineData)
             }
         }
     }

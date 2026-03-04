@@ -23,6 +23,13 @@ targets:
         product: GRDB
       - package: LiveKit
         product: LiveKit
+      - sdk: CoreLocation.framework
+      - sdk: CoreMotion.framework
+      - sdk: AVFoundation.framework
+      - sdk: AuthenticationServices.framework
+      - sdk: CryptoKit.framework
+      - sdk: CoreHaptics.framework
+      - sdk: Network.framework
     settings:
       CODE_SIGN_IDENTITY: "-"
       DEVELOPMENT_TEAM: ""

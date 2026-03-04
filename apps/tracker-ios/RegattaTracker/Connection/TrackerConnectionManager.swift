@@ -1,5 +1,7 @@
 import Foundation
 import Network
+import UIKit
+import CoreMotion
 import Combine
 
 class TrackerConnectionManager: ObservableObject {

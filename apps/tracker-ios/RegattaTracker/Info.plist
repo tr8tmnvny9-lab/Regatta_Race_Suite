@@ -20,6 +20,12 @@
 	<string>1</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>RegattaTracker uses Bluetooth to connect to UWB hardware nodes.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>RegattaTracker uses the camera for live streaming race footage.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>RegattaTracker uses the microphone for live streaming race audio.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>RegattaTracker uses motion data for raw gyro and accelerometer telemetry.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>RegattaTracker uses your location to provide high-frequency telemetry to the race committee.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
@@ -28,6 +34,8 @@
 	<array>
 		<string>location</string>
 		<string>bluetooth-central</string>
+		<string>audio</string>
+		<string>voip</string>
 	</array>
 	<key>UILaunchScreen</key>
 	<dict/>

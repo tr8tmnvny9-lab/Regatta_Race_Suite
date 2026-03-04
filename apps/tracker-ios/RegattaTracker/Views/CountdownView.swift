@@ -10,16 +10,6 @@
 
 import SwiftUI
 
-enum RacePhase: String {
-    case idle       = "IDLE"
-    case warming    = "WARNING"
-    case prep       = "PREP"
-    case oneMinute  = "ONE_MINUTE"
-    case racing     = "RACING"
-    case postponed  = "POSTPONED"
-    case abandoned  = "ABANDONED"
-}
-
 struct CountdownView: View {
     let timeRemaining: Double  // seconds
     let phase: RacePhase
