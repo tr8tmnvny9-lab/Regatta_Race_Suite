@@ -114,26 +114,30 @@ class TrackerConnectionManager: ObservableObject {
         // Mock non-zero values if standing still, for Regatta visualization testing
         if lat == 0 { lat = 59.3293; lon = 18.0686 }
         
-        let payloadDict: [String: Any] = [
+        let motionDict: [String: Any] = [
+            "accel": ["x": accel?.x ?? 0, "y": accel?.y ?? 0, "z": accel?.z ?? 0],
+            "gyro": ["x": gyro?.x ?? 0, "y": gyro?.y ?? 0, "z": gyro?.z ?? 0],
+            "mag": ["x": mag?.x ?? 0, "y": mag?.y ?? 0, "z": mag?.z ?? 0],
+            "relAlt": relAlt
+        ]
+        
+        let deviceDict: [String: Any] = [
+            "battery": battery,
+            "thermal": thermal.rawValue,
+            "ts": Date().timeIntervalSince1970
+        ]
+        
+        var payloadDict: [String: Any] = [
             "lat": lat,
             "lng": lon,
             "alt": alt,
             "course": course,
             "speedKnots": speed,
             "isUwb": isUWB,
-            "dtlCm": dtl as Any,
-            "motion": [
-                "accel": ["x": accel?.x ?? 0, "y": accel?.y ?? 0, "z": accel?.z ?? 0],
-                "gyro": ["x": gyro?.x ?? 0, "y": gyro?.y ?? 0, "z": gyro?.z ?? 0],
-                "mag": ["x": mag?.x ?? 0, "y": mag?.y ?? 0, "z": mag?.z ?? 0],
-                "relAlt": relAlt
-            ],
-            "device": [
-                "battery": battery,
-                "thermal": thermal.rawValue,
-                "ts": Date().timeIntervalSince1970
-            ]
+            "dtlCm": dtl as Any
         ]
+        payloadDict["motion"] = motionDict
+        payloadDict["device"] = deviceDict
         
         if isConnected {
             // Live Push

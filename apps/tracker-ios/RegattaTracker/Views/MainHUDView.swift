@@ -74,9 +74,6 @@ struct MainHUDView: View {
                 .padding(.top, 44)
                 .frame(maxWidth: .infinity)
                 .frame(height: 90)
-                .background(
-                    LinearGradient(colors: [.black.opacity(0.4), .clear], startPoint: .top, endPoint: .bottom)
-                )
                 
                 Spacer()
                 
@@ -213,7 +210,7 @@ struct MainHUDView: View {
                     .trueLiquidGlass(cornerRadius: 24)
                 }
                 .padding(.horizontal, 20)
-                .padding(.bottom, 24)
+                .padding(.bottom, 34) // Adjust for Home Indicator
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

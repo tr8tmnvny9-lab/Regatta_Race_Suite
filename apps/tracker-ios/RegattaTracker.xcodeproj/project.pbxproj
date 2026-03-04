@@ -7,24 +7,34 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		012AB2F11AA42678BCC749A5 /* RacePhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3B120C4BCA27690F73DF06C /* RacePhase.swift */; };
 		1C95B5418D67FB9EE75E1931 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D71A2C2FA25A17C47E7A44 /* LocationManager.swift */; };
 		2BCC441472BC27F007B03617 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DC7083DEB2F26F49759C5C /* WelcomeView.swift */; };
 		2C8BA7D651F24EBE11989890 /* TrackerConnectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67CD6AA02F2B5BE3B120C004 /* TrackerConnectionManager.swift */; };
 		2F2E1B2E9C92992DB5975E25 /* ConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD96D2A8833FCA2614285D83 /* ConfigurationView.swift */; };
+		30ABAE196F808BCDB533AA6C /* FailsafeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0605CD6A7EF7476AD1ADB54 /* FailsafeManager.swift */; };
 		42E12E81FA9AAFDD17E9A580 /* SettingsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB45313BA789CB9F357A23B5 /* SettingsSheet.swift */; };
 		4D716A9EC2BF5433F5F74FE0 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = E47A823FC0E1B75083C5E747 /* DesignTokens.swift */; };
 		5554EAB45FD991797DA9958B /* SupabaseAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9500443F285D77BE47381447 /* SupabaseAuthManager.swift */; };
 		595987505CCA24B15997156D /* MainHUDView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8C2C8B57F8154048455FEA4 /* MainHUDView.swift */; };
 		5CA5133C9F035FCE966AC691 /* CountdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68A1933BF6E72C381724E01C /* CountdownView.swift */; };
+		5E201CAF9C3822E52FCB2211 /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A87AE671E2E9FDDAD79D7C01 /* CoreMotion.framework */; };
+		604AEBFB5A688564631F1CDC /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4415AC5BA2BD86998A1C5163 /* AVFoundation.framework */; };
 		6E709DAC901A1722B940DA61 /* JoinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49E260D58A844987FE11DC74 /* JoinView.swift */; };
+		7D9E622EE836548A6641E26B /* MotionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A04454AC9197A5252BCBA2F /* MotionManager.swift */; };
+		86FF1BBA625B7C567BC8B29B /* CryptoKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2237607B6CDF36438DDF2753 /* CryptoKit.framework */; };
 		90A7EAD4DD88791ED136CC2E /* RaceStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB31D4E77D86F6F2322E120A /* RaceStateModel.swift */; };
 		9555B48BC7C98ACAC6950309 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B4D66A288F9D7332088419E /* App.swift */; };
 		9BF8BC8A8AAEEB5E5E82317A /* OfflineBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07E5CB81AA92F1438E5A84B2 /* OfflineBuffer.swift */; };
 		9F9A86CC1E344FCBD7E612E7 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F298DB48CCA513F2560713 /* LoginView.swift */; };
+		A200D1617578A7A58D0D2E8E /* Network.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 431013F9E66D21D8847384A7 /* Network.framework */; };
+		B2A31D501E0B932991695601 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6DB85EBF1DC09278D38A171A /* CoreLocation.framework */; };
+		B45C23E80AB3F1FEA40605F3 /* AuthenticationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A3001805F504CDC34B4B5F46 /* AuthenticationServices.framework */; };
 		C5A64E51CF75ADDB9C566BD9 /* StartLineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1602576B9A1C1595485ADAA4 /* StartLineView.swift */; };
 		D1537F373399F958F8BF93A3 /* LiveKit in Frameworks */ = {isa = PBXBuildFile; productRef = 59612CE35C60068A9FF5A40A /* LiveKit */; };
 		E7D9DD40B8F8A79335A53F13 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 20F4AD67AE975BC07336548B /* Supabase */; };
 		F1C59B2F6123F3F3AE6A9FB0 /* LiveStreamManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31001CAD6FF4A896396C8965 /* LiveStreamManager.swift */; };
+		F4700EA1B11969469CB7176C /* CoreHaptics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 36C3185347A23BA5E454F81D /* CoreHaptics.framework */; };
 		FCFDADF78404C6C5690CD6CE /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F772A3509F1E5DAE18F9797 /* HapticManager.swift */; };
 		FDFA2F70BF451E139B148E95 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = DB7CE095A03E7E306620595A /* GRDB */; };
 		FE294B4221DC106D4B4FC862 /* UWBNodeBLEClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78154548506C43105EE1420B /* UWBNodeBLEClient.swift */; };
@@ -36,18 +46,28 @@
 		0F772A3509F1E5DAE18F9797 /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
 		13DC7083DEB2F26F49759C5C /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
 		1602576B9A1C1595485ADAA4 /* StartLineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartLineView.swift; sourceTree = "<group>"; };
+		2237607B6CDF36438DDF2753 /* CryptoKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CryptoKit.framework; path = System/Library/Frameworks/CryptoKit.framework; sourceTree = SDKROOT; };
 		31001CAD6FF4A896396C8965 /* LiveStreamManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveStreamManager.swift; sourceTree = "<group>"; };
+		36C3185347A23BA5E454F81D /* CoreHaptics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreHaptics.framework; path = System/Library/Frameworks/CoreHaptics.framework; sourceTree = SDKROOT; };
+		431013F9E66D21D8847384A7 /* Network.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Network.framework; path = System/Library/Frameworks/Network.framework; sourceTree = SDKROOT; };
+		4415AC5BA2BD86998A1C5163 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		49E260D58A844987FE11DC74 /* JoinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoinView.swift; sourceTree = "<group>"; };
 		4E9D0449303145F2205B198F /* RegattaTracker.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = RegattaTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		67CD6AA02F2B5BE3B120C004 /* TrackerConnectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackerConnectionManager.swift; sourceTree = "<group>"; };
 		68A1933BF6E72C381724E01C /* CountdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountdownView.swift; sourceTree = "<group>"; };
+		6A04454AC9197A5252BCBA2F /* MotionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionManager.swift; sourceTree = "<group>"; };
+		6DB85EBF1DC09278D38A171A /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
 		78154548506C43105EE1420B /* UWBNodeBLEClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UWBNodeBLEClient.swift; sourceTree = "<group>"; };
 		83D71A2C2FA25A17C47E7A44 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		9500443F285D77BE47381447 /* SupabaseAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAuthManager.swift; sourceTree = "<group>"; };
 		A1F298DB48CCA513F2560713 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		A3001805F504CDC34B4B5F46 /* AuthenticationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AuthenticationServices.framework; path = System/Library/Frameworks/AuthenticationServices.framework; sourceTree = SDKROOT; };
+		A3B120C4BCA27690F73DF06C /* RacePhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RacePhase.swift; sourceTree = "<group>"; };
+		A87AE671E2E9FDDAD79D7C01 /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMotion.framework; path = System/Library/Frameworks/CoreMotion.framework; sourceTree = SDKROOT; };
 		AB31D4E77D86F6F2322E120A /* RaceStateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaceStateModel.swift; sourceTree = "<group>"; };
 		B8C2C8B57F8154048455FEA4 /* MainHUDView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainHUDView.swift; sourceTree = "<group>"; };
 		C770F56BDD96DEB9221CFB22 /* RegattaTracker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RegattaTracker.entitlements; sourceTree = "<group>"; };
+		D0605CD6A7EF7476AD1ADB54 /* FailsafeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FailsafeManager.swift; sourceTree = "<group>"; };
 		E47A823FC0E1B75083C5E747 /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
 		EB45313BA789CB9F357A23B5 /* SettingsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSheet.swift; sourceTree = "<group>"; };
 		F0DCDBA57044E2970612F6C5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -62,6 +82,13 @@
 				E7D9DD40B8F8A79335A53F13 /* Supabase in Frameworks */,
 				FDFA2F70BF451E139B148E95 /* GRDB in Frameworks */,
 				D1537F373399F958F8BF93A3 /* LiveKit in Frameworks */,
+				B2A31D501E0B932991695601 /* CoreLocation.framework in Frameworks */,
+				5E201CAF9C3822E52FCB2211 /* CoreMotion.framework in Frameworks */,
+				604AEBFB5A688564631F1CDC /* AVFoundation.framework in Frameworks */,
+				B45C23E80AB3F1FEA40605F3 /* AuthenticationServices.framework in Frameworks */,
+				86FF1BBA625B7C567BC8B29B /* CryptoKit.framework in Frameworks */,
+				F4700EA1B11969469CB7176C /* CoreHaptics.framework in Frameworks */,
+				A200D1617578A7A58D0D2E8E /* Network.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -74,6 +101,28 @@
 				4E9D0449303145F2205B198F /* RegattaTracker.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		19F782BD03146DC80D28C923 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				A3001805F504CDC34B4B5F46 /* AuthenticationServices.framework */,
+				4415AC5BA2BD86998A1C5163 /* AVFoundation.framework */,
+				36C3185347A23BA5E454F81D /* CoreHaptics.framework */,
+				6DB85EBF1DC09278D38A171A /* CoreLocation.framework */,
+				A87AE671E2E9FDDAD79D7C01 /* CoreMotion.framework */,
+				2237607B6CDF36438DDF2753 /* CryptoKit.framework */,
+				431013F9E66D21D8847384A7 /* Network.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		2D6DBEADB7A94F8C950EA11B /* Failsafe */ = {
+			isa = PBXGroup;
+			children = (
+				D0605CD6A7EF7476AD1ADB54 /* FailsafeManager.swift */,
+			);
+			path = Failsafe;
 			sourceTree = "<group>";
 		};
 		391A2686A44C723527D34EB3 /* Location */ = {
@@ -124,6 +173,14 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
+		5D8A1B44D249CCED2CC8332C /* Motion */ = {
+			isa = PBXGroup;
+			children = (
+				6A04454AC9197A5252BCBA2F /* MotionManager.swift */,
+			);
+			path = Motion;
+			sourceTree = "<group>";
+		};
 		61A02B3D041BD336DCA94031 /* Media */ = {
 			isa = PBXGroup;
 			children = (
@@ -143,6 +200,7 @@
 		8EB872F9118B84B2F59421DA /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				A3B120C4BCA27690F73DF06C /* RacePhase.swift */,
 				AB31D4E77D86F6F2322E120A /* RaceStateModel.swift */,
 			);
 			path = Models;
@@ -165,10 +223,12 @@
 				43972A1EF63E5CD670B61F1C /* Auth */,
 				3AC24189E7944203D02CA6AF /* BLE */,
 				71C0E0655F8D29C584E8C39F /* Connection */,
+				2D6DBEADB7A94F8C950EA11B /* Failsafe */,
 				3CF5B8C019C5A0BED84650F7 /* Haptics */,
 				391A2686A44C723527D34EB3 /* Location */,
 				61A02B3D041BD336DCA94031 /* Media */,
 				8EB872F9118B84B2F59421DA /* Models */,
+				5D8A1B44D249CCED2CC8332C /* Motion */,
 				A82D315E5DD54BEA451C8328 /* Storage */,
 				5A90C381EAA0B87C0A268095 /* Views */,
 			);
@@ -179,6 +239,7 @@
 			isa = PBXGroup;
 			children = (
 				C713E28343C42B9E23674EC4 /* RegattaTracker */,
+				19F782BD03146DC80D28C923 /* Frameworks */,
 				0E9EEAD34F9EF50FEFCA4ABD /* Products */,
 			);
 			sourceTree = "<group>";
@@ -254,13 +315,16 @@
 				2F2E1B2E9C92992DB5975E25 /* ConfigurationView.swift in Sources */,
 				5CA5133C9F035FCE966AC691 /* CountdownView.swift in Sources */,
 				4D716A9EC2BF5433F5F74FE0 /* DesignTokens.swift in Sources */,
+				30ABAE196F808BCDB533AA6C /* FailsafeManager.swift in Sources */,
 				FCFDADF78404C6C5690CD6CE /* HapticManager.swift in Sources */,
 				6E709DAC901A1722B940DA61 /* JoinView.swift in Sources */,
 				F1C59B2F6123F3F3AE6A9FB0 /* LiveStreamManager.swift in Sources */,
 				1C95B5418D67FB9EE75E1931 /* LocationManager.swift in Sources */,
 				9F9A86CC1E344FCBD7E612E7 /* LoginView.swift in Sources */,
 				595987505CCA24B15997156D /* MainHUDView.swift in Sources */,
+				7D9E622EE836548A6641E26B /* MotionManager.swift in Sources */,
 				9BF8BC8A8AAEEB5E5E82317A /* OfflineBuffer.swift in Sources */,
+				012AB2F11AA42678BCC749A5 /* RacePhase.swift in Sources */,
 				90A7EAD4DD88791ED136CC2E /* RaceStateModel.swift in Sources */,
 				42E12E81FA9AAFDD17E9A580 /* SettingsSheet.swift in Sources */,
 				C5A64E51CF75ADDB9C566BD9 /* StartLineView.swift in Sources */,

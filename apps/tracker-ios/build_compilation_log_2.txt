@@ -1,0 +1,480 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project RegattaTracker.xcodeproj -scheme RegattaTracker -destination generic/platform=iOS CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+
+Build settings from command line:
+    CODE_SIGNING_ALLOWED = NO
+    CODE_SIGNING_REQUIRED = NO
+
+Resolve Package Graph
+
+
+Resolved source packages:
+  swift-crypto: https://github.com/apple/swift-crypto.git @ 4.2.0
+  LiveKitUniFFI: https://github.com/livekit/livekit-uniffi-xcframework.git @ 0.0.5
+  LiveKitWebRTC: https://github.com/livekit/webrtc-xcframework.git @ 137.7151.12
+  swift-http-types: https://github.com/apple/swift-http-types.git @ 1.5.1
+  swift-asn1: https://github.com/apple/swift-asn1.git @ 1.5.1
+  SwiftProtobuf: https://github.com/apple/swift-protobuf.git @ 1.35.1
+  LiveKit: https://github.com/livekit/client-sdk-swift.git @ 2.12.1
+  xctest-dynamic-overlay: https://github.com/pointfreeco/xctest-dynamic-overlay @ 1.9.0
+  swift-collections: https://github.com/apple/swift-collections.git @ 1.2.1
+  GRDB: https://github.com/groue/GRDB.swift @ 6.29.3
+  Supabase: https://github.com/supabase/supabase-swift @ 2.41.1
+  swift-concurrency-extras: https://github.com/pointfreeco/swift-concurrency-extras @ 1.3.2
+  swift-clocks: https://github.com/pointfreeco/swift-clocks @ 1.0.6
+
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (42 targets)
+    Target 'RegattaTracker' in project 'RegattaTracker'
+        ➜ Explicit dependency on target 'Supabase' in project 'Supabase'
+        ➜ Explicit dependency on target 'GRDB' in project 'GRDB'
+        ➜ Explicit dependency on target 'LiveKit' in project 'LiveKit'
+    Target 'LiveKit' in project 'LiveKit'
+        ➜ Explicit dependency on target 'LiveKit' in project 'LiveKit'
+        ➜ Explicit dependency on target 'LiveKit_LiveKit' in project 'LiveKit'
+        ➜ Explicit dependency on target 'LKObjCHelpers' in project 'LiveKit'
+        ➜ Explicit dependency on target 'LiveKitWebRTC' in project 'LiveKitWebRTC'
+        ➜ Explicit dependency on target 'LiveKitUniFFI' in project 'LiveKitUniFFI'
+        ➜ Explicit dependency on target 'SwiftProtobuf' in project 'SwiftProtobuf'
+        ➜ Explicit dependency on target 'DequeModule' in project 'swift-collections'
+        ➜ Explicit dependency on target 'OrderedCollections' in project 'swift-collections'
+    Target 'LiveKit' in project 'LiveKit'
+        ➜ Explicit dependency on target 'LiveKit_LiveKit' in project 'LiveKit'
+        ➜ Explicit dependency on target 'LKObjCHelpers' in project 'LiveKit'
+        ➜ Explicit dependency on target 'LiveKitWebRTC' in project 'LiveKitWebRTC'
+        ➜ Explicit dependency on target 'LiveKitUniFFI' in project 'LiveKitUniFFI'
+        ➜ Explicit dependency on target 'SwiftProtobuf' in project 'SwiftProtobuf'
+        ➜ Explicit dependency on target 'DequeModule' in project 'swift-collections'
+        ➜ Explicit dependency on target 'OrderedCollections' in project 'swift-collections'
+    Target 'OrderedCollections' in project 'swift-collections'
+        ➜ Explicit dependency on target 'OrderedCollections' in project 'swift-collections'
+        ➜ Explicit dependency on target 'InternalCollectionsUtilities' in project 'swift-collections'
+    Target 'OrderedCollections' in project 'swift-collections'
+        ➜ Explicit dependency on target 'InternalCollectionsUtilities' in project 'swift-collections'
+    Target 'DequeModule' in project 'swift-collections'
+        ➜ Explicit dependency on target 'DequeModule' in project 'swift-collections'
+        ➜ Explicit dependency on target 'InternalCollectionsUtilities' in project 'swift-collections'
+    Target 'DequeModule' in project 'swift-collections'
+        ➜ Explicit dependency on target 'InternalCollectionsUtilities' in project 'swift-collections'
+    Target 'InternalCollectionsUtilities' in project 'swift-collections' (no dependencies)
+    Target 'SwiftProtobuf' in project 'SwiftProtobuf'
+        ➜ Explicit dependency on target 'SwiftProtobuf' in project 'SwiftProtobuf'
+        ➜ Explicit dependency on target 'SwiftProtobuf_SwiftProtobuf' in project 'SwiftProtobuf'
+    Target 'SwiftProtobuf' in project 'SwiftProtobuf'
+        ➜ Explicit dependency on target 'SwiftProtobuf_SwiftProtobuf' in project 'SwiftProtobuf'
+    Target 'SwiftProtobuf_SwiftProtobuf' in project 'SwiftProtobuf' (no dependencies)
+    Target 'LiveKitUniFFI' in project 'LiveKitUniFFI'
+        ➜ Explicit dependency on target 'LiveKitUniFFI' in project 'LiveKitUniFFI'
+    Target 'LiveKitUniFFI' in project 'LiveKitUniFFI' (no dependencies)
+    Target 'LiveKitWebRTC' in project 'LiveKitWebRTC' (no dependencies)
+    Target 'LKObjCHelpers' in project 'LiveKit' (no dependencies)
+    Target 'LiveKit_LiveKit' in project 'LiveKit' (no dependencies)
+    Target 'GRDB' in project 'GRDB'
+        ➜ Explicit dependency on target 'GRDB' in project 'GRDB'
+        ➜ Explicit dependency on target 'GRDB_GRDB' in project 'GRDB'
+    Target 'GRDB' in project 'GRDB'
+        ➜ Explicit dependency on target 'GRDB_GRDB' in project 'GRDB'
+        ➜ Explicit dependency on target 'CSQLite' in project 'GRDB'
+    Target 'CSQLite' in project 'GRDB' (no dependencies)
+    Target 'GRDB_GRDB' in project 'GRDB' (no dependencies)
+    Target 'Supabase' in project 'Supabase'
+        ➜ Explicit dependency on target 'Supabase' in project 'Supabase'
+        ➜ Explicit dependency on target 'Functions' in project 'Supabase'
+        ➜ Explicit dependency on target 'PostgREST' in project 'Supabase'
+        ➜ Explicit dependency on target 'Auth' in project 'Supabase'
+        ➜ Explicit dependency on target 'Realtime' in project 'Supabase'
+        ➜ Explicit dependency on target 'Storage' in project 'Supabase'
+        ➜ Explicit dependency on target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'Crypto' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+    Target 'Supabase' in project 'Supabase'
+        ➜ Explicit dependency on target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'Auth' in project 'Supabase'
+        ➜ Explicit dependency on target 'Functions' in project 'Supabase'
+        ➜ Explicit dependency on target 'PostgREST' in project 'Supabase'
+        ➜ Explicit dependency on target 'Realtime' in project 'Supabase'
+        ➜ Explicit dependency on target 'Storage' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'Crypto' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+    Target 'Storage' in project 'Supabase'
+        ➜ Explicit dependency on target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+    Target 'Realtime' in project 'Supabase'
+        ➜ Explicit dependency on target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+    Target 'PostgREST' in project 'Supabase'
+        ➜ Explicit dependency on target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+    Target 'Functions' in project 'Supabase'
+        ➜ Explicit dependency on target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+    Target 'Auth' in project 'Supabase'
+        ➜ Explicit dependency on target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'Crypto' in project 'swift-crypto'
+    Target 'Crypto' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'Crypto' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'swift-crypto_Crypto' in project 'swift-crypto'
+    Target 'Crypto' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'swift-crypto_Crypto' in project 'swift-crypto'
+    Target 'swift-crypto_Crypto' in project 'swift-crypto' (no dependencies)
+    Target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+    Target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'IssueReportingPackageSupport' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+    Target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'IssueReportingPackageSupport' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+    Target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+    Target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+    Target 'IssueReporting' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'IssueReportingPackageSupport' in project 'xctest-dynamic-overlay'
+    Target 'IssueReporting' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'IssueReportingPackageSupport' in project 'xctest-dynamic-overlay'
+    Target 'IssueReportingPackageSupport' in project 'xctest-dynamic-overlay' (no dependencies)
+    Target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+    Target 'HTTPTypes' in project 'swift-http-types' (no dependencies)
+    Target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+    Target 'ConcurrencyExtras' in project 'swift-concurrency-extras' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk -x objective-c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+ReadFileContents /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/share/docc/features.json
+
+Build description signature: 0089f8f1a4d082d252f926e7e07647c5
+Build description path: /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/XCBuildData/0089f8f1a4d082d252f926e7e07647c5.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphoneos26.2-23C57-3794476bd08197c3e2abd9bb477ef7f7.sdkstatcache
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk -o /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphoneos26.2-23C57-3794476bd08197c3e2abd9bb477ef7f7.sdkstatcache
+
+ProcessInfoPlistFile /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/LiveKit_LiveKit.bundle/Info.plist /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/LiveKit.build/Debug-iphoneos/LiveKit_LiveKit.build/empty-LiveKit_LiveKit.plist (in target 'LiveKit_LiveKit' from project 'LiveKit')
+    cd /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/SourcePackages/checkouts/client-sdk-swift
+    builtin-infoPlistUtility /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/LiveKit.build/Debug-iphoneos/LiveKit_LiveKit.build/empty-LiveKit_LiveKit.plist -producttype com.apple.product-type.bundle -expandbuildsettings -format binary -platform iphoneos -requiredArchitecture arm64 -o /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/LiveKit_LiveKit.bundle/Info.plist
+
+ProcessInfoPlistFile /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/swift-crypto_Crypto.bundle/Info.plist /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/swift-crypto.build/Debug-iphoneos/swift-crypto_Crypto.build/empty-swift-crypto_Crypto.plist (in target 'swift-crypto_Crypto' from project 'swift-crypto')
+    cd /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/SourcePackages/checkouts/swift-crypto
+    builtin-infoPlistUtility /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/swift-crypto.build/Debug-iphoneos/swift-crypto_Crypto.build/empty-swift-crypto_Crypto.plist -producttype com.apple.product-type.bundle -expandbuildsettings -format binary -platform iphoneos -requiredArchitecture arm64 -o /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/swift-crypto_Crypto.bundle/Info.plist
+
+ProcessInfoPlistFile /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/SwiftProtobuf_SwiftProtobuf.bundle/Info.plist /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/SwiftProtobuf.build/Debug-iphoneos/SwiftProtobuf_SwiftProtobuf.build/empty-SwiftProtobuf_SwiftProtobuf.plist (in target 'SwiftProtobuf_SwiftProtobuf' from project 'SwiftProtobuf')
+    cd /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/SourcePackages/checkouts/swift-protobuf
+    builtin-infoPlistUtility /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/SwiftProtobuf.build/Debug-iphoneos/SwiftProtobuf_SwiftProtobuf.build/empty-SwiftProtobuf_SwiftProtobuf.plist -producttype com.apple.product-type.bundle -expandbuildsettings -format binary -platform iphoneos -requiredArchitecture arm64 -o /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/SwiftProtobuf_SwiftProtobuf.bundle/Info.plist
+
+ProcessInfoPlistFile /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/GRDB_GRDB.bundle/Info.plist /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/GRDB.build/Debug-iphoneos/GRDB_GRDB.build/empty-GRDB_GRDB.plist (in target 'GRDB_GRDB' from project 'GRDB')
+    cd /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/SourcePackages/checkouts/GRDB.swift
+    builtin-infoPlistUtility /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/GRDB.build/Debug-iphoneos/GRDB_GRDB.build/empty-GRDB_GRDB.plist -producttype com.apple.product-type.bundle -expandbuildsettings -format binary -platform iphoneos -requiredArchitecture arm64 -o /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/GRDB_GRDB.bundle/Info.plist
+
+WriteAuxiliaryFile /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker.SwiftFileList (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    write-file /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker.SwiftFileList
+
+WriteAuxiliaryFile /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker.SwiftConstValuesFileList (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    write-file /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker.LinkFileList (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    write-file /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker.LinkFileList
+
+WriteAuxiliaryFile /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker-OutputFileMap.json (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    write-file /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker-OutputFileMap.json
+
+SwiftDriver RegattaTracker normal arm64 com.apple.xcode.tools.swift.compiler (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name RegattaTracker -Onone -enforce-exclusivity\=checked @/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker.SwiftFileList -DDEBUG -Xcc -fmodule-map-file\=/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/SourcePackages/checkouts/GRDB.swift/Sources/CSQLite/module.modulemap -Xcc -fmodule-map-file\=/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/GeneratedModuleMaps-iphoneos/LKObjCHelpers.modulemap -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk -target arm64-apple-ios17.0 -g -module-cache-path /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos -c -j16 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphoneos26.2-23C57-3794476bd08197c3e2abd9bb477ef7f7.sdkstatcache -output-file-map /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker_const_extract_protocols.json -Xcc -iquote -Xcc /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/RegattaTracker-generated-files.hmap -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/RegattaTracker-own-target-headers.hmap -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/RegattaTracker-all-non-framework-target-headers.hmap -Xcc -ivfsoverlay -Xcc /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker-f96533054046fef7c1f4920f652916fe-VFS-iphoneos/all-product-headers.yaml -Xcc -iquote -Xcc /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/RegattaTracker-project-headers.hmap -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/SourcePackages/checkouts/client-sdk-swift/Sources/LKObjCHelpers/include -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/include -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/DerivedSources-normal/arm64 -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/DerivedSources/arm64 -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker-Swift.h -working-directory /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios -experimental-emit-module-separately -disable-cmo
+
+Copy /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.app/SwiftProtobuf_SwiftProtobuf.bundle /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/SwiftProtobuf_SwiftProtobuf.bundle (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/SwiftProtobuf_SwiftProtobuf.bundle /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.app
+
+Copy /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.app/LiveKit_LiveKit.bundle /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/LiveKit_LiveKit.bundle (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/LiveKit_LiveKit.bundle /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.app
+
+Copy /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.app/swift-crypto_Crypto.bundle /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/swift-crypto_Crypto.bundle (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/swift-crypto_Crypto.bundle /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.app
+
+Copy /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.app/GRDB_GRDB.bundle /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/GRDB_GRDB.bundle (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/GRDB_GRDB.bundle /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.app
+
+ProcessInfoPlistFile /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.app/Info.plist /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Info.plist (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    builtin-infoPlistUtility /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Info.plist -producttype com.apple.product-type.application -genpkginfo /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.app/PkgInfo -expandbuildsettings -format binary -platform iphoneos -scanforprivacyfile /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.app/Frameworks/LiveKitWebRTC.framework -scanforprivacyfile /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.app/GRDB_GRDB.bundle -scanforprivacyfile /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.app/LiveKit_LiveKit.bundle -scanforprivacyfile /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.app/SwiftProtobuf_SwiftProtobuf.bundle -scanforprivacyfile /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.app/swift-crypto_Crypto.bundle -requiredArchitecture arm64 -o /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.app/Info.plist
+
+SwiftCompile normal arm64 Compiling\ LocationManager.swift,\ LoginView.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Location/LocationManager.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/LoginView.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftCompile normal arm64 /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Location/LocationManager.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    
+
+SwiftCompile normal arm64 /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/LoginView.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    
+
+SwiftCompile normal arm64 Compiling\ JoinView.swift,\ LiveStreamManager.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/JoinView.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Media/LiveStreamManager.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftCompile normal arm64 /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/JoinView.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    
+
+SwiftCompile normal arm64 /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Media/LiveStreamManager.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    
+/Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Media/LiveStreamManager.swift:25:21: warning: capture of 'self' with non-Sendable type 'LiveStreamManager' in a '@Sendable' closure
+                    self.currentRoom = room
+                    ^
+/Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Media/LiveStreamManager.swift:6:7: note: class 'LiveStreamManager' does not conform to the 'Sendable' protocol
+class LiveStreamManager: ObservableObject {
+      ^
+/Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Media/LiveStreamManager.swift:36:21: warning: capture of 'self' with non-Sendable type 'LiveStreamManager' in a '@Sendable' closure
+                    self.isStreaming = true
+                    ^
+/Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Media/LiveStreamManager.swift:6:7: note: class 'LiveStreamManager' does not conform to the 'Sendable' protocol
+class LiveStreamManager: ObservableObject {
+      ^
+/Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Media/LiveStreamManager.swift:29:35: warning: no calls to throwing functions occur within 'try' expression
+                let cameraTrack = try LocalVideoTrack.createCameraTrack()
+                                  ^
+/Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Media/LiveStreamManager.swift:64:17: warning: capture of 'self' with non-Sendable type 'LiveStreamManager' in a '@Sendable' closure
+                self.isStreaming = false
+                ^
+/Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Media/LiveStreamManager.swift:6:7: note: class 'LiveStreamManager' does not conform to the 'Sendable' protocol
+class LiveStreamManager: ObservableObject {
+      ^
+
+SwiftCompile normal arm64 Compiling\ FailsafeManager.swift,\ HapticManager.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Failsafe/FailsafeManager.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Haptics/HapticManager.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftCompile normal arm64 /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Failsafe/FailsafeManager.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    
+
+SwiftCompile normal arm64 /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Haptics/HapticManager.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    
+
+SwiftCompile normal arm64 Compiling\ App.swift,\ ConfigurationView.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/App.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/ConfigurationView.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftCompile normal arm64 /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/App.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    
+
+SwiftCompile normal arm64 /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/ConfigurationView.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    
+
+SwiftCompile normal arm64 Compiling\ CountdownView.swift,\ DesignTokens.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/CountdownView.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/DesignTokens.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftCompile normal arm64 /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/CountdownView.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    
+
+SwiftCompile normal arm64 /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/DesignTokens.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    
+
+SwiftCompile normal arm64 Compiling\ MainHUDView.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/MainHUDView.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftCompile normal arm64 /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/MainHUDView.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    
+
+SwiftCompile normal arm64 Compiling\ MotionManager.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Motion/MotionManager.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftCompile normal arm64 /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Motion/MotionManager.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    
+
+SwiftCompile normal arm64 Compiling\ OfflineBuffer.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Storage/OfflineBuffer.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftCompile normal arm64 /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Storage/OfflineBuffer.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    
+/Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Storage/OfflineBuffer.swift:74:21: warning: variable 'pos' was never mutated; consider changing to 'let' constant
+                var pos = position
+                ~~~ ^
+                let
+
+SwiftCompile normal arm64 Compiling\ RacePhase.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Models/RacePhase.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftCompile normal arm64 /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Models/RacePhase.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    
+
+SwiftCompile normal arm64 Compiling\ RaceStateModel.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Models/RaceStateModel.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftCompile normal arm64 /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Models/RaceStateModel.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    
+
+SwiftCompile normal arm64 Compiling\ SettingsSheet.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/SettingsSheet.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftCompile normal arm64 /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/SettingsSheet.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    
+
+SwiftCompile normal arm64 Compiling\ SupabaseAuthManager.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Auth/SupabaseAuthManager.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftCompile normal arm64 /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Auth/SupabaseAuthManager.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    
+
+SwiftCompile normal arm64 Compiling\ TrackerConnectionManager.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Connection/TrackerConnectionManager.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+SwiftCompile normal arm64 /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Connection/TrackerConnectionManager.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    
+/Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Connection/TrackerConnectionManager.swift:117:13: error: the compiler is unable to type-check this expression in reasonable time; try breaking up the expression into distinct sub-expressions
+        let payloadDict: [String: Any] = [
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Failed frontend command:
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -c /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/App.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/ConfigurationView.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/CountdownView.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/DesignTokens.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Failsafe/FailsafeManager.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Haptics/HapticManager.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/JoinView.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Media/LiveStreamManager.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Location/LocationManager.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/LoginView.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/MainHUDView.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Motion/MotionManager.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Storage/OfflineBuffer.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Models/RacePhase.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Models/RaceStateModel.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/SettingsSheet.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/StartLineView.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Auth/SupabaseAuthManager.swift -primary-file /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Connection/TrackerConnectionManager.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/BLE/UWBNodeBLEClient.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/WelcomeView.swift -emit-dependencies-path /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/TrackerConnectionManager.d -emit-const-values-path /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/TrackerConnectionManager.swiftconstvalues -emit-reference-dependencies-path /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/TrackerConnectionManager.swiftdeps -serialize-diagnostics-path /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/TrackerConnectionManager.dia -target arm64-apple-ios17.0 -disable-cross-import-overlay-search -swift-module-cross-import AuthenticationServices /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/System/Cryptexes/OS/System/Library/Frameworks/AuthenticationServices.framework/Modules/AuthenticationServices.swiftcrossimport/SwiftUI.swiftoverlay -swift-module-cross-import AuthenticationServices /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk/System/Library/Frameworks/AuthenticationServices.framework/Modules/AuthenticationServices.swiftcrossimport/SwiftUI.swiftoverlay -load-resolved-plugin /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins/libFoundationMacros.dylib\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server\#FoundationMacros -load-resolved-plugin /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins/libObservationMacros.dylib\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server\#ObservationMacros -load-resolved-plugin /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins/libPreviewsMacros.dylib\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server\#PreviewsMacros -load-resolved-plugin /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins/libSwiftMacros.dylib\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server\#SwiftMacros -load-resolved-plugin /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins/libSwiftUIMacros.dylib\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server\#SwiftUIMacros -load-resolved-plugin /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins/libTipKitMacros.dylib\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server\#TipKitMacros -disable-implicit-swift-modules -Xcc -fno-implicit-modules -Xcc -fno-implicit-module-maps -explicit-swift-module-map-file /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker-dependencies-1.json -Xllvm -aarch64-use-tbi -enable-objc-interop -stack-check -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk -I /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos -no-color-diagnostics -Xcc -fno-color-diagnostics -enable-testing -g -debug-info-format\=dwarf -dwarf-version\=4 -module-cache-path /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -swift-version 5 -enforce-exclusivity\=checked -Onone -D DEBUG -serialize-debugging-options -const-gather-protocols-file /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker_const_extract_protocols.json -enable-experimental-feature DebugDescriptionMacro -enable-bare-slash-regex -empty-abi-descriptor -validate-clang-modules-once -clang-build-session-file /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -working-directory -Xcc /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios -enable-anonymous-context-mangled-names -file-compilation-dir /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios -Xcc -fmodule-map-file\=/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/SourcePackages/checkouts/GRDB.swift/Sources/CSQLite/module.modulemap -Xcc -fmodule-map-file\=/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/GeneratedModuleMaps-iphoneos/LKObjCHelpers.modulemap -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -Xcc -ivfsstatcache -Xcc /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphoneos26.2-23C57-3794476bd08197c3e2abd9bb477ef7f7.sdkstatcache -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/swift-overrides.hmap -Xcc -iquote -Xcc /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/RegattaTracker-generated-files.hmap -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/RegattaTracker-own-target-headers.hmap -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/RegattaTracker-all-non-framework-target-headers.hmap -Xcc -ivfsoverlay -Xcc /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker-f96533054046fef7c1f4920f652916fe-VFS-iphoneos/all-product-headers.yaml -Xcc -iquote -Xcc /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/RegattaTracker-project-headers.hmap -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/SourcePackages/checkouts/client-sdk-swift/Sources/LKObjCHelpers/include -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/include -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/DerivedSources-normal/arm64 -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/DerivedSources/arm64 -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/DerivedSources -Xcc -DDEBUG\=1 -no-auto-bridging-header-chaining -module-name RegattaTracker -frontend-parseable-output -disable-clang-spi -target-sdk-version 26.2 -target-sdk-name iphoneos26.2 -clang-target arm64-apple-ios26.2 -in-process-plugin-server-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -o /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/TrackerConnectionManager.o -index-unit-output-path /RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/TrackerConnectionManager.o -index-store-path /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Index.noindex/DataStore -index-system-modules
+SwiftCompile normal arm64 Compiling\ WelcomeView.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/WelcomeView.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftCompile normal arm64 /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/WelcomeView.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ RegattaTracker (in target 'RegattaTracker' from project 'RegattaTracker')
+
+EmitSwiftModule normal arm64 (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    
+
+SwiftCompile normal arm64 Compiling\ UWBNodeBLEClient.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/BLE/UWBNodeBLEClient.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftCompile normal arm64 /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/BLE/UWBNodeBLEClient.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    
+
+SwiftCompile normal arm64 Compiling\ StartLineView.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/StartLineView.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftCompile normal arm64 /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Views/StartLineView.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling RacePhase.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for RegattaTracker (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftDriver\ Compilation\ Requirements RegattaTracker normal arm64 com.apple.xcode.tools.swift.compiler (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name RegattaTracker -Onone -enforce-exclusivity\=checked @/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker.SwiftFileList -DDEBUG -Xcc -fmodule-map-file\=/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/SourcePackages/checkouts/GRDB.swift/Sources/CSQLite/module.modulemap -Xcc -fmodule-map-file\=/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/GeneratedModuleMaps-iphoneos/LKObjCHelpers.modulemap -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk -target arm64-apple-ios17.0 -g -module-cache-path /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/PackageFrameworks -F /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos -c -j16 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphoneos26.2-23C57-3794476bd08197c3e2abd9bb477ef7f7.sdkstatcache -output-file-map /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker_const_extract_protocols.json -Xcc -iquote -Xcc /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/RegattaTracker-generated-files.hmap -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/RegattaTracker-own-target-headers.hmap -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/RegattaTracker-all-non-framework-target-headers.hmap -Xcc -ivfsoverlay -Xcc /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker-f96533054046fef7c1f4920f652916fe-VFS-iphoneos/all-product-headers.yaml -Xcc -iquote -Xcc /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/RegattaTracker-project-headers.hmap -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/SourcePackages/checkouts/client-sdk-swift/Sources/LKObjCHelpers/include -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/include -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/DerivedSources-normal/arm64 -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/DerivedSources/arm64 -Xcc -I/Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker-Swift.h -working-directory /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios -experimental-emit-module-separately -disable-cmo
+
+SwiftMergeGeneratedHeaders /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/DerivedSources/RegattaTracker-Swift.h /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker-Swift.h (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    builtin-swiftHeaderTool -arch arm64 /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker-Swift.h -o /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/DerivedSources/RegattaTracker-Swift.h
+
+Copy /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.swiftmodule/arm64-apple-ios.swiftmodule /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker.swiftmodule (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker.swiftmodule /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.swiftmodule/arm64-apple-ios.swiftmodule
+
+Copy /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.swiftmodule/arm64-apple-ios.swiftdoc /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker.swiftdoc (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker.swiftdoc /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.swiftmodule/arm64-apple-ios.swiftdoc
+
+Copy /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.swiftmodule/arm64-apple-ios.abi.json /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker.abi.json (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker.abi.json /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.swiftmodule/arm64-apple-ios.abi.json
+
+Copy /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.swiftmodule/Project/arm64-apple-ios.swiftsourceinfo /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker.swiftsourceinfo (in target 'RegattaTracker' from project 'RegattaTracker')
+    cd /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Intermediates.noindex/RegattaTracker.build/Debug-iphoneos/RegattaTracker.build/Objects-normal/arm64/RegattaTracker.swiftsourceinfo /Users/oscarkinnala/Library/Developer/Xcode/DerivedData/RegattaTracker-dglbecbuztafsfdnngseooncyttg/Build/Products/Debug-iphoneos/RegattaTracker.swiftmodule/Project/arm64-apple-ios.swiftsourceinfo
+
+SwiftDriverJobDiscovery normal arm64 Compiling JoinView.swift, LiveStreamManager.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftDriverJobDiscovery normal arm64 Compiling SupabaseAuthManager.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftDriverJobDiscovery normal arm64 Compiling RaceStateModel.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftDriverJobDiscovery normal arm64 Compiling WelcomeView.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftDriverJobDiscovery normal arm64 Compiling FailsafeManager.swift, HapticManager.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftDriverJobDiscovery normal arm64 Compiling MotionManager.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftDriverJobDiscovery normal arm64 Compiling UWBNodeBLEClient.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftDriverJobDiscovery normal arm64 Compiling OfflineBuffer.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftDriverJobDiscovery normal arm64 Compiling MainHUDView.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftDriverJobDiscovery normal arm64 Compiling CountdownView.swift, DesignTokens.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftDriverJobDiscovery normal arm64 Compiling StartLineView.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftDriverJobDiscovery normal arm64 Compiling SettingsSheet.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftDriverJobDiscovery normal arm64 Compiling App.swift, ConfigurationView.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+SwiftDriverJobDiscovery normal arm64 Compiling LocationManager.swift, LoginView.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+
+** BUILD FAILED **
+
+
+The following build commands failed:
+	SwiftCompile normal arm64 /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Connection/TrackerConnectionManager.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+	SwiftCompile normal arm64 Compiling\ TrackerConnectionManager.swift /Users/oscarkinnala/.gemini/antigravity/Regatta_Race/regatta-suite/apps/tracker-ios/RegattaTracker/Connection/TrackerConnectionManager.swift (in target 'RegattaTracker' from project 'RegattaTracker')
+	Building project RegattaTracker with scheme RegattaTracker
+(3 failures)

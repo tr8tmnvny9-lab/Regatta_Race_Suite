@@ -158,16 +158,12 @@ struct SettingsSheet: View {
                         dismiss()
                     } label: {
                         Text("DONE")
-                            .font(RegattaFont.label(10))
-                            .foregroundColor(.white.opacity(0.9))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
-                            .background(.ultraThinMaterial)
-                            .cornerRadius(16)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(Color.white.opacity(0.3), lineWidth: 0.5)
-                            )
+                            .font(RegattaFont.label(12))
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 10)
+                            .trueLiquidGlass(cornerRadius: 14)
                     }
                 }
             }
