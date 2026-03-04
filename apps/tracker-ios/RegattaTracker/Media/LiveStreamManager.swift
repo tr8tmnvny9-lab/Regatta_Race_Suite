@@ -18,7 +18,7 @@ class LiveStreamManager: ObservableObject {
         Task {
             let room = Room()
             do {
-                try await room.connect(serverUrl, token)
+                try await room.connect(url: serverUrl, token: token)
                 print("LiveKit Room Connected!")
                 
                 DispatchQueue.main.async {
@@ -30,7 +30,7 @@ class LiveStreamManager: ObservableObject {
                 self.localVideoTrack = cameraTrack
                 
                 // Publish local video to the Room
-                try await room.localParticipant.publishVideoTrack(track: cameraTrack)
+                try await room.localParticipant.publish(videoTrack: cameraTrack)
                 
                 DispatchQueue.main.async {
                     self.isStreaming = true
@@ -39,7 +39,7 @@ class LiveStreamManager: ObservableObject {
                 print("Published LocalVideoTrack to SFU successfully.")
                 
             } catch {
-                print("Failed to connect to LiveKit SFU: \\(error)")
+                print("Failed to connect to LiveKit SFU: \(error)")
             }
         }
     }
@@ -49,10 +49,10 @@ class LiveStreamManager: ObservableObject {
         Task {
             guard let participant = currentRoom?.localParticipant else { return }
             do {
-                print("Backend requested camera bandwidth change: \\(pauseHighRes ? "PAUSING" : "RESUMING")")
+                print("Backend requested camera bandwidth change: \(pauseHighRes ? "PAUSING" : "RESUMING")")
                 try await participant.setCamera(enabled: !pauseHighRes)
             } catch {
-                print("Failed to throttle camera feed: \\(error)")
+                print("Failed to throttle camera feed: \(error)")
             }
         }
     }

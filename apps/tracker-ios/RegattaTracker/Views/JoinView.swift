@@ -7,35 +7,34 @@ struct JoinView: View {
     
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            AnimatedWaveBackground()
             
             VStack(spacing: 40) {
                 Image(systemName: "sailboat.fill")
                     .resizable()
                     .scaledToFit()
-                    .frame(height: 100)
-                    .foregroundColor(.cyan)
-                    .shadow(color: .cyan.opacity(0.5), radius: 20)
+                    .frame(height: 80)
+                    .foregroundColor(.white)
+                    .shadow(color: .cyanAccent.opacity(0.8), radius: 10)
                 
                 VStack(spacing: 8) {
                     Text("Regatta Tracker")
-                        .font(.largeTitle)
-                        .fontWeight(.black)
+                        .font(RegattaFont.heroRounded(32))
                         .foregroundColor(.white)
                     Text("Join an active race session")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .font(RegattaFont.bodyRounded(16))
+                        .foregroundColor(.white.opacity(0.6))
                 }
                 
-                VStack(spacing: 20) {
-                    TextField("Session ID (e.g. 1234)", text: $inputId)
-                        .padding()
-                        .background(Color.white.opacity(0.1))
-                        .cornerRadius(12)
+                VStack(spacing: 24) {
+                    TextField("Session ID", text: $inputId)
+                        .font(RegattaFont.data(32))
                         .foregroundColor(.white)
-                        .font(.system(size: 24, weight: .bold, design: .monospaced))
-                        .keyboardType(.numberPad)
                         .multilineTextAlignment(.center)
+                        .keyboardType(.numberPad)
+                        .padding()
+                        .tracking(4)
+                        .trueLiquidGlass(cornerRadius: 16)
                         
                     Button(action: {
                         if !inputId.isEmpty {
@@ -44,19 +43,14 @@ struct JoinView: View {
                         }
                     }) {
                         Text("JOIN SESSION")
-                            .font(.headline)
-                            .fontWeight(.black)
-                            .foregroundColor(.black)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.cyan)
-                            .cornerRadius(16)
                     }
+                    .buttonStyle(LiquidGlassButtonStyle(isPrimary: true))
                     .disabled(inputId.isEmpty)
-                    .opacity(inputId.isEmpty ? 0.5 : 1.0)
                 }
                 .padding(.horizontal, 40)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .ignoresSafeArea(.all)
     }
 }

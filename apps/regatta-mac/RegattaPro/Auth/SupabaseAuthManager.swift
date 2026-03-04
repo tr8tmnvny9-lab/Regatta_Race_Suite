@@ -5,7 +5,13 @@ import Combine
 let supabaseUrl = URL(string: "https://lagsagefmaqvxoceuhrt.supabase.co")!
 let supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxhZ3NhZ2VmbWFxdnhvY2V1aHJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMjgxMDAsImV4cCI6MjA4NzcwNDEwMH0.zvYXiHlOBa0UnsDl8Y0pAYgT0NmO6intzVlQJ58VLV8"
 
-public let supabase = SupabaseClient(supabaseURL: supabaseUrl, supabaseKey: supabaseKey)
+public let supabase = SupabaseClient(
+    supabaseURL: supabaseUrl,
+    supabaseKey: supabaseKey,
+    options: SupabaseClientOptions(
+        auth: .init(emitLocalSessionAsInitialSession: true)
+    )
+)
 
 @MainActor
 class SupabaseAuthManager: ObservableObject {

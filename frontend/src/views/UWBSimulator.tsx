@@ -55,7 +55,6 @@ interface Telemetry {
 const VIEW_W = 700;          // px
 const VIEW_H = 500;
 const WORLD_W = 200;         // meters (x: -100 to +100)
-const WORLD_H = 380;         // meters (y: -350 to +30 OCS)
 const ORIGIN_X = VIEW_W / 2;
 const ORIGIN_Y = VIEW_H * 0.12; // start line near top
 

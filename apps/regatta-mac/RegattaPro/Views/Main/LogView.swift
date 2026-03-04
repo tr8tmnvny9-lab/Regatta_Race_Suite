@@ -1,114 +1,159 @@
 import SwiftUI
 
-// Temporary Model definition until we link to the Rust Native Core Data Model
-struct LogEntry: Identifiable, Hashable {
-    let id = UUID()
-    let timestamp: Date
-    let category: String
-    let source: String
-    let message: String
-    let isFlagged: Bool
-}
-
 struct LogView: View {
-    // Dummy Data to establish UI
-    @State private var logs: [LogEntry] = [
-        LogEntry(timestamp: Date().addingTimeInterval(-3600), category: "SYSTEM", source: "Sidecar", message: "Regatta Engine Started", isFlagged: false),
-        LogEntry(timestamp: Date().addingTimeInterval(-1800), category: "PROCEDURE", source: "Director", message: "Sequence 1 (Warning) Initiated", isFlagged: false),
-        LogEntry(timestamp: Date().addingTimeInterval(-1740), category: "PROCEDURE", source: "Director", message: "Class Flag Hoisted", isFlagged: false),
-        LogEntry(timestamp: Date().addingTimeInterval(-120), category: "BOAT", source: "FRA 28", message: "Ping timeout, switching to offline buffer", isFlagged: true),
-        LogEntry(timestamp: Date(), category: "JURY", source: "Automated", message: "USA 11 On Course Side (OCS)", isFlagged: true)
-    ]
-    
+    @EnvironmentObject var raceState: RaceStateModel
+    @State private var selectedCategory: LogCategory? = nil
+    @State private var searchSource: String = ""
     @State private var sortOrder = [KeyPathComparator(\LogEntry.timestamp, order: .reverse)]
+    
+    var filteredLogs: [LogEntry] {
+        raceState.logs.filter { entry in
+            let catMatch = selectedCategory == nil || entry.category == selectedCategory
+            let sourceMatch = searchSource.isEmpty || entry.source.lowercased().contains(searchSource.lowercased())
+            return catMatch && sourceMatch
+        }
+    }
     
     var body: some View {
         VStack(spacing: 0) {
-            // Toolbar Area
-            HStack {
-                Text("Race Audit Log")
-                    .font(.headline)
-                Spacer()
-                Button(action: exportCSV) {
-                    Label("Export CSV", systemImage: "arrow.down.doc")
+            // High-Velocity Toolbar
+            HStack(spacing: 20) {
+                // Category Filter
+                HStack(spacing: 8) {
+                    FilterChip(label: "ALL", isActive: selectedCategory == nil) { selectedCategory = nil }
+                    ForEach([LogCategory.jury, .boat, .procedure, .system], id: \.self) { cat in
+                        FilterChip(label: cat.rawValue, isActive: selectedCategory == cat, color: categoryColor(cat)) {
+                            selectedCategory = (selectedCategory == cat ? nil : cat)
+                        }
+                    }
                 }
-                Button(action: exportPDF) {
-                    Label("Export PDF", systemImage: "doc.richtext")
+                
+                Divider().frame(height: 24)
+                
+                // Search / Boat ID Filter
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(.secondary)
+                    TextField("Filter by Boat ID / Source", text: $searchSource)
+                        .textFieldStyle(.plain)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Color.white.opacity(0.05))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                
+                Spacer()
+                
+                // Actions
+                HStack(spacing: 12) {
+                    ActionButton(icon: "arrow.down.doc", label: "CSV") { /* Export */ }
+                    ActionButton(icon: "doc.richtext", label: "PDF") { /* Export */ }
                 }
             }
-            .padding()
-            .background(Color(NSColor.controlBackgroundColor))
+            .padding(20)
+            .background(.ultraThinMaterial)
             
-            Divider()
-            
-            // Core Table
-            Table(logs, sortOrder: $sortOrder) {
-                TableColumn("Time", value: \.timestamp) { entry in
-                    Text(entry.timestamp, style: .time)
-                        .font(.system(.body, design: .monospaced))
-                }
-                .width(min: 80, ideal: 100, max: 120)
-                
-                TableColumn("Category", value: \.category) { entry in
-                    Text(entry.category)
-                        .font(.caption)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(categoryColor(entry.category).opacity(0.2))
-                        .foregroundStyle(categoryColor(entry.category))
-                        .cornerRadius(4)
+            // The Log Table
+            Table(filteredLogs, sortOrder: $sortOrder) {
+                TableColumn("TIME", value: \.timestamp) { entry in
+                    Text(entry.date, style: .time)
+                        .font(RegattaDesign.Fonts.mono)
+                        .foregroundStyle(.secondary)
                 }
                 .width(80)
                 
-                TableColumn("Source", value: \.source) { entry in
-                    Text(entry.source)
-                        .foregroundStyle(.secondary)
+                TableColumn("CATEGORY", value: \.category.rawValue) { entry in
+                    categoryBadge(for: entry.category)
                 }
                 .width(100)
                 
-                TableColumn("Message", value: \.message) { entry in
+                TableColumn("SOURCE", value: \.source) { entry in
+                    Text(entry.source)
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .foregroundStyle(entry.category == .boat ? RegattaDesign.Colors.cyan : .white)
+                }
+                .width(100)
+                
+                TableColumn("MESSAGE", value: \.message) { entry in
                     HStack {
                         if entry.isFlagged {
-                            Image(systemName: "flag.fill")
-                                .foregroundStyle(.red)
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(RegattaDesign.Colors.crimson)
                         }
                         Text(entry.message)
-                            .fontWeight(entry.isFlagged ? .semibold : .regular)
+                            .foregroundStyle(entry.isFlagged ? RegattaDesign.Colors.crimson : .primary)
                     }
                 }
             }
-            .onChange(of: sortOrder) { oldOrder, newOrder in
-                logs.sort(using: newOrder)
-            }
-            .contextMenu(forSelectionType: LogEntry.ID.self) { items in
-                Button("Flag for Jury") {
-                    // TODO: Trigger Jury Modal
-                }
-                Button("Copy Message") {
-                    // TODO: Copy to clipboard
-                }
-            }
+            .tableStyle(.inset)
         }
-        .navigationTitle("Race Log")
+        .background(Color.black.opacity(0.2))
     }
     
-    // Helper to color code chips
-    private func categoryColor(_ category: String) -> Color {
+    @ViewBuilder
+    private func categoryBadge(for category: LogCategory) -> some View {
+        Text(category.rawValue)
+            .font(.system(size: 9, weight: .black))
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(categoryColor(category).opacity(0.15))
+            .foregroundStyle(categoryColor(category))
+            .clipShape(RoundedRectangle(cornerRadius: 4))
+            .overlay(RoundedRectangle(cornerRadius: 4).stroke(categoryColor(category).opacity(0.3), lineWidth: 1))
+    }
+    
+    private func categoryColor(_ category: LogCategory) -> Color {
         switch category {
-        case "SYSTEM": return .gray
-        case "PROCEDURE": return .blue
-        case "BOAT": return .cyan
-        case "JURY": return .red
-        default: return .primary
+        case .system: return .gray
+        case .procedure: return .blue
+        case .boat: return RegattaDesign.Colors.cyan
+        case .jury: return RegattaDesign.Colors.crimson
+        default: return .white
         }
-    }
-    
-    // Export Handlers
-    private func exportCSV() {
-        print("Exporting CSV...")
-    }
-    
-    private func exportPDF() {
-        print("Exporting PDF...")
     }
 }
+
+// ─── Sub-Components ──────────────────────────────────────────────────────────
+
+struct FilterChip: View {
+    let label: String
+    let isActive: Bool
+    var color: Color = RegattaDesign.Colors.electricBlue
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(label)
+                .font(.system(size: 10, weight: .black))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(isActive ? color.opacity(0.2) : Color.white.opacity(0.05))
+                .foregroundStyle(isActive ? color : .secondary)
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(isActive ? color.opacity(0.5) : .clear, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct ActionButton: View {
+    let icon: String
+    let label: String
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                Text(label)
+            }
+            .font(.system(size: 10, weight: .bold))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(Color.white.opacity(0.05))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
+    }
+}
+

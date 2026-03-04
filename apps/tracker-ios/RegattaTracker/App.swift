@@ -18,6 +18,8 @@ struct RegattaTrackerApp: App {
     @StateObject private var connection = TrackerConnectionManager()
     @StateObject private var bleClient  = UWBNodeBLEClient()
     @StateObject private var location   = LocationManager()
+    @StateObject private var motion     = MotionManager()
+    @StateObject private var failsafe   = FailsafeManager()
     @StateObject private var race       = RaceStateModel()
     @StateObject private var haptics    = HapticManager()
     @StateObject private var liveStream = LiveStreamManager()
@@ -29,15 +31,18 @@ struct RegattaTrackerApp: App {
                 .environmentObject(connection)
                 .environmentObject(bleClient)
                 .environmentObject(location)
+                .environmentObject(motion)
+                .environmentObject(failsafe)
                 .environmentObject(race)
                 .environmentObject(haptics)
                 .environmentObject(liveStream)
                 .preferredColorScheme(.dark)
                 .onAppear {
                     connection.liveStreamManager = liveStream
-                    connection.start(location: location, ble: bleClient)
+                    connection.start(location: location, ble: bleClient, motion: motion, failsafe: failsafe)
                     bleClient.start()
                     location.start()
+                    motion.start()
                     // Mock joining the WebRTC Room when app opens
                     liveStream.connect(token: "mock-ios-token")
                 }
@@ -51,20 +56,18 @@ struct TrackerRootView: View {
     @EnvironmentObject var authManager: SupabaseAuthManager
     @EnvironmentObject var connection: TrackerConnectionManager
     @EnvironmentObject var race: RaceStateModel
-    @State private var showJoin = false
 
     var body: some View {
         Group {
             if !authManager.isAuthenticated {
                 LoginView()
+            } else if !authManager.hasSeenWelcome {
+                WelcomeView()
             } else if connection.sessionId == nil {
-                JoinView(showSheet: $showJoin)
+                ConfigurationView(initialMode: .manual)
             } else {
-                StartLineView()
+                MainHUDView()
             }
-        }
-        .sheet(isPresented: $showJoin) {
-            JoinView(showSheet: $showJoin)
         }
     }
 }

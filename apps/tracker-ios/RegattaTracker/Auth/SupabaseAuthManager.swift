@@ -10,6 +10,9 @@ public let supabase = SupabaseClient(supabaseURL: supabaseUrl, supabaseKey: supa
 @MainActor
 class SupabaseAuthManager: ObservableObject {
     @Published var isAuthenticated = false
+    @Published var hasSeenWelcome: Bool = UserDefaults.standard.bool(forKey: "regatta.hasSeenWelcome") {
+        didSet { UserDefaults.standard.set(hasSeenWelcome, forKey: "regatta.hasSeenWelcome") }
+    }
     @Published var currentSession: Session?
     @Published var currentUser: User?
     @Published var authError: String? = nil
@@ -72,6 +75,7 @@ class SupabaseAuthManager: ObservableObject {
     func signOut() async {
         do {
             try await supabase.auth.signOut()
+            self.hasSeenWelcome = false
         } catch {
             print("SignOut Error: \(error.localizedDescription)")
         }

@@ -1,3 +1,6 @@
+// LoginView.swift
+// AnimatedWaveBackground and WaveShape are defined in DesignTokens.swift
+
 import SwiftUI
 import AuthenticationServices
 import CryptoKit
@@ -12,19 +15,17 @@ struct LoginView: View {
     
     var body: some View {
         ZStack {
-            // Sailing / Ocean Themed Background
-            LinearGradient(gradient: Gradient(colors: [Color(red: 0.0, green: 0.2, blue: 0.4), Color.cyan]), startPoint: .topLeading, endPoint: .bottomTrailing)
-                .ignoresSafeArea()
+            AnimatedWaveBackground()
             
-            // Decorative elements
+            // Decorative elements... (rest of the circles)
             Circle()
-                .fill(Color.white.opacity(0.1))
+                .fill(Color.white.opacity(0.05))
                 .frame(width: 300, height: 300)
                 .blur(radius: 50)
                 .offset(x: -200, y: -200)
             
             Circle()
-                .fill(Color.cyan.opacity(0.2))
+                .fill(Color.cyan.opacity(0.1))
                 .frame(width: 400, height: 400)
                 .blur(radius: 80)
                 .offset(x: 200, y: 200)
@@ -180,15 +181,14 @@ struct LoginView: View {
                     .shadow(color: .black.opacity(0.1), radius: 5)
                 }
                 .padding(30)
-                .background(.ultraThinMaterial)
-                .cornerRadius(30)
-                .shadow(color: .black.opacity(0.3), radius: 30, x: 0, y: 15)
-                .overlay(RoundedRectangle(cornerRadius: 30).stroke(Color.white.opacity(0.2), lineWidth: 1))
+                .trueLiquidGlass(cornerRadius: 30)
                 .padding(.horizontal, 20)
                 
                 Spacer()
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .ignoresSafeArea(.all)
     }
     
     // --- Cryptography Helpers ---

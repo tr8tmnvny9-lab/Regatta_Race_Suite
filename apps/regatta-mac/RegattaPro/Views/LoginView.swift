@@ -2,6 +2,109 @@ import SwiftUI
 import AuthenticationServices
 import CryptoKit
 
+struct WaveShape: Shape {
+    var offset: Angle
+    var percent: Double
+    
+    var animatableData: Double {
+        get { offset.degrees }
+        set { offset = Angle(degrees: newValue) }
+    }
+    
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let lowAmplitude: CGFloat = 20
+        let waveHeight: CGFloat = lowAmplitude
+        let yOffset = CGFloat(1 - percent) * (rect.height - waveHeight)
+        let startAngle = offset
+        let endAngle = startAngle + Angle(degrees: 360)
+        
+        path.move(to: CGPoint(x: 0, y: yOffset + waveHeight * CGFloat(sin(startAngle.radians))))
+        
+        for x in stride(from: 0, to: rect.width + 5, by: 5) {
+            let relativeX = x / rect.width
+            let angle = startAngle.radians + (endAngle.radians - startAngle.radians) * Double(relativeX)
+            let y = yOffset + waveHeight * CGFloat(sin(angle))
+            path.addLine(to: CGPoint(x: x, y: y))
+        }
+        
+        path.addLine(to: CGPoint(x: rect.width, y: rect.height))
+        path.addLine(to: CGPoint(x: 0, y: rect.height))
+        path.closeSubpath()
+        return path
+    }
+}
+
+struct AnimatedWaveBackground: View {
+    @State private var waveOffset = Angle(degrees: 0)
+    @State private var waveOffset2 = Angle(degrees: 0)
+    @State private var glowOffset = CGSize.zero
+    
+    var body: some View {
+        ZStack {
+            // Background Gradient (Deep Ocean)
+            LinearGradient(gradient: Gradient(colors: [
+                Color(red: 0.0, green: 0.05, blue: 0.15),
+                Color(red: 0.0, green: 0.15, blue: 0.35),
+                Color(red: 0.1, green: 0.4, blue: 0.7)
+            ]), startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea()
+            
+            // Depth Glows
+            Circle()
+                .fill(Color.cyan.opacity(0.15))
+                .frame(width: 400, height: 400)
+                .blur(radius: 80)
+                .offset(x: glowOffset.width - 200, y: glowOffset.height - 200)
+            
+            Circle()
+                .fill(Color.blue.opacity(0.1))
+                .frame(width: 500, height: 500)
+                .blur(radius: 100)
+                .offset(x: -glowOffset.width + 250, y: -glowOffset.height + 150)
+            
+            // Distant Waves (Slow & Faint)
+            WaveShape(offset: waveOffset2, percent: 0.3)
+                .fill(Color.white.opacity(0.03))
+                .ignoresSafeArea()
+                .offset(y: 20)
+            
+            WaveShape(offset: waveOffset2 + Angle(degrees: 120), percent: 0.28)
+                .fill(Color.cyan.opacity(0.04))
+                .ignoresSafeArea()
+                .offset(y: 40)
+            
+            // Midground Waves
+            WaveShape(offset: waveOffset, percent: 0.35)
+                .fill(Color.white.opacity(0.08))
+                .ignoresSafeArea()
+                .offset(y: 60)
+            
+            WaveShape(offset: waveOffset + Angle(degrees: 180), percent: 0.32)
+                .fill(Color.cyan.opacity(0.12))
+                .ignoresSafeArea()
+                .offset(y: 80)
+            
+            // Foreground Waves (Faster & Prominent)
+            WaveShape(offset: waveOffset * 1.5 + Angle(degrees: 90), percent: 0.4)
+                .fill(Color.white.opacity(0.05))
+                .ignoresSafeArea()
+                .offset(y: 100)
+        }
+        .onAppear {
+            withAnimation(.linear(duration: 12).repeatForever(autoreverses: false)) {
+                waveOffset = Angle(degrees: 360)
+            }
+            withAnimation(.linear(duration: 20).repeatForever(autoreverses: false)) {
+                waveOffset2 = Angle(degrees: 360)
+            }
+            withAnimation(.easeInOut(duration: 15).repeatForever(autoreverses: true)) {
+                glowOffset = CGSize(width: 100, height: 100)
+            }
+        }
+    }
+}
+
 struct LoginView: View {
     @EnvironmentObject var authManager: SupabaseAuthManager
     @State private var email = ""
@@ -12,19 +115,17 @@ struct LoginView: View {
     
     var body: some View {
         ZStack {
-            // Sailing / Ocean Themed Background
-            LinearGradient(gradient: Gradient(colors: [Color(red: 0.0, green: 0.2, blue: 0.4), Color.cyan]), startPoint: .topLeading, endPoint: .bottomTrailing)
-                .ignoresSafeArea()
+            AnimatedWaveBackground()
             
-            // Decorative elements
+            // Decorative elements... (rest of the circles)
             Circle()
-                .fill(Color.white.opacity(0.1))
+                .fill(Color.white.opacity(0.05))
                 .frame(width: 300, height: 300)
                 .blur(radius: 50)
                 .offset(x: -200, y: -200)
             
             Circle()
-                .fill(Color.cyan.opacity(0.2))
+                .fill(Color.cyan.opacity(0.1))
                 .frame(width: 400, height: 400)
                 .blur(radius: 80)
                 .offset(x: 200, y: 200)

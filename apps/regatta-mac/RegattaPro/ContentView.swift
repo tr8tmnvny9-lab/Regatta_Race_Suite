@@ -28,21 +28,8 @@ struct ContentView: View {
             }
         }
         .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Label("Regatta Pro", systemImage: "sailboat.fill")
-                    .labelStyle(.iconOnly)
-                    .font(.title2)
-            }
             ToolbarItem(placement: .status) {
-                Text(connection.modeLabel)
-                    .font(.system(size: 11, weight: .medium, design: .monospaced))
-            }
-            ToolbarItem(placement: .status) {
-                if connection.latencyMs > 0 {
-                    Text(String(format: "%.0f ms", connection.latencyMs))
-                        .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
-                }
+                ConnectivityStatusView()
             }
         }
     }

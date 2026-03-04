@@ -1458,6 +1458,135 @@ pub async fn on_connect(
         });
     }
 
+    // ── move-buoy ─────────────────────────────────────────────────────────────
+    {
+        let socket = socket.clone();
+        let shared = shared.clone();
+        let auth = auth.clone();
+        socket.on("move-buoy", move |s: SocketRef, Data::<Value>(data)| {
+            let shared = shared.clone();
+            let auth = auth.clone();
+            async move {
+                if auth.get_role(&s.id.to_string()).await.as_deref() != Some("director") {
+                    warn!("Unauthorized move-buoy attempt by: {}", s.id);
+                    return;
+                }
+                
+                let id = data["id"].as_str().unwrap_or("");
+                let lat = data["lat"].as_f64().unwrap_or(0.0);
+                let lon = data["lon"].as_f64().unwrap_or(0.0);
+                
+                {
+                    let mut state = shared.write().await;
+                    if let Some(idx) = state.course.marks.iter().position(|b| b.id == id) {
+                        state.course.marks[idx].pos.lat = lat;
+                        state.course.marks[idx].pos.lon = lon;
+                    } else {
+                        // Create default if it doesn't exist (e.g. from a tool drop)
+                        let count = state.course.marks.len() + 1;
+                        state.course.marks.push(crate::state::Buoy {
+                            id: id.to_string(),
+                            buoy_type: crate::state::BuoyType::Mark,
+                            name: format!("Mark {}", count),
+                            pos: crate::state::LatLon { lat, lon },
+                            color: Some("Orange".to_string()),
+                            rounding: Some(crate::state::Rounding::Port),
+                            pair_id: None,
+                            gate_direction: None,
+                            design: Some(crate::state::BuoyDesign::Buoy),
+                            disable_laylines: false,
+                        });
+                    }
+                }
+                
+                let state = shared.read().await;
+                let _ = s.broadcast().emit("state-update", &*state);
+                let _ = s.emit("state-update", &*state);
+                let _ = save_state(&state).await;
+            }
+        });
+    }
+
+    // ── update-buoy-config ────────────────────────────────────────────────────
+    {
+        let socket = socket.clone();
+        let shared = shared.clone();
+        let auth = auth.clone();
+        socket.on("update-buoy-config", move |s: SocketRef, Data::<Value>(data)| {
+            let shared = shared.clone();
+            let auth = auth.clone();
+            async move {
+                if auth.get_role(&s.id.to_string()).await.as_deref() != Some("director") {
+                    warn!("Unauthorized update-buoy-config attempt by: {}", s.id);
+                    return;
+                }
+                
+                let id = data["id"].as_str().unwrap_or("");
+                {
+                    let mut state = shared.write().await;
+                    if let Some(idx) = state.course.marks.iter().position(|b| b.id == id) {
+                        if let Some(name) = data["name"].as_str() { state.course.marks[idx].name = name.to_string(); }
+                        if let Some(color) = data["color"].as_str() { state.course.marks[idx].color = Some(color.to_string()); }
+                        if let Some(rounding) = data["rounding"].as_str() {
+                            state.course.marks[idx].rounding = match rounding.to_uppercase().as_str() {
+                                "STARBOARD" => Some(crate::state::Rounding::Starboard),
+                                _ => Some(crate::state::Rounding::Port),
+                            };
+                        }
+                        if let Some(design) = data["design"].as_str() {
+                            state.course.marks[idx].design = match design.to_lowercase().as_str() {
+                                "spherical" => Some(crate::state::BuoyDesign::Buoy),
+                                "cylindrical" => Some(crate::state::BuoyDesign::Tube),
+                                "spar" => Some(crate::state::BuoyDesign::Pole),
+                                "marksetbot" => Some(crate::state::BuoyDesign::Marksetbot),
+                                _ => Some(crate::state::BuoyDesign::Buoy),
+                            };
+                        }
+                    }
+                }
+                
+                let state = shared.read().await;
+                let _ = s.broadcast().emit("state-update", &*state);
+                let _ = s.emit("state-update", &*state);
+                let _ = save_state(&state).await;
+            }
+        });
+    }
+
+    // ── set-boundary ──────────────────────────────────────────────────────────
+    {
+        let socket = socket.clone();
+        let shared = shared.clone();
+        let auth = auth.clone();
+        socket.on("set-boundary", move |s: SocketRef, Data::<Vec<Value>>(data)| {
+            let shared = shared.clone();
+            let auth = auth.clone();
+            async move {
+                if auth.get_role(&s.id.to_string()).await.as_deref() != Some("director") {
+                    warn!("Unauthorized set-boundary attempt by: {}", s.id);
+                    return;
+                }
+                
+                let points = data.iter().filter_map(|v| {
+                    Some(crate::state::LatLon {
+                        lat: v["lat"].as_f64()?,
+                        lon: v["lon"].as_f64()?,
+                    })
+                }).collect::<Vec<_>>();
+                
+                {
+                    let mut state = shared.write().await;
+                    state.course.course_boundary = Some(points);
+                }
+                
+                let state = shared.read().await;
+                let _ = s.broadcast().emit("state-update", &*state);
+                let _ = s.emit("state-update", &*state);
+                let _ = save_state(&state).await;
+            }
+        });
+    }
+
     // ── signal (WebRTC relay) ─────────────────────────────────────────────────
     {
         let socket = socket.clone();

@@ -11,9 +11,41 @@ targets:
     platform: macOS
     deploymentTarget: "14.0"
     sources: [RegattaPro]
-    dependencies:
-      - package: Supabase
+    info:
+      path: RegattaPro/Info.plist
     settings:
       CODE_SIGN_IDENTITY: "-"
       DEVELOPMENT_TEAM: ""
       ENABLE_HARDENED_RUNTIME: YES
+      PRODUCT_BUNDLE_IDENTIFIER: com.regatta.pro
+    dependencies:
+      - package: Supabase
+    preBuildScripts:
+      - name: "Build Sidecar Assets"
+        basedOnDependencyAnalysis: true
+        outputs:
+          - "$(PROJECT_DIR)/../../target/release/regatta-backend"
+          - "$(PROJECT_DIR)/../../frontend/dist/index.html"
+        script: |
+          set -e
+          echo "🚀 Regatta Pro Build v1.0.1 (Antigravity Fixed)"
+          echo "Building Frontend Sidecar..."
+          cd "$PROJECT_DIR/../../frontend"
+          # Skip build if dist exists and we are in a hurry, but for final form we build
+          if [ ! -d "dist" ]; then
+            npm install
+            npm run build
+          fi
+          echo "Building Backend Sidecar..."
+          cd "$PROJECT_DIR/../.."
+          if [ ! -f "target/release/regatta-backend" ]; then
+            cargo build --release
+          fi
+          # Ensure outputs are touched to satisfy Xcode's dependency analysis
+          touch "$PROJECT_DIR/../../target/release/regatta-backend"
+          mkdir -p "$PROJECT_DIR/../../frontend/dist"
+          touch "$PROJECT_DIR/../../frontend/dist/index.html"
+    resources:
+      - path: ../../target/release/regatta-backend
+      - path: ../../frontend/dist
+        name: app

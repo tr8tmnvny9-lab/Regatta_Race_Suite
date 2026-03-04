@@ -20,7 +20,9 @@ targets:
     dependencies:
       - package: Supabase
       - package: GRDB.swift
+        product: GRDB
       - package: LiveKit
+        product: LiveKit
     settings:
       CODE_SIGN_IDENTITY: "-"
       DEVELOPMENT_TEAM: ""
@@ -30,4 +32,8 @@ targets:
         NSLocationAlwaysAndWhenInUseUsageDescription: "RegattaTracker uses your location to provide high-frequency telemetry to the race committee."
         NSLocationWhenInUseUsageDescription: "RegattaTracker uses your location to provide high-frequency telemetry."
         NSBluetoothAlwaysUsageDescription: "RegattaTracker uses Bluetooth to connect to UWB hardware nodes."
-        UIBackgroundModes: [location, bluetooth-central]
+        NSCameraUsageDescription: "RegattaTracker uses the camera for live streaming race footage."
+        NSMicrophoneUsageDescription: "RegattaTracker uses the microphone for live streaming race audio."
+        NSMotionUsageDescription: "RegattaTracker uses motion data for raw gyro and accelerometer telemetry."
+        UIBackgroundModes: [location, bluetooth-central, audio, voip]
+        UILaunchScreen: {}

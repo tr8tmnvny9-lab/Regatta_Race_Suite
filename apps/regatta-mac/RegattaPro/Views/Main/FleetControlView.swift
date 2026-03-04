@@ -33,71 +33,93 @@ struct FleetControlView: View {
     @State private var sortOrder = [KeyPathComparator(\TeamNode.name)]
 
     var body: some View {
-        VSplitView {
-            // TOP HALF: Team Roster
-            VStack(alignment: .leading) {
-                HStack {
-                    Text("Team Roster")
-                        .font(.headline)
-                    Spacer()
-                    Button(action: addTeam) {
-                        Label("Add Team", systemImage: "plus")
-                    }
-                }
-                .padding()
-                
-                Table(unassignedTeams, sortOrder: $sortOrder) {
-                    TableColumn("Team Name", value: \.name) { team in
-                        Text(team.name)
-                            .onDrag {
-                                // Provide JSON representation for drag
-                                let provider = NSItemProvider(object: team.id.uuidString as NSString)
-                                return provider
+        VStack(spacing: 20) {
+            HStack(spacing: 20) {
+                // Left: Team Roster
+                GlassPanel(title: "Team Roster", icon: "person.3.fill") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Spacer()
+                            Button(action: addTeam) {
+                                Label("Add Team", systemImage: "plus")
+                                    .font(RegattaDesign.Fonts.label)
                             }
+                            .buttonStyle(.borderedProminent)
+                            .tint(RegattaDesign.Colors.electricBlue)
+                        }
+                        
+                        Table(unassignedTeams, sortOrder: $sortOrder) {
+                            TableColumn("Team Name", value: \.name) { team in
+                                HStack {
+                                    Text(team.name)
+                                        .fontWeight(.bold)
+                                    Spacer()
+                                    Image(systemName: "line.3.horizontal")
+                                        .foregroundStyle(.secondary)
+                                }
+                                .padding(8)
+                                .background(Color.white.opacity(0.05))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .onDrag {
+                                    let provider = NSItemProvider(object: team.id.uuidString as NSString)
+                                    return provider
+                                }
+                            }
+                            TableColumn("Club", value: \.club)
+                        }
+                        .tableStyle(.inset)
                     }
-                    TableColumn("Club", value: \.club)
                 }
-                .onChange(of: sortOrder) { newOrder in
-                    unassignedTeams.sort(using: newOrder)
-                }
-            }
-            .frame(minHeight: 200)
-            
-            // BOTTOM HALF: Flight Pairings Matrix
-            VStack(alignment: .leading) {
-                HStack {
-                    Text("Flight Schedule")
-                        .font(.headline)
-                    Spacer()
-                    Button(action: autoGenerate) {
-                        Label("Generate Pairings", systemImage: "wand.and.stars")
-                    }
-                }
-                .padding()
+                .frame(maxWidth: .infinity)
                 
-                Table(flightPairs) {
-                    TableColumn("Boat", value: \.boatId)
-                        .width(max: 80)
-                    
-                    TableColumn("Assigned Team") { row in
-                        DropZoneCell(team: row.teamA, onDrop: { teamId in
-                            assignTeam(teamId: teamId, to: row.id)
-                        })
+                // Right: Flight Schedule
+                GlassPanel(title: "Flight Schedule", icon: "calendar") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("LEAGUE ROUND-ROBIN")
+                                .font(RegattaDesign.Fonts.label)
+                                .foregroundStyle(RegattaDesign.Colors.cyan)
+                            Spacer()
+                            Button(action: autoGenerate) {
+                                Label("Auto-Generate", systemImage: "wand.and.stars")
+                                    .font(RegattaDesign.Fonts.label)
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                        
+                        ScrollView {
+                            VStack(spacing: 12) {
+                                ForEach(flightPairs) { row in
+                                    HStack {
+                                        Text(row.boatId)
+                                            .font(RegattaDesign.Fonts.mono)
+                                            .frame(width: 80, alignment: .leading)
+                                        
+                                        DropZoneCell(team: row.teamA, onDrop: { teamId in
+                                            assignTeam(teamId: teamId, to: row.id)
+                                        })
+                                    }
+                                    .padding(12)
+                                    .background(Color.black.opacity(0.2))
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color.white.opacity(0.05), lineWidth: 1)
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
+                .frame(maxWidth: .infinity)
             }
-            .frame(minHeight: 200)
-            .background(Color(NSColor.controlBackgroundColor))
-        }
-        .navigationTitle("Fleet Management")
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Picker("Format", selection: .constant("League")) {
-                    Text("League Round-Robin").tag("League")
-                    Text("Owner Driver").tag("Owner")
-                }
-                .pickerStyle(.segmented)
+            .frame(maxHeight: .infinity)
+            
+            // BOTTOM: Fleet Health Dashboard
+            GlassPanel(title: "Fleet Diagnostics", icon: "waveform.path.ecg") {
+                FleetHealthDashboard()
             }
+            .frame(height: 300)
         }
     }
     

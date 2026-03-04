@@ -18,18 +18,5 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
-	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>RegattaTracker uses Bluetooth to connect to UWB hardware nodes.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>RegattaTracker uses your location to provide high-frequency telemetry to the race committee.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>RegattaTracker uses your location to provide high-frequency telemetry.</string>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>location</string>
-		<string>bluetooth-central</string>
-	</array>
-	<key>UILaunchScreen</key>
-	<dict/>
 </dict>
 </plist>

@@ -31,7 +31,7 @@ class UDPListener: ObservableObject {
             listener = try NWListener(using: params, on: 5555)
             
             listener?.stateUpdateHandler = { state in
-                print("UDP Listener state: \\(state)")
+                print("UDP Listener state: \(state)")
             }
             
             listener?.newConnectionHandler = { [weak self] connection in
@@ -41,7 +41,7 @@ class UDPListener: ObservableObject {
             listener?.start(queue: queue)
             print("Started UDP Listener on port 5555.")
         } catch {
-            print("Failed to start UDP listener: \\(error)")
+            print("Failed to start UDP listener: \(error)")
         }
     }
     

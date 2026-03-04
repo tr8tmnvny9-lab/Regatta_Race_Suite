@@ -32,13 +32,13 @@ final class SidecarManager: ObservableObject {
     @Published var logs: [String] = []
 
     // URL of the embedded Rust backend
-    let backendURL = URL(string: "http://localhost:3001")!
+    let backendURL = URL(string: "http://127.0.0.1:3001")!
     // Frontend URL — local dev Vite server in dev builds, bundled in production
     var frontendURL: URL {
         #if DEBUG
-        return URL(string: "http://localhost:3000")!
+        return URL(string: "http://127.0.0.1:3000")!
         #else
-        return URL(string: "http://localhost:3001/app")!
+        return URL(string: "http://127.0.0.1:3001/app")!
         #endif
     }
 
@@ -53,9 +53,21 @@ final class SidecarManager: ObservableObject {
     func start() {
         guard status == .idle else { return }
         status = .starting
-        log.info("Starting Rust sidecar...")
-        launchProcess()
-        startHealthMonitor()
+        log.info("Checking if sidecar service is already reachable...")
+        
+        Task {
+            // "Ready-First" check: If something is already listening on 3001, just use it.
+            if await self.ping(timeout: 0.5) {
+                log.info("Sidecar service already running. Skipping launch.")
+                return
+            }
+            
+            await MainActor.run {
+                log.info("Starting Rust sidecar...")
+                self.launchProcess()
+                self.startHealthMonitor()
+            }
+        }
     }
 
     func stop() {
@@ -108,9 +120,23 @@ final class SidecarManager: ObservableObject {
 
         p.terminationHandler = { [weak self] proc in
             guard let self else { return }
-            log.warning("Sidecar exited with code \(proc.terminationStatus)")
-            DispatchQueue.main.async { self.status = .starting }
-            self.scheduleRestart()
+            log.warning("Sidecar process terminated (PID \(proc.processIdentifier)) with code \(proc.terminationStatus)")
+            
+            Task {
+                // Before we tear down the UI by setting .starting, check if it's already back up 
+                // or if another process is handling it.
+                let stillAlive = await self.ping()
+                if !stillAlive {
+                    DispatchQueue.main.async {
+                        if self.status == .ready {
+                            self.status = .starting 
+                        }
+                    }
+                    self.scheduleRestart()
+                } else {
+                    log.info("Sidecar process exited but service is still reachable (external/stray). Keeping .ready state.")
+                }
+            }
         }
 
         do {
@@ -119,7 +145,9 @@ final class SidecarManager: ObservableObject {
             log.info("Sidecar launched (PID \(p.processIdentifier))")
         } catch {
             DispatchQueue.main.async {
-                self.status = .failed("Could not launch sidecar: \(error.localizedDescription)")
+                if self.status != .ready {
+                    self.status = .failed("Could not launch sidecar: \(error.localizedDescription)")
+                }
             }
             log.error("Failed to launch sidecar: \(error)")
         }
@@ -145,7 +173,7 @@ final class SidecarManager: ObservableObject {
             .deletingLastPathComponent()      // regatta-mac/
             .deletingLastPathComponent()      // apps/
             .deletingLastPathComponent()      // regatta-suite/
-            .appendingPathComponent("backend-rust/target/aarch64-apple-darwin/release/regatta-backend")
+            .appendingPathComponent("target/release/regatta-backend")
         if FileManager.default.isExecutableFile(atPath: devURL.path) {
             return devURL
         }
@@ -169,7 +197,7 @@ final class SidecarManager: ObservableObject {
             var attempts = 0
             while attempts < 30 {
                 try? await Task.sleep(nanoseconds: 500_000_000) // 0.5s
-                if await self.ping() { break }
+                if await self.ping(timeout: 1.0) { break }
                 attempts += 1
             }
 
@@ -184,15 +212,22 @@ final class SidecarManager: ObservableObject {
         }
     }
 
-    private func ping() async -> Bool {
+    func ping(timeout: TimeInterval = 2.0) async -> Bool {
         let url = backendURL.appendingPathComponent("health")
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = timeout
+        let session = URLSession(configuration: config)
+        
         do {
-            let (_, response) = try await URLSession.shared.data(from: url)
+            let (_, response) = try await session.data(from: url)
             let ok = (response as? HTTPURLResponse)?.statusCode == 200
-            if ok && status != .ready {
+            
+            if ok {
                 await MainActor.run {
-                    self.status = .ready
-                    self.restartDelay = 1.0   // reset backoff on successful start
+                    if self.status != .ready {
+                        self.status = .ready
+                        self.restartDelay = 1.0   // reset backoff on successful start
+                    }
                 }
             }
             return ok

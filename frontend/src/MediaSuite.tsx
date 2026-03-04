@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Globe, Monitor, LayoutGrid, SplitSquareHorizontal, Map as MapIcon, Aperture } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { LiveKitRoom } from '@livekit/components-react'
@@ -6,7 +6,7 @@ import VideoPlayer from './components/media/VideoPlayer'
 
 type LayoutMode = 'QUAD' | 'SPLIT' | 'MAP_SPLIT' | 'SINGLE';
 
-export default function MediaSuite({ socket, raceState, onHome }: { socket: any, raceState: any, onHome?: () => void }) {
+export default function MediaSuite({ socket, onHome }: { socket: any, onHome?: () => void }) {
     const [layout, setLayout] = useState<LayoutMode>('QUAD')
     const [autoDirector, setAutoDirector] = useState(true)
     const [liveKitToken, setLiveKitToken] = useState<string | null>(null)
@@ -79,7 +79,7 @@ export default function MediaSuite({ socket, raceState, onHome }: { socket: any,
                     connect={false} // Currently false so it doesn't try to connect to localhost without server
                     className="w-full h-full flex gap-6"
                 >
-                    <MediaGrid layout={layout} raceState={raceState} autoDirector={autoDirector} />
+                    <MediaGrid layout={layout} autoDirector={autoDirector} />
                 </LiveKitRoom>
 
                 {/* Sponsor Bug Overlay */}
@@ -98,7 +98,7 @@ export default function MediaSuite({ socket, raceState, onHome }: { socket: any,
 }
 
 // Subcomponent to organize tracks based on layout
-function MediaGrid({ layout, raceState, autoDirector }: { layout: LayoutMode, raceState: any, autoDirector: boolean }) {
+function MediaGrid({ layout, autoDirector }: { layout: LayoutMode, autoDirector: boolean }) {
     // In production we would pull active video tracks using `useTracks`
     // const tracks = useTracks([Track.Source.Camera], { onlySubscribed: true });
 

@@ -22,6 +22,7 @@ final class RaceStateModel: ObservableObject {
     // ── Fleet ─────────────────────────────────────────────────────────────────
     @Published var assignedBoatNumber: String = ""
     @Published var assignedTeamName: String? 
+    @Published var boatColour: String = ""
     @Published var isLeagueMode: Bool = false
     @Published var sessionId: String?
 
@@ -34,6 +35,9 @@ final class RaceStateModel: ObservableObject {
         }
         if let secs = json["sequenceTimeRemaining"] as? Double {
             timeRemaining = secs
+        }
+        if let boatColor = json["hullColour"] as? String {
+            boatColour = boatColor
         }
         if let seqInfo = json["currentSequence"] as? [String: Any],
            let flags = seqInfo["flags"] as? [String] {

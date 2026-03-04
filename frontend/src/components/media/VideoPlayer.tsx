@@ -1,4 +1,3 @@
-import React from 'react';
 import { VideoTrack } from '@livekit/components-react';
 import { Track, Participant } from 'livekit-client';
 import { CameraOff } from 'lucide-react';

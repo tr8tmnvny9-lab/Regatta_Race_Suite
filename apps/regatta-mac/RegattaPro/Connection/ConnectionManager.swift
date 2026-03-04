@@ -116,33 +116,37 @@ final class ConnectionManager: ObservableObject {
     }
 
     private func evaluateConnectionModeAsync() async {
+        let newMode: ConnectionMode
+        let newLatency: Double
+        
         // 1. Try local sidecar (always preferred for lowest latency)
         if let ms = await ping(url: localURL) {
-            await MainActor.run {
-                self.mode = .local(self.localURL)
-                self.isConnected = true
-                self.latencyMs = ms
-            }
-            return
+            newMode = .local(self.localURL)
+            newLatency = ms
+        } else if let ms = await ping(url: cloudURL) {
+            // 2. Try cloud backend (satisfies Invariant #3: <10s failover)
+            newMode = .cloud(self.cloudURL)
+            newLatency = ms
+        } else {
+            // 3. Offline
+            newMode = .offline
+            newLatency = 0
         }
 
-        // 2. Try cloud backend (satisfies Invariant #3: <10s failover)
-        if let ms = await ping(url: cloudURL) {
-            log.info("Switched to cloud backend (latency: \(ms)ms)")
-            await MainActor.run {
-                self.mode = .cloud(self.cloudURL)
-                self.isConnected = true
-                self.latencyMs = ms
+        // 🟢 CRITICAL: Prevent redundant updates that trigger redraw loops
+        if self.mode == newMode && self.isConnected == (newMode != .offline) {
+            if abs(self.latencyMs - newLatency) < 50 { // Only update if latency changed meaningfully (>50ms)
+                return 
             }
-            return
         }
 
-        // 3. Offline
-        log.warning("All backends unreachable — entering offline mode")
         await MainActor.run {
-            self.mode = .offline
-            self.isConnected = false
-            self.latencyMs = 0
+            if self.mode != newMode {
+                log.info("Connection mode changed to: \(self.modeLabel)")
+                self.mode = newMode
+                self.isConnected = (newMode != .offline)
+            }
+            self.latencyMs = newLatency
         }
     }
 

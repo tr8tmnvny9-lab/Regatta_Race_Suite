@@ -26,6 +26,8 @@ struct RegattaProApp: App {
     @StateObject private var notifications = NotificationManager()
     @StateObject private var udpListener = UDPListener()
     
+    @StateObject private var mapInteraction = MapInteractionModel()
+    
     // Core Engine State
     @StateObject private var raceState = RaceStateModel()
     @StateObject private var raceEngine = RaceEngineClient()
@@ -40,6 +42,7 @@ struct RegattaProApp: App {
                 .environmentObject(udpListener)
                 .environmentObject(raceState)
                 .environmentObject(raceEngine)
+                .environmentObject(mapInteraction)
                 .frame(minWidth: 1200, minHeight: 800)
                 .onAppear {
                     // Hook engine client to the state model
@@ -64,21 +67,29 @@ struct RootView: View {
     @EnvironmentObject var udpListener: UDPListener
 
     var body: some View {
-        Group {
+        ZStack {
             if !authManager.isAuthenticated {
                 LoginView()
-            } else if sidecar.status == .ready {
-                ContentView()
+                    .transition(.opacity)
             } else {
-                SidecarLoadingView()
+                // Keep ContentView mounted to preserve Map identities and prevent Metal crashes
+                ContentView()
+                    .transition(.opacity)
+                
+                if sidecar.status != .ready {
+                    SidecarLoadingView()
+                        .transition(.opacity)
+                        .zIndex(100)
+                }
             }
         }
+        .animation(.default, value: sidecar.status)
         .onAppear {
             sidecar.start()
             connection.start()
             udpListener.start()
         }
-        .onChange(of: connection.backendURL) { newURL in
+        .onChange(of: connection.backendURL) { oldURL, newURL in
             if let url = newURL {
                 raceEngine.connect(to: url)
             } else {
