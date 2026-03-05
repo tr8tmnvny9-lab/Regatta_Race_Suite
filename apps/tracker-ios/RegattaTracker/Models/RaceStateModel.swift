@@ -16,6 +16,7 @@ final class RaceStateModel: ObservableObject {
     // ── Sequence / countdown ──────────────────────────────────────────────────
     @Published var currentPhase: RacePhase = .idle
     @Published var timeRemaining: Double = 0
+    @Published var isJuryMode: Bool = false
     @Published var activeFlags: [String] = []
     @Published var currentNodeId: String = ""
 

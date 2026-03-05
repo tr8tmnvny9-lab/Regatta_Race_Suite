@@ -16,6 +16,7 @@ struct ContentView: View {
     @EnvironmentObject var connection: ConnectionManager
     @EnvironmentObject var sidecar: SidecarManager
     @EnvironmentObject var authManager: SupabaseAuthManager
+    @ObservedObject var commandTarget = CommandTargetManager.shared
 
     var body: some View {
         ZStack {
@@ -30,6 +31,9 @@ struct ContentView: View {
         .toolbar {
             ToolbarItem(placement: .status) {
                 ConnectivityStatusView()
+            }
+            ToolbarItem(placement: .principal) {
+                CommandTargetSelectorView(targetManager: commandTarget)
             }
         }
     }

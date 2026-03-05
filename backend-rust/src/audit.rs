@@ -135,6 +135,7 @@ struct AuditState {
 pub struct AuditLogger {
     state: Arc<RwLock<AuditState>>,
     session_id: Arc<RwLock<String>>,
+    cloud_sync: Arc<RwLock<Option<Arc<crate::cloud_sync::CloudSyncManager>>>>,
 }
 
 impl AuditLogger {
@@ -146,7 +147,13 @@ impl AuditLogger {
         Self {
             state: Arc::new(RwLock::new(initial_state)),
             session_id: Arc::new(RwLock::new("default".to_string())),
+            cloud_sync: Arc::new(RwLock::new(None)),
         }
+    }
+
+    pub async fn attach_cloud_sync(&self, sync: Arc<crate::cloud_sync::CloudSyncManager>) {
+        *self.cloud_sync.write().await = Some(sync);
+        info!("AuditLogger: Attached to AWS Aurora Cloud Sync");
     }
 
     pub async fn set_session(&self, id: String) {
@@ -209,6 +216,15 @@ impl AuditLogger {
                     warn!("Audit: could not open {AUDIT_LOG_PATH}: {e}");
                 }
             }
+        }
+
+        // AWS Aurora Sync
+        let sync_opt = self.cloud_sync.read().await.clone();
+        if let Some(sync) = sync_opt {
+            let block_clone = block.clone();
+            tokio::spawn(async move {
+                sync.push_audit_block(&block_clone).await;
+            });
         }
     }
 

@@ -15,6 +15,7 @@
 		30ABAE196F808BCDB533AA6C /* FailsafeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0605CD6A7EF7476AD1ADB54 /* FailsafeManager.swift */; };
 		42E12E81FA9AAFDD17E9A580 /* SettingsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB45313BA789CB9F357A23B5 /* SettingsSheet.swift */; };
 		4D716A9EC2BF5433F5F74FE0 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = E47A823FC0E1B75083C5E747 /* DesignTokens.swift */; };
+		5447CC08A9AA72E9E5F3F372 /* TrackerEndpointConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = B827EE37C626221D4FF52685 /* TrackerEndpointConfig.swift */; };
 		5554EAB45FD991797DA9958B /* SupabaseAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9500443F285D77BE47381447 /* SupabaseAuthManager.swift */; };
 		595987505CCA24B15997156D /* MainHUDView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8C2C8B57F8154048455FEA4 /* MainHUDView.swift */; };
 		5CA5133C9F035FCE966AC691 /* CountdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68A1933BF6E72C381724E01C /* CountdownView.swift */; };
@@ -31,7 +32,6 @@
 		B2A31D501E0B932991695601 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6DB85EBF1DC09278D38A171A /* CoreLocation.framework */; };
 		B45C23E80AB3F1FEA40605F3 /* AuthenticationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A3001805F504CDC34B4B5F46 /* AuthenticationServices.framework */; };
 		C5A64E51CF75ADDB9C566BD9 /* StartLineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1602576B9A1C1595485ADAA4 /* StartLineView.swift */; };
-		D1537F373399F958F8BF93A3 /* LiveKit in Frameworks */ = {isa = PBXBuildFile; productRef = 59612CE35C60068A9FF5A40A /* LiveKit */; };
 		E7D9DD40B8F8A79335A53F13 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 20F4AD67AE975BC07336548B /* Supabase */; };
 		F1C59B2F6123F3F3AE6A9FB0 /* LiveStreamManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31001CAD6FF4A896396C8965 /* LiveStreamManager.swift */; };
 		F4700EA1B11969469CB7176C /* CoreHaptics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 36C3185347A23BA5E454F81D /* CoreHaptics.framework */; };
@@ -65,6 +65,7 @@
 		A3B120C4BCA27690F73DF06C /* RacePhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RacePhase.swift; sourceTree = "<group>"; };
 		A87AE671E2E9FDDAD79D7C01 /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMotion.framework; path = System/Library/Frameworks/CoreMotion.framework; sourceTree = SDKROOT; };
 		AB31D4E77D86F6F2322E120A /* RaceStateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaceStateModel.swift; sourceTree = "<group>"; };
+		B827EE37C626221D4FF52685 /* TrackerEndpointConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackerEndpointConfig.swift; sourceTree = "<group>"; };
 		B8C2C8B57F8154048455FEA4 /* MainHUDView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainHUDView.swift; sourceTree = "<group>"; };
 		C770F56BDD96DEB9221CFB22 /* RegattaTracker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RegattaTracker.entitlements; sourceTree = "<group>"; };
 		D0605CD6A7EF7476AD1ADB54 /* FailsafeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FailsafeManager.swift; sourceTree = "<group>"; };
@@ -81,7 +82,6 @@
 			files = (
 				E7D9DD40B8F8A79335A53F13 /* Supabase in Frameworks */,
 				FDFA2F70BF451E139B148E95 /* GRDB in Frameworks */,
-				D1537F373399F958F8BF93A3 /* LiveKit in Frameworks */,
 				B2A31D501E0B932991695601 /* CoreLocation.framework in Frameworks */,
 				5E201CAF9C3822E52FCB2211 /* CoreMotion.framework in Frameworks */,
 				604AEBFB5A688564631F1CDC /* AVFoundation.framework in Frameworks */,
@@ -193,6 +193,7 @@
 			isa = PBXGroup;
 			children = (
 				67CD6AA02F2B5BE3B120C004 /* TrackerConnectionManager.swift */,
+				B827EE37C626221D4FF52685 /* TrackerEndpointConfig.swift */,
 			);
 			path = Connection;
 			sourceTree = "<group>";
@@ -262,7 +263,6 @@
 			packageProductDependencies = (
 				20F4AD67AE975BC07336548B /* Supabase */,
 				DB7CE095A03E7E306620595A /* GRDB */,
-				59612CE35C60068A9FF5A40A /* LiveKit */,
 			);
 			productName = RegattaTracker;
 			productReference = 4E9D0449303145F2205B198F /* RegattaTracker.app */;
@@ -294,7 +294,6 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				F4995148CC881755F7262C13 /* XCRemoteSwiftPackageReference "GRDB.swift" */,
-				BF270EB8E85C1D286C25BC3A /* XCRemoteSwiftPackageReference "client-sdk-swift" */,
 				D71E5BD8C9A8ED8D29EF769A /* XCRemoteSwiftPackageReference "supabase-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -330,6 +329,7 @@
 				C5A64E51CF75ADDB9C566BD9 /* StartLineView.swift in Sources */,
 				5554EAB45FD991797DA9958B /* SupabaseAuthManager.swift in Sources */,
 				2C8BA7D651F24EBE11989890 /* TrackerConnectionManager.swift in Sources */,
+				5447CC08A9AA72E9E5F3F372 /* TrackerEndpointConfig.swift in Sources */,
 				FE294B4221DC106D4B4FC862 /* UWBNodeBLEClient.swift in Sources */,
 				2BCC441472BC27F007B03617 /* WelcomeView.swift in Sources */,
 			);
@@ -515,14 +515,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		BF270EB8E85C1D286C25BC3A /* XCRemoteSwiftPackageReference "client-sdk-swift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/livekit/client-sdk-swift.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.0.0;
-			};
-		};
 		D71E5BD8C9A8ED8D29EF769A /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/supabase/supabase-swift";
@@ -546,11 +538,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = D71E5BD8C9A8ED8D29EF769A /* XCRemoteSwiftPackageReference "supabase-swift" */;
 			productName = Supabase;
-		};
-		59612CE35C60068A9FF5A40A /* LiveKit */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = BF270EB8E85C1D286C25BC3A /* XCRemoteSwiftPackageReference "client-sdk-swift" */;
-			productName = LiveKit;
 		};
 		DB7CE095A03E7E306620595A /* GRDB */ = {
 			isa = XCSwiftPackageProductDependency;

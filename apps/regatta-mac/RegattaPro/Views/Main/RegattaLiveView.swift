@@ -1,7 +1,7 @@
 import SwiftUI
 import AVKit
 
-// Temporary structural mock until LiveKit Swift SDK is injected
+// Temporary structural mock until Kinesis SDK views are injected
 struct VideoStreamNode: Identifiable {
     let id = UUID()
     let boatName: String
@@ -34,7 +34,7 @@ struct RegattaLiveView: View {
                     Text("Regatta Live Media Center")
                         .font(.title2)
                         .fontWeight(.bold)
-                    Text("Powered by LiveKit WebRTC")
+                    Text("Powered by Amazon Kinesis Video Streams WebRTC")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

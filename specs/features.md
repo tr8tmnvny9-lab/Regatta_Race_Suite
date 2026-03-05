@@ -115,3 +115,61 @@ Ones the race course is designed The map whitch has the race course and all the 
 ## 📊 Overview & Dashboard
 
 ## ⚖️ Jury & Media
+
+## 🌐 System Architecture View
+
+A full-screen, animated live topology of the Regatta Suite data infrastructure. Accessible from the sidebar as a dedicated section (teal node icon). Designed for both the technical operator (for system health) and as a briefing tool for race committee members.
+
+- **Layout**
+  - Dark canvas (~1200×700 internal coordinate space) embedded in a scrollable/zoomable SwiftUI container.
+  - Layer bands are visually separated with subtle vertical colour stripes labelled `FIELD`, `EDGE`, `CLOUD`, `COMMAND`.
+  - Zoom controls (+/-/reset) in a top HUD bar. Scrollable on both axes.
+  - Top toolbar shows the **Command Target Selector** (green=SNPN, blue=AWS) so mode switching is always in context here.
+
+- **Nodes**
+  Represent every active system component. 16 nodes total across 4 layers:
+  - *Field*: iOS Trackers 1-N, UWB Node
+  - *Edge*: Nokia gNB, Nokia DAC, RegattaPro Primary (Rust Backend), state.json, UWB Hub
+  - *Cloud*: AWS Fargate, Aurora, ElastiCache Redis, S3+Kinesis
+  - *Command*: Regatta Pro macOS, Juror Portal, Broadcast Feed
+
+  Each node renders as:
+  - Rounded icon card with SF Symbol and layer colour tint
+  - Two-line label (name + sublabel e.g. "AWS Fargate · RegattaPro CloudVM")
+  - Hover enlarges the card and increases the glow radius
+  - Inactive nodes dim to ~20% opacity
+
+- **Edges (Connections)**
+  Bezier-curved paths between nodes. Each edge has:
+  - A glow underlay (blurred, wider stroke) matching the edge colour
+  - A crisp core line (1.5pt)
+  - A floating label at the curve midpoint (e.g. "Starlink ↕︎ Sync", "Private 5G")
+  - Solid line = bidirectional; Dashed line = unidirectional flow
+  - Inactive edges rendered at 18% opacity, no label, no glow
+
+  Colour coding:
+  - 🟢 **Green**: Nokia SNPN / Private 5G paths
+  - 🔵 **Blue**: AWS Cloud paths
+  - 🟠 **Orange**: Starlink bridge (SNPN↔Cloud)
+  - 🩵 **Mint**: UWB Thunderbolt path
+  - ⚪ **Grey**: Cellular fallback (inactive in Edge mode)
+  - 🟣 **Purple**: Broadcast feed
+
+- **Animated Data Particles**
+  - A `Timer`-driven particle engine spawns small glowing dots (~7pt) on active edges at ~0.7s intervals.
+  - Each particle travels from `fromNode` to `toNode` along the bezier path at a fixed speed.
+  - Particles inherit the colour and glow of their edge.
+  - Max 80 simultaneous particles to keep CPU load minimal.
+  - Particle system pauses when the view is off-screen.
+
+- **Mode Reactivity**
+  When `CommandTargetManager.shared.target` changes:
+  - SNPN Edge mode: Private 5G + Thunderbolt + Starlink edges are active; Cellular fallback edges dim.
+  - AWS Cloud mode: Cellular fallback edges activate; SNPN private edges dim.
+  - Transition is smooth, changes propagated via Combine.
+
+- **Legend Panel**
+  Collapsible bottom-left panel showing:
+  - Layer colours reference
+  - Connection type legend (solid=bidir, dashed=unidir) with colour swatches
+  - Live counters: Active Edges / Total, Particle Count, Current Command Target

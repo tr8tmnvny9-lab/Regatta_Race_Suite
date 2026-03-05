@@ -11,6 +11,7 @@ pub struct ProcedureEngine {
     pub sequence_started_at: Option<Instant>,
     pub is_post_trigger: bool,
     pub post_trigger_started_at: Option<Instant>,
+    pub has_fired_gun: bool,
 }
 
 impl ProcedureEngine {
@@ -29,6 +30,7 @@ impl ProcedureEngine {
             sequence_started_at: None,
             is_post_trigger: false,
             post_trigger_started_at: None,
+            has_fired_gun: false,
         }
     }
 
@@ -51,6 +53,7 @@ impl ProcedureEngine {
             self.sequence_started_at = Some(Instant::now());
             self.is_post_trigger = false;
             self.post_trigger_started_at = None;
+            self.has_fired_gun = false;
             info!("Jumped to node: {node_id}");
             self.build_update()
         } else {
@@ -95,6 +98,7 @@ impl ProcedureEngine {
         self.sequence_started_at = Some(Instant::now());
         self.is_post_trigger = false;
         self.post_trigger_started_at = None;
+        self.has_fired_gun = false;
 
         self.build_update()
     }
@@ -105,6 +109,7 @@ impl ProcedureEngine {
         self.node_started_at = None;
         self.is_post_trigger = false;
         self.post_trigger_started_at = None;
+        self.has_fired_gun = false;
     }
 
     pub fn is_running(&self) -> bool {
@@ -221,6 +226,17 @@ impl ProcedureEngine {
             } else if duration == 0.0 && !is_waiting {
                 self.transition_next()
             } else {
+                // Determine if we just hit T-0 (Gun Fired)
+                let status = self.current_race_status();
+                if status == RaceStatus::Racing && !self.has_fired_gun {
+                    self.has_fired_gun = true;
+                    // Return the special GunFired tick immediately
+                    return match self.build_update() {
+                        Some(update) => TickResult::GunFired(update),
+                        None => TickResult::Idle,
+                    };
+                }
+
                 // Still in current node — emit time update
                 match self.build_update() {
                     Some(update) => TickResult::Update(update),
@@ -389,5 +405,6 @@ impl ProcedureEngine {
 pub enum TickResult {
     Idle,
     Update(SequenceUpdate),
+    GunFired(SequenceUpdate),
     SequenceComplete,
 }

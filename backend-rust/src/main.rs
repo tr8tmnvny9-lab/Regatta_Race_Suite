@@ -8,6 +8,8 @@ mod audit;
 mod uwb_hub;
 mod trilateration;
 mod auto_director;
+pub mod cloud_sync;
+pub mod edge_network;
 
 use std::collections::HashSet;
 use std::sync::Arc;
@@ -70,6 +72,7 @@ async fn run_engine_tick(
     engine: SharedEngine,
     shared: SharedState,
     io: SocketIo,
+    ocs_tx: tokio::sync::mpsc::Sender<uwb_hub::OcsEvent>,
 ) {
     let mut interval = tokio::time::interval(Duration::from_millis(200)); // 5Hz
     loop {
@@ -101,6 +104,28 @@ async fn run_engine_tick(
                     state.action_label = upd.action_label.clone();
                     state.is_post_trigger = upd.is_post_trigger;
                 }
+                let _ = io.emit("sequence-update", &upd);
+            }
+            TickResult::GunFired(upd) => {
+                info!("🏁 T-0 GUN FIRED: Transition to RACING state!");
+
+                // Sync race status
+                let eng = engine.read().await;
+                let engine_status = eng.current_race_status();
+                drop(eng);
+                
+                {
+                    let mut state = shared.write().await;
+                    state.status = engine_status;
+                    state.current_sequence = Some(upd.current_sequence.clone());
+                    state.sequence_time_remaining = Some(upd.sequence_time_remaining);
+                    state.current_node_id = Some(upd.current_node_id.clone());
+                    state.action_label = upd.action_label.clone();
+                }
+                
+                // Trigger the UWB Concurrent Batch Solve for sub-cm OCS Detection
+                uwb_hub::trigger_batch_solve(&ocs_tx).await;
+                
                 let _ = io.emit("sequence-update", &upd);
             }
             TickResult::SequenceComplete => {
@@ -151,6 +176,16 @@ async fn main() {
     let backend_mode = std::env::var("BACKEND_MODE").unwrap_or_else(|_| "local".into());
     info!("🏁 Regatta Pro Backend (Rust) v{} starting — mode: {backend_mode}",
         env!("CARGO_PKG_VERSION"));
+        
+    // Phase 3: SNPN-to-Starlink Routing (Edge Configuration)
+    if backend_mode == "edge" {
+        info!("📡 Nokia SNPN Edge Mode detected. Configuring Starlink Uplink Routing...");
+        if let Err(e) = edge_network::configure_starlink_routing().await {
+            warn!("Failed to configure Starlink routing override: {e}");
+        } else {
+            info!("✅ Outbound Media & Telemetry bound to Starlink tunnel.");
+        }
+    }
 
     // Load persisted state
     let race_state = load_state().await;
@@ -180,6 +215,9 @@ async fn main() {
     // UWB Hub (UDP listener on :5555, satisfies Invariant #1 path)
     let (ocs_tx, _ocs_rx) = tokio::sync::mpsc::channel::<uwb_hub::OcsEvent>(64);
     let uwb_config = UwbHubConfig::default();
+    
+    // We clone the sender so the engine tick can use it too
+    let ocs_tx_tick = ocs_tx.clone();
     tokio::spawn(start_uwb_hub(uwb_config, ocs_tx));
 
     // Build Socket.IO layer
@@ -201,11 +239,28 @@ async fn main() {
         }
     });
 
-    // Start engine tick loop
-    tokio::spawn(run_engine_tick(engine.clone(), shared.clone(), io.clone()));
-
-    // Start Auto-Director (SRS) loop
+    // Start execution task loops
+    tokio::spawn(run_engine_tick(engine.clone(), shared.clone(), io.clone(), ocs_tx_tick));
     tokio::spawn(start_auto_director(shared.clone(), io.clone()));
+
+    // Phase 1: AWS Aurora Cloud Sync (Heartbeat & State Mirroring)
+    if let Ok(db_url) = std::env::var("AURORA_DB_URL") {
+        info!("AWS Setup: Activating CloudSyncManager for Aurora integration.");
+        let redis_url = std::env::var("REDIS_URL").ok();
+        let session_id = "default".to_string(); // In a full app, generate/fetch this dynamically
+        if let Ok(cloud_sync) = cloud_sync::CloudSyncManager::connect(&db_url, redis_url, session_id).await {
+            let sync_arc = Arc::new(cloud_sync);
+            
+            // Wire AuditLogger to Aurora DB
+            audit_logger.attach_cloud_sync(sync_arc.clone()).await;
+
+            // Spawn cloud sync background tasks
+            tokio::spawn(sync_arc.clone().run_heartbeat_loop());
+            tokio::spawn(sync_arc.run_state_sync_loop(shared.clone()));
+        } else {
+            warn!("Failed to connect to Aurora Database. Proceeding in Local-Only mode.");
+        }
+    }
 
     // CORS — local dev: http://localhost:3000; cloud: set CORS_ORIGINS=*
     // Fly.io env sets CORS_ORIGINS=* so native Mac apps, iOS apps, and

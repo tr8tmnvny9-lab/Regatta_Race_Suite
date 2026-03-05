@@ -7,6 +7,7 @@ struct SettingsSheet: View {
     @EnvironmentObject var authManager: SupabaseAuthManager
     @EnvironmentObject var connection: TrackerConnectionManager
     @EnvironmentObject var bleClient: UWBNodeBLEClient
+    @EnvironmentObject var raceState: RaceStateModel
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
@@ -65,7 +66,7 @@ struct SettingsSheet: View {
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
 
-                // Section 2: Connection
+                // Section 2: Connection & Backend
                 Section {
                     LabeledContent {
                         Text(connection.sessionId ?? "None")
@@ -81,16 +82,59 @@ struct SettingsSheet: View {
                     }
                     
                     LabeledContent {
-                        Text(bleClient.isConnected ? "Connected" : "Scanning...")
+                        Text(bleClient.isConnected ? "Connected ✓" : "Scanning…")
                             .foregroundColor(bleClient.isConnected ? .statusRacing : .statusWarn)
                     } label: {
-                        Text("UWB Node")
+                        Text("UWB Node (Thunderbolt)")
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                    
+                    Toggle(isOn: $raceState.isJuryMode) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Jury Mode")
+                                .foregroundColor(.white)
+                            Text("Report as a Jury/Safety node")
+                                .font(.system(size: 10))
+                                .foregroundColor(.white.opacity(0.4))
+                        }
+                    }
+                    .tint(.purple)
+                } header: {
+                    Text("HARDWARE STATUS")
+                        .font(RegattaFont.label(11))
+                        .foregroundColor(.white.opacity(0.4))
+                }
+                .listRowBackground(Color.white.opacity(0.05))
+
+                // Section: Backend Endpoint
+                Section {
+                    Picker("Network Mode", selection: Binding(
+                        get: { TrackerEndpointConfig.preferredMode.rawValue },
+                        set: { TrackerEndpointConfig.setMode(TrackerNetworkMode(rawValue: $0) ?? .awsCloud) }
+                    )) {
+                        Text("Nokia SNPN (Local Edge)").tag(TrackerNetworkMode.localEdge.rawValue)
+                        Text("AWS CloudVM (Fargate)").tag(TrackerNetworkMode.awsCloud.rawValue)
+                    }
+                    .pickerStyle(.segmented)
+                    
+                    LabeledContent {
+                        Text(TrackerEndpointConfig.currentEndpointDisplayName)
+                            .font(RegattaFont.data(12))
+                            .foregroundColor(.cyanAccent)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
+                    } label: {
+                        Text("Active Endpoint")
                             .foregroundColor(.white.opacity(0.6))
                     }
                 } header: {
-                    Text("NETWORK & HARDWARE")
+                    Text("NETWORK & BACKEND")
                         .font(RegattaFont.label(11))
                         .foregroundColor(.white.opacity(0.4))
+                } footer: {
+                    Text("Set via Settings → Backend or Info.plist REGATTA_BACKEND_URL key at build time.")
+                        .font(.system(size: 10))
+                        .foregroundColor(.white.opacity(0.3))
                 }
                 .listRowBackground(Color.white.opacity(0.05))
 

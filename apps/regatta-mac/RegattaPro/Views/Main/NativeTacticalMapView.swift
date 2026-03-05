@@ -106,7 +106,8 @@ struct NativeTacticalMap: NSViewRepresentable {
             keepBuoyIds.insert(buoy.id)
             if let existing = existingBuoys[buoy.id] {
                 // Update coordinate natively to animate
-                UIView.animate(withDuration: 0.2) {
+                NSAnimationContext.runAnimationGroup { context in
+                    context.duration = 0.2
                     existing.coordinate = buoy.pos.coordinate
                 }
             } else {
@@ -119,7 +120,8 @@ struct NativeTacticalMap: NSViewRepresentable {
             keepBoatIds.insert(boat.id)
             if let existing = existingBoats[boat.id] {
                 // Update coordinate natively to animate
-                UIView.animate(withDuration: 0.2) {
+                NSAnimationContext.runAnimationGroup { context in
+                    context.duration = 0.2
                     existing.coordinate = boat.pos.coordinate
                 }
                 // HACK: MKAnnotation coordinate change doesn't auto-update views if we need rotation
@@ -243,9 +245,7 @@ struct NativeTacticalMap: NSViewRepresentable {
                 
                 guard let buoy = parent.raceState.course.marks.first(where: { $0.id == buoyAnn.buoyId }) else { return view }
                 
-                // NSHostingView injection
-                let isSelected = parent.mapInteraction.selectedBuoyId == buoy.id
-                let swiftUIView = BuoySymbolView(buoy: buoy, isSelected: isSelected)
+                let swiftUIView = BuoySymbolView(buoyId: buoy.id)
                     .environmentObject(parent.raceState)
                     .environmentObject(parent.mapInteraction)
                 

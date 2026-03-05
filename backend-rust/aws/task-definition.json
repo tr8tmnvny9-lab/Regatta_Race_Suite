@@ -1,0 +1,80 @@
+{
+    "family": "regatta-backend-task",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "512",
+    "memory": "1024",
+    "executionRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskExecutionRole",
+    "taskRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskRole",
+    "containerDefinitions": [
+        {
+            "name": "regatta-backend",
+            "image": "YOUR_ACCOUNT_ID.dkr.ecr.eu-north-1.amazonaws.com/regatta-backend:latest",
+            "essential": true,
+            "portMappings": [
+                {
+                    "containerPort": 3001,
+                    "protocol": "tcp"
+                },
+                {
+                    "containerPort": 5555,
+                    "protocol": "udp"
+                }
+            ],
+            "environment": [
+                {
+                    "name": "BACKEND_MODE",
+                    "value": "cloud"
+                },
+                {
+                    "name": "PORT",
+                    "value": "3001"
+                },
+                {
+                    "name": "BINDADDR",
+                    "value": "0.0.0.0"
+                },
+                {
+                    "name": "CORS_ORIGINS",
+                    "value": "*"
+                },
+                {
+                    "name": "RUST_LOG",
+                    "value": "info,regatta_backend=debug"
+                }
+            ],
+            "secrets": [
+                {
+                    "name": "AURORA_DB_URL",
+                    "valueFrom": "arn:aws:ssm:eu-north-1:YOUR_ACCOUNT_ID:parameter/regatta/aurora_url"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/regatta-backend",
+                    "awslogs-region": "eu-north-1",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            },
+            "mountPoints": [
+                {
+                    "sourceVolume": "regatta_data_efs",
+                    "containerPath": "/data",
+                    "readOnly": false
+                }
+            ]
+        }
+    ],
+    "volumes": [
+        {
+            "name": "regatta_data_efs",
+            "efsVolumeConfiguration": {
+                "fileSystemId": "fs-XXXXXX",
+                "transitEncryption": "ENABLED"
+            }
+        }
+    ]
+}

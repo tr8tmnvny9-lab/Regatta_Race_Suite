@@ -67,7 +67,7 @@ struct TemplateButton: View {
 extension CourseTemplatesCard {
     
     private func generateWindwardLeeward() {
-        guard let center = mapInteraction.cameraPosition.region?.center else { return }
+        guard let center = mapInteraction.explicitMapRegion?.center else { return }
         
         let twd = raceState.twd
         let distance: Double = 1000 // 1km course
@@ -77,16 +77,14 @@ extension CourseTemplatesCard {
         
         // Top Mark (Windward)
         let topPos = destination(from: center, distance: distance / 2, bearing: twd)
-        raceState.course.marks.append(Buoy(id: "M1", name: "Windward", pos: topPos, color: "Red", type: .mark, design: "Cylindrical"))
+        raceState.course.marks.append(Buoy(id: "M1", type: .mark, name: "Windward", pos: topPos, color: "Red", design: "Cylindrical"))
         
         // Bottom Mark (Leeward)
         let botPos = destination(from: center, distance: distance / 2, bearing: (twd + 180).truncatingRemainder(dividingBy: 360))
-        raceState.course.marks.append(Buoy(id: "M2", name: "Leeward", pos: botPos, color: "Yellow", type: .mark, design: "Cylindrical"))
+        raceState.course.marks.append(Buoy(id: "M2", type: .mark, name: "Leeward", pos: botPos, color: "Yellow", design: "Cylindrical"))
         
         // Center the map
-        withAnimation {
-            mapInteraction.cameraPosition = .region(MKCoordinateRegion(center: center, span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)))
-        }
+        mapInteraction.explicitMapRegion = MKCoordinateRegion(center: center, span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02))
     }
     
     private func generateTrapezoid() {

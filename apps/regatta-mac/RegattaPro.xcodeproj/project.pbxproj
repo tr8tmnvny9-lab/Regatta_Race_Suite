@@ -12,47 +12,69 @@
 		25F24900D3048A215A8B24DA /* ProcedureArchitectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60FFE7A35C38686CA42BFFFC /* ProcedureArchitectView.swift */; };
 		26D91BA39F3754DAD529E033 /* RegattaLiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C9C96F829D4596E244ECBCC /* RegattaLiveView.swift */; };
 		293AAD55A521C4661444A1A8 /* UDPListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4C3E2D0ED9864FA5002D94C /* UDPListener.swift */; };
+		32F75E9E6AD7BC5C4BFBDE46 /* ConnectivityStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFA3DAF0B25C2EEC174EED /* ConnectivityStatusView.swift */; };
+		3DC81CB771355EBDEA11B126 /* CourseTemplatesCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CD28FD52944D9D44C39F86D /* CourseTemplatesCard.swift */; };
 		408799B8A2C8D4EF02B14C03 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21344C227C553B3BD939C63E /* NotificationManager.swift */; };
 		410382F9367D764839B5241A /* StartProcedureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32E8A535EB9015E9D22D8D90 /* StartProcedureView.swift */; };
+		43B9DA8A09E61C1231B2E9C6 /* BoatSymbolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6D31C59FF4160F86A96CABF /* BoatSymbolView.swift */; };
 		451F5BE90EB435C150AEC8C1 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13FDB26F5E86ED6D93DDC066 /* ContentView.swift */; };
 		4650159404D5BFA8EB4331D5 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0E7C3850B6A1DA84B0D9662 /* App.swift */; };
 		46BF90BFD61EBB2A45EFFEE7 /* TacticalMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F2EB0533E3208AFC8158BB3 /* TacticalMapView.swift */; };
+		4DF6807C1FAF310EC99BBB53 /* CloudMediaReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E23AB2F11DAEA1E8E65691D /* CloudMediaReviewView.swift */; };
+		660EF80D82BD071C9255768B /* SystemArchitectureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B822774E2B0237024D59EA04 /* SystemArchitectureView.swift */; };
 		6EB6361501517DDC2CB67F5D /* SidecarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9A440B7232131E9DDEEA055 /* SidecarManager.swift */; };
 		730BEC7460FC3BCB53C23E51 /* MenuCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 508CD8752E7BD2EF08CDA59F /* MenuCommands.swift */; };
+		7450DB3E7C9903C2ABAEE8E3 /* CommandTargetSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43A8CC1801B5A074F7D93677 /* CommandTargetSelectorView.swift */; };
+		7FEAD8BCC160E4FB120BC54A /* CommandTargetManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F3E8227EAF9781519A38C26 /* CommandTargetManager.swift */; };
 		80F46842B888FFF088F56461 /* RaceStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BE201ABBEA38BD8EAE782C7 /* RaceStateModel.swift */; };
+		92B8A07A1CAA060EA2138C99 /* FleetHealthDashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB78C985F65A0D710D02617A /* FleetHealthDashboard.swift */; };
 		99E8E6AF465BECB7384169E3 /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C5C5BBEAD7408247C9DF9C8 /* LogView.swift */; };
 		9DA4AF7DD8B34F96912BEF3D /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E08B121AF5178AF2EB5ABA50 /* LoginView.swift */; };
 		A3918A86D1BA08E58DA45425 /* RaceEngineClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6C583A2DA1DDD2884066DBE /* RaceEngineClient.swift */; };
+		A727F8AA3F4606625B3E85E0 /* PerformanceOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63898A40A67CD6F6AE5BBB27 /* PerformanceOverlayView.swift */; };
 		AAF6ED16A0B00623949C2AAA /* MapInteractionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 518B45AFD012093D2FC37B68 /* MapInteractionModel.swift */; };
 		B10BD8F8E98B3C1FFE411869 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = DA1E0E06077115D9985625BC /* Supabase */; };
+		B5242AEDD174ACEC9158EB03 /* NativeTacticalMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A771BD25FBBF9ADAC4285B /* NativeTacticalMapView.swift */; };
 		CA68EC3032868835E8A4AA59 /* FleetControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87DE4B0A6EC0EE00E4C2976B /* FleetControlView.swift */; };
 		E695730EBA30A62A9E1652FF /* MainLayoutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B8F19A6B5822CCFA2A43C3E /* MainLayoutView.swift */; };
+		EBAA3FBAC779FADB04823F7F /* BuoySymbolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEB0349A9CB6C6C0AB017790 /* BuoySymbolView.swift */; };
 		FF1041AECD177CCA8BF70841 /* CourseBuilderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 563B75D8F491C81897208ABD /* CourseBuilderView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0CD28FD52944D9D44C39F86D /* CourseTemplatesCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseTemplatesCard.swift; sourceTree = "<group>"; };
 		11A36B84F1EAF8DD63A6B657 /* SupabaseAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAuthManager.swift; sourceTree = "<group>"; };
 		13FDB26F5E86ED6D93DDC066 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		21344C227C553B3BD939C63E /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		2BE201ABBEA38BD8EAE782C7 /* RaceStateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaceStateModel.swift; sourceTree = "<group>"; };
 		32E8A535EB9015E9D22D8D90 /* StartProcedureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartProcedureView.swift; sourceTree = "<group>"; };
+		3FFFA3DAF0B25C2EEC174EED /* ConnectivityStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectivityStatusView.swift; sourceTree = "<group>"; };
+		43A8CC1801B5A074F7D93677 /* CommandTargetSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandTargetSelectorView.swift; sourceTree = "<group>"; };
 		4F2EB0533E3208AFC8158BB3 /* TacticalMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalMapView.swift; sourceTree = "<group>"; };
 		508CD8752E7BD2EF08CDA59F /* MenuCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuCommands.swift; sourceTree = "<group>"; };
 		518B45AFD012093D2FC37B68 /* MapInteractionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapInteractionModel.swift; sourceTree = "<group>"; };
 		563B75D8F491C81897208ABD /* CourseBuilderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseBuilderView.swift; sourceTree = "<group>"; };
 		5C5C5BBEAD7408247C9DF9C8 /* LogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogView.swift; sourceTree = "<group>"; };
 		60FFE7A35C38686CA42BFFFC /* ProcedureArchitectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcedureArchitectView.swift; sourceTree = "<group>"; };
+		63898A40A67CD6F6AE5BBB27 /* PerformanceOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerformanceOverlayView.swift; sourceTree = "<group>"; };
 		67A0EC182A2FC53191756A07 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		7B0E45690F3BAC9E2DD60D7E /* ConnectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionManager.swift; sourceTree = "<group>"; };
 		7C9C96F829D4596E244ECBCC /* RegattaLiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegattaLiveView.swift; sourceTree = "<group>"; };
+		7E23AB2F11DAEA1E8E65691D /* CloudMediaReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudMediaReviewView.swift; sourceTree = "<group>"; };
+		7F3E8227EAF9781519A38C26 /* CommandTargetManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandTargetManager.swift; sourceTree = "<group>"; };
 		87DE4B0A6EC0EE00E4C2976B /* FleetControlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FleetControlView.swift; sourceTree = "<group>"; };
 		8B8F19A6B5822CCFA2A43C3E /* MainLayoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainLayoutView.swift; sourceTree = "<group>"; };
 		B0E7C3850B6A1DA84B0D9662 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		B4C3E2D0ED9864FA5002D94C /* UDPListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UDPListener.swift; sourceTree = "<group>"; };
 		B7187E1EACE8705995E8872D /* RegattaPro.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RegattaPro.entitlements; sourceTree = "<group>"; };
+		B822774E2B0237024D59EA04 /* SystemArchitectureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemArchitectureView.swift; sourceTree = "<group>"; };
 		C41EFC555853177BC0418866 /* RegattaPro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RegattaPro.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C6C583A2DA1DDD2884066DBE /* RaceEngineClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaceEngineClient.swift; sourceTree = "<group>"; };
+		D6D31C59FF4160F86A96CABF /* BoatSymbolView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoatSymbolView.swift; sourceTree = "<group>"; };
+		DB78C985F65A0D710D02617A /* FleetHealthDashboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FleetHealthDashboard.swift; sourceTree = "<group>"; };
+		DEB0349A9CB6C6C0AB017790 /* BuoySymbolView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuoySymbolView.swift; sourceTree = "<group>"; };
 		E08B121AF5178AF2EB5ABA50 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		E1A771BD25FBBF9ADAC4285B /* NativeTacticalMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeTacticalMapView.swift; sourceTree = "<group>"; };
 		E9A440B7232131E9DDEEA055 /* SidecarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidecarManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -102,12 +124,22 @@
 			path = Auth;
 			sourceTree = "<group>";
 		};
+		A351F47241A3178F244BB24E /* Course */ = {
+			isa = PBXGroup;
+			children = (
+				DEB0349A9CB6C6C0AB017790 /* BuoySymbolView.swift */,
+				0CD28FD52944D9D44C39F86D /* CourseTemplatesCard.swift */,
+			);
+			path = Course;
+			sourceTree = "<group>";
+		};
 		B24720C188EEBB47AA1AB0DD /* Main */ = {
 			isa = PBXGroup;
 			children = (
 				563B75D8F491C81897208ABD /* CourseBuilderView.swift */,
 				87DE4B0A6EC0EE00E4C2976B /* FleetControlView.swift */,
 				5C5C5BBEAD7408247C9DF9C8 /* LogView.swift */,
+				E1A771BD25FBBF9ADAC4285B /* NativeTacticalMapView.swift */,
 				60FFE7A35C38686CA42BFFFC /* ProcedureArchitectView.swift */,
 				7C9C96F829D4596E244ECBCC /* RegattaLiveView.swift */,
 				32E8A535EB9015E9D22D8D90 /* StartProcedureView.swift */,
@@ -128,6 +160,7 @@
 		B6364A1D554856DB3B7EF937 /* Connection */ = {
 			isa = PBXGroup;
 			children = (
+				7F3E8227EAF9781519A38C26 /* CommandTargetManager.swift */,
 				7B0E45690F3BAC9E2DD60D7E /* ConnectionManager.swift */,
 				C6C583A2DA1DDD2884066DBE /* RaceEngineClient.swift */,
 				B4C3E2D0ED9864FA5002D94C /* UDPListener.swift */,
@@ -135,11 +168,27 @@
 			path = Connection;
 			sourceTree = "<group>";
 		};
+		C1EA7C9B73F759EE1AF528E4 /* Fleet */ = {
+			isa = PBXGroup;
+			children = (
+				D6D31C59FF4160F86A96CABF /* BoatSymbolView.swift */,
+				DB78C985F65A0D710D02617A /* FleetHealthDashboard.swift */,
+			);
+			path = Fleet;
+			sourceTree = "<group>";
+		};
 		C711B4057CE505AAFB4EA889 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				7E23AB2F11DAEA1E8E65691D /* CloudMediaReviewView.swift */,
+				43A8CC1801B5A074F7D93677 /* CommandTargetSelectorView.swift */,
+				3FFFA3DAF0B25C2EEC174EED /* ConnectivityStatusView.swift */,
 				E08B121AF5178AF2EB5ABA50 /* LoginView.swift */,
 				8B8F19A6B5822CCFA2A43C3E /* MainLayoutView.swift */,
+				63898A40A67CD6F6AE5BBB27 /* PerformanceOverlayView.swift */,
+				B822774E2B0237024D59EA04 /* SystemArchitectureView.swift */,
+				A351F47241A3178F244BB24E /* Course */,
+				C1EA7C9B73F759EE1AF528E4 /* Fleet */,
 				B24720C188EEBB47AA1AB0DD /* Main */,
 			);
 			path = Views;
@@ -239,16 +288,26 @@
 			buildActionMask = 2147483647;
 			files = (
 				4650159404D5BFA8EB4331D5 /* App.swift in Sources */,
+				43B9DA8A09E61C1231B2E9C6 /* BoatSymbolView.swift in Sources */,
+				EBAA3FBAC779FADB04823F7F /* BuoySymbolView.swift in Sources */,
+				4DF6807C1FAF310EC99BBB53 /* CloudMediaReviewView.swift in Sources */,
+				7FEAD8BCC160E4FB120BC54A /* CommandTargetManager.swift in Sources */,
+				7450DB3E7C9903C2ABAEE8E3 /* CommandTargetSelectorView.swift in Sources */,
 				1CFA2E7673F13D2721B5EE8F /* ConnectionManager.swift in Sources */,
+				32F75E9E6AD7BC5C4BFBDE46 /* ConnectivityStatusView.swift in Sources */,
 				451F5BE90EB435C150AEC8C1 /* ContentView.swift in Sources */,
 				FF1041AECD177CCA8BF70841 /* CourseBuilderView.swift in Sources */,
+				3DC81CB771355EBDEA11B126 /* CourseTemplatesCard.swift in Sources */,
 				CA68EC3032868835E8A4AA59 /* FleetControlView.swift in Sources */,
+				92B8A07A1CAA060EA2138C99 /* FleetHealthDashboard.swift in Sources */,
 				99E8E6AF465BECB7384169E3 /* LogView.swift in Sources */,
 				9DA4AF7DD8B34F96912BEF3D /* LoginView.swift in Sources */,
 				E695730EBA30A62A9E1652FF /* MainLayoutView.swift in Sources */,
 				AAF6ED16A0B00623949C2AAA /* MapInteractionModel.swift in Sources */,
 				730BEC7460FC3BCB53C23E51 /* MenuCommands.swift in Sources */,
+				B5242AEDD174ACEC9158EB03 /* NativeTacticalMapView.swift in Sources */,
 				408799B8A2C8D4EF02B14C03 /* NotificationManager.swift in Sources */,
+				A727F8AA3F4606625B3E85E0 /* PerformanceOverlayView.swift in Sources */,
 				25F24900D3048A215A8B24DA /* ProcedureArchitectView.swift in Sources */,
 				A3918A86D1BA08E58DA45425 /* RaceEngineClient.swift in Sources */,
 				80F46842B888FFF088F56461 /* RaceStateModel.swift in Sources */,
@@ -256,6 +315,7 @@
 				6EB6361501517DDC2CB67F5D /* SidecarManager.swift in Sources */,
 				410382F9367D764839B5241A /* StartProcedureView.swift in Sources */,
 				1161EC24772092E7A280614C /* SupabaseAuthManager.swift in Sources */,
+				660EF80D82BD071C9255768B /* SystemArchitectureView.swift in Sources */,
 				46BF90BFD61EBB2A45EFFEE7 /* TacticalMapView.swift in Sources */,
 				293AAD55A521C4661444A1A8 /* UDPListener.swift in Sources */,
 			);

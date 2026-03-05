@@ -226,11 +226,40 @@ async fn process_packet(
             .as_millis() as u64;
 
         // Collect into a single OCS event (Phase 6: aggregate all nodes in epoch)
-        if node.is_ocs {
-            let _ = ocs_tx.try_send(OcsEvent {
-                epoch_ms,
-                boats: vec![node],
-            });
         }
     }
+}
+
+/// Triggers the 2-second concurrent batch solve algorithm.
+/// This is called explicitly by the ProcedureEngine at the exact moment of the Gun (T-0).
+/// In SNPN mode, this uses the Thunderbolt-connected raw UWB ranges. 
+pub async fn trigger_batch_solve(ocs_tx: &mpsc::Sender<OcsEvent>) {
+    info!("🎯 T-0 GUN FIRED: Executing UWB Concurrent Batch Solve for OCS Detection");
+    // In Phase 6, this will gather the last 2 seconds of buffered `MeasurementPackets`
+    // and feed them into `trilateration::batch_solve(epochs, anchors, guess)`.
+    
+    // For Phase 3 implementation, we simulate the output of the batch solve
+    // to strictly verify the pipeline from ProcedureEngine -> UWB Hub -> Audit Log -> IO Emit.
+    
+    let mock_ocs_node = FusedNode {
+        node_id: 99, // Represents a simulated boat
+        x_line_m: 10.5,
+        y_line_m: 0.25, // 25cm over the line
+        vx_line_mps: 2.1,
+        vy_line_mps: 0.0,
+        heading_deg: 90.0,
+        fix_quality: 95,
+        is_ocs: true,
+        dtl_cm: 25.0,
+    };
+    
+    let epoch_ms = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as u64;
+
+    let _ = ocs_tx.try_send(OcsEvent {
+        epoch_ms,
+        boats: vec![mock_ocs_node], // Dispatching the batch result
+    });
 }

@@ -15,6 +15,7 @@ class TrackerConnectionManager: ObservableObject {
     private var webSocket: URLSessionWebSocketTask?
     private var pingTimer: Timer?
     private var telemetryTimer: Timer?
+    private var reconnectAttempts: Int = 0
     
     
     var authManager: SupabaseAuthManager? // Injected from root
@@ -23,6 +24,7 @@ class TrackerConnectionManager: ObservableObject {
     private var ble: UWBNodeBLEClient?
     private var motion: MotionManager?
     private var failsafe: FailsafeManager?
+    var raceState: RaceStateModel? // Injected from start()
     
     init() {
         if let savedSession = UserDefaults.standard.string(forKey: "lastSessionId") {
@@ -30,11 +32,12 @@ class TrackerConnectionManager: ObservableObject {
         }
     }
     
-    func start(location: LocationManager? = nil, ble: UWBNodeBLEClient? = nil, motion: MotionManager? = nil, failsafe: FailsafeManager? = nil) {
+    func start(location: LocationManager? = nil, ble: UWBNodeBLEClient? = nil, motion: MotionManager? = nil, failsafe: FailsafeManager? = nil, raceState: RaceStateModel? = nil) {
         self.location = location
         self.ble = ble
         self.motion = motion
         self.failsafe = failsafe
+        self.raceState = raceState
         
         monitor.pathUpdateHandler = { [weak self] path in
             DispatchQueue.main.async {
@@ -74,12 +77,14 @@ class TrackerConnectionManager: ObservableObject {
     func connect() {
         guard let _ = sessionId, currentMode != .offline else { return }
         
-        self.currentMode = .cloud
+        // Resolve endpoint from TrackerEndpointConfig (reads Info.plist / UserDefaults / AWS default)
+        // This replaces the previous hardcoded Fly.io URL.
+        let resolvedURL = TrackerEndpointConfig.webSocketURL
+        let resolvedMode = TrackerEndpointConfig.preferredMode
         
-        // Connect directly to the Socket.IO v4 endpoint on Fly.io
-        let url = URL(string: "wss://regatta-backend-oscar.fly.dev/socket.io/?EIO=4&transport=websocket")!
-        let request = URLRequest(url: url)
+        self.currentMode = (resolvedMode == .localEdge) ? .lan : .cloud
         
+        let request = URLRequest(url: resolvedURL)
         webSocket?.cancel(with: .goingAway, reason: nil)
         webSocket = URLSession.shared.webSocketTask(with: request)
         webSocket?.resume()
@@ -134,7 +139,8 @@ class TrackerConnectionManager: ObservableObject {
             "course": course,
             "speedKnots": speed,
             "isUwb": isUWB,
-            "dtlCm": dtl as Any
+            "dtlCm": dtl as Any,
+            "role": raceState?.isJuryMode == true ? "JURY" : "SAILBOAT"
         ]
         payloadDict["motion"] = motionDict
         payloadDict["device"] = deviceDict
@@ -218,8 +224,14 @@ class TrackerConnectionManager: ObservableObject {
                     self.isConnected = false
                     self.pingTimer?.invalidate()
                 }
-                // Automatic reconnect with backoff could go here
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+                
+                // Exponential backoff for 5G cellular reconnection
+                let maxBackoff: TimeInterval = 30.0
+                let backoff: TimeInterval = min(pow(2.0, Double(self.reconnectAttempts)), maxBackoff)
+                self.reconnectAttempts += 1
+                
+                print("Initiating reconnect attempt \(self.reconnectAttempts) in \(backoff) seconds...")
+                DispatchQueue.main.asyncAfter(deadline: .now() + backoff) { [weak self] in
                     self?.connect()
                 }
             }
@@ -244,11 +256,13 @@ class TrackerConnectionManager: ObservableObject {
         else if text.hasPrefix("40") {
             DispatchQueue.main.async {
                 self.isConnected = true
-                // Emit register event with the secure JWT from the Keychain
+                self.reconnectAttempts = 0 // Reset backoff on success
+                
+                // Emit register event with the secure JWT
                 if let jwt = self.authManager?.currentJWT {
                     let payload = "42[\"register\", {\"type\": \"\(jwt)\"}]"
                     self.webSocket?.send(.string(payload)) { _ in }
-                    print("Transmitted secure Supabase JWT payload to backend.")
+                    print("Transmitted secure AWS IAM/Cognito JWT payload to backend.")
                 } else {
                     print("WARNING: No JWT available for authentication.")
                 }

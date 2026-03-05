@@ -39,12 +39,13 @@ struct RegattaTrackerApp: App {
                 .preferredColorScheme(.dark)
                 .onAppear {
                     connection.liveStreamManager = liveStream
-                    connection.start(location: location, ble: bleClient, motion: motion, failsafe: failsafe)
+                    connection.start(location: location, ble: bleClient, motion: motion, failsafe: failsafe, raceState: race)
                     bleClient.start()
                     location.start()
                     motion.start()
-                    // Mock joining the WebRTC Room when app opens
-                    liveStream.connect(token: "mock-ios-token")
+                            // MOCK: Auto-connect to a testing channel
+                            // In real app, this happens when explicitly joining a regatta
+                            liveStream.connect(channelARN: "mock-arn", token: "mock-ios-token", region: "eu-west-1")
                 }
         }
     }
