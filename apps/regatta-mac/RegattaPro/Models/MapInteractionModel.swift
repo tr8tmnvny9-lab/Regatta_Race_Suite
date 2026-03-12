@@ -51,12 +51,39 @@ final class MapInteractionModel: ObservableObject {
     @Published var persistentMeasurements: [MeasurementLine] = []
     @Published var activeRestrictionId: String?
     
+    // Smooth Dragging State
+    @Published var draggingMarkId: String?
+    @Published var draggingCoordinate: CLLocationCoordinate2D?
+    
     // For box selection
     @Published var selectionBoxStart: CGPoint?
     @Published var selectionBoxEnd: CGPoint?
     
-    @Published var explicitMapRegion: MKCoordinateRegion? = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
-        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+    @Published var explicitMapRegion: MKCoordinateRegion?
+    
+    // Default to Helsinki water areas
+    @Published var homeWaterRegion: MKCoordinateRegion = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 60.1699, longitude: 24.9384),
+        span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.2)
     )
+    
+    // Live Map specific viewport state
+    @Published var liveMapRegion: MKCoordinateRegion?
+    @Published var isLiveMapAutoTracking: Bool = true
+    
+    // Persist the last used course zoom to maintain parity between views
+    @Published var lastAppliedCourseRegion: MKCoordinateRegion?
+    
+    init() {
+        // Initialization can handle loading from AppStorage if needed, but for now we set the starting region
+        self.explicitMapRegion = homeWaterRegion
+        self.liveMapRegion = homeWaterRegion
+    }
+    
+    func resetLiveMapToDesigner() {
+        if let designerRegion = lastAppliedCourseRegion {
+            liveMapRegion = designerRegion
+            isLiveMapAutoTracking = false
+        }
+    }
 }

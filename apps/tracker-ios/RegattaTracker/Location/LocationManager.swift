@@ -8,7 +8,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var speedKnots: Double = 0.0
     @Published var headingDegrees: Double = 0.0
     
-    private let manager = CLLocationManager()
+    internal let manager = CLLocationManager()
     
     override init() {
         super.init()

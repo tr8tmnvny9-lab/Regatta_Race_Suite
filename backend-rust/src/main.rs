@@ -8,6 +8,7 @@ mod audit;
 mod uwb_hub;
 mod trilateration;
 mod auto_director;
+mod ranking_engine;
 pub mod cloud_sync;
 pub mod edge_network;
 
@@ -23,7 +24,7 @@ use socketioxide::SocketIo;
 use tokio::sync::RwLock;
 use tower_http::cors::{Any, CorsLayer};
 use axum::http::HeaderValue;
-use tracing::info;
+use tracing::{info, warn};
 
 use auth::AuthEngine;
 use audit::AuditLogger;
@@ -33,6 +34,7 @@ use procedure_engine::{ProcedureEngine, TickResult};
 use state::{RaceStatus, SequenceInfo};
 use uwb_hub::{start_uwb_hub, UwbHubConfig};
 use auto_director::start_auto_director;
+use ranking_engine::start_ranking_engine;
 
 // ─── Global startup time (for uptime reporting) ──────────────────────────────
 static STARTUP_MS: AtomicU64 = AtomicU64::new(0);
@@ -242,6 +244,7 @@ async fn main() {
     // Start execution task loops
     tokio::spawn(run_engine_tick(engine.clone(), shared.clone(), io.clone(), ocs_tx_tick));
     tokio::spawn(start_auto_director(shared.clone(), io.clone()));
+    tokio::spawn(start_ranking_engine(shared.clone(), io.clone()));
 
     // Phase 1: AWS Aurora Cloud Sync (Heartbeat & State Mirroring)
     if let Ok(db_url) = std::env::var("AURORA_DB_URL") {

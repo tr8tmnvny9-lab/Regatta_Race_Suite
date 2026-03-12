@@ -95,6 +95,7 @@ pub fn solve(
     measurements: &[RangeMeasurement],
     anchors: &AnchorMap,
     initial_guess: &HashMap<u32, Pos2D>,
+    antenna_offsets: &HashMap<u32, Pos2D>,
     max_iter: u32,
     converge_threshold: f32,
 ) -> Option<MultilaterationResult> {
@@ -149,8 +150,17 @@ pub fn solve(
                 };
                 let pj = match pj_arr { Some(p) => p, None => continue };
 
-                let dx = pi[0] - pj[0];
-                let dy = pi[1] - pj[1];
+                // Apply dynamic tilt compensation (Shift CoG to Antenna)
+                let pi_offset = antenna_offsets.get(&id_i).copied().unwrap_or(Pos2D { x: 0.0, y: 0.0 });
+                let pj_offset = if m.node_j == id_i {
+                    antenna_offsets.get(&m.node_i).copied().unwrap_or(Pos2D { x: 0.0, y: 0.0 })
+                } else {
+                    antenna_offsets.get(&m.node_j).copied().unwrap_or(Pos2D { x: 0.0, y: 0.0 })
+                };
+
+                // Residual compares distance between ANTENNAS, but we optimize CoG
+                let dx = (pi[0] + pi_offset.x) - (pj[0] + pj_offset.x);
+                let dy = (pi[1] + pi_offset.y) - (pj[1] + pj_offset.y);
                 let dist = (dx*dx + dy*dy).sqrt().max(0.001);
                 let residual = m.range_m - dist;
 
@@ -223,12 +233,13 @@ pub fn batch_solve(
     epochs: &[Vec<RangeMeasurement>],
     anchors: &AnchorMap,
     initial_guess: &HashMap<u32, Pos2D>,
+    antenna_offsets: &HashMap<u32, Pos2D>,
 ) -> Option<MultilaterationResult> {
     // Flatten all epoch measurements
     let all: Vec<RangeMeasurement> = epochs.iter().flat_map(|e| e.iter().cloned()).collect();
     // More measurements → better convergence and accuracy
     // With 40 epochs × 15 boats × 5 measurements = ~3000 ranges, expect σ_batch ≈ 1cm
-    solve(&all, anchors, initial_guess, 20, 0.001)
+    solve(&all, anchors, initial_guess, antenna_offsets, 20, 0.001)
 }
 
 // ── OCS determination from solve result ───────────────────────────────────────
@@ -247,11 +258,14 @@ pub struct OcsDetection {
 pub fn detect_ocs(
     result: &MultilaterationResult,
     fix_qualities: &HashMap<u32, u8>,
+    bow_offsets_m: &HashMap<u32, f32>, // Y-axis projection of CoG -> Bow Tip
     ocs_threshold_m: f32,
     min_fix_quality: u8,
 ) -> Vec<OcsDetection> {
     result.positions.iter()
         .filter_map(|(&node_id, &pos)| {
+            let bow_offset = bow_offsets_m.get(&node_id).copied().unwrap_or(0.0);
+            let bow_y_line = pos.y + bow_offset;
             let fq = fix_qualities.get(&node_id).copied().unwrap_or(0);
             if pos.y > ocs_threshold_m && fq >= min_fix_quality {
                 Some(OcsDetection {

@@ -98,7 +98,7 @@ impl CloudSyncManager {
                 "#
             )
             .bind(Uuid::parse_str(&self.session_id).unwrap_or_default())
-            .bind(state_json)
+            .bind(&state_json)
             .execute(&self.pool)
             .await;
 

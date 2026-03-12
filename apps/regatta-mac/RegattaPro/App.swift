@@ -45,8 +45,9 @@ struct RegattaProApp: App {
                 .environmentObject(mapInteraction)
                 .frame(minWidth: 1200, minHeight: 800)
                 .onAppear {
-                    // Hook engine client to the state model
+                    // Hook engine client to the state model and vice versa
                     raceEngine.stateModel = raceState
+                    raceState.raceEngine = raceEngine
                 }
         }
         .windowStyle(.hiddenTitleBar)
@@ -90,9 +91,12 @@ struct RootView: View {
             udpListener.start()
         }
         .onChange(of: connection.backendURL) { oldURL, newURL in
+            guard oldURL != newURL else { return }
             if let url = newURL {
+                print("🌐 ConnectionManager: Backend URL changed to \(url). Reconnecting...")
                 raceEngine.connect(to: url)
             } else {
+                print("🌐 ConnectionManager: No backend URL available. Disconnecting...")
                 raceEngine.disconnect()
             }
         }

@@ -10,56 +10,62 @@ struct BuoySymbolView: View {
     }
     
     var isSelected: Bool {
-        mapInteraction.selectedBuoyId == buoyId
+        mapInteraction.selectedBuoyIds.contains(buoyId) || mapInteraction.selectedBuoyId == buoyId
     }
     
     var body: some View {
         Group {
             if let buoy = buoy {
-                ZStack {
+                ZStack(alignment: .center) {
+                    // Frame: 40x40. Center point (20,20) is the geographic coordinate.
+                    
+                    // 1. Selection & Decoration
                     if isSelected {
                         Circle()
                             .stroke(RegattaDesign.Colors.cyan, lineWidth: 2)
-                            .frame(width: 36, height: 36)
-                            .blur(radius: 2)
+                            .frame(width: 38, height: 38)
+                            .blur(radius: 1)
                     }
                     
+                    // 2. Rounding Indicator (anchored to center)
                     if buoy.type == .mark || buoy.type == .gate {
                         if let rounding = buoy.rounding {
                             RoundingIndicator(direction: rounding)
                         }
                     }
                     
-                    VStack(spacing: 2) {
-                        // The actual 3D-ish Buoy representation
-                        ZStack {
+                    // 3. The Mark Visuals
+                    VStack(spacing: 0) {
+                        // The buoy Shape (max height 24)
+                        ZStack(alignment: .bottom) {
                             switch buoy.design ?? "Cylindrical" {
-                            case "Spherical":
-                                SphericalBuoyShape(color: buoyColor(for: buoy))
-                            case "Spar":
-                                SparBuoyShape(color: buoyColor(for: buoy))
-                            case "MarkSetBot":
-                                MarkSetBotShape(color: buoyColor(for: buoy))
-                            case "CommitteeBoat":
-                                CommitteeBoatShape(color: buoyColor(for: buoy))
-                            default:
-                                CylindricalBuoyShape(color: buoyColor(for: buoy))
+                            case "Spherical": SphericalBuoyShape(color: buoyColor(for: buoy))
+                            case "Spar": SparBuoyShape(color: buoyColor(for: buoy))
+                            case "MarkSetBot": MarkSetBotShape(color: buoyColor(for: buoy))
+                            case "CommitteeBoat": CommitteeBoatShape(color: buoyColor(for: buoy))
+                            default: CylindricalBuoyShape(color: buoyColor(for: buoy))
+                            }
+                            
+                            // Label (Pushed above the buoy)
+                            if let name = buoy.name.isEmpty ? nil : buoy.name {
+                                Text(name)
+                                    .font(.system(size: 8, weight: .black))
+                                    .padding(.horizontal, 4)
+                                    .padding(.vertical, 1)
+                                    .background(.black.opacity(0.7))
+                                    .clipShape(RoundedRectangle(cornerRadius: 2))
+                                    .offset(y: -28) // Pushed above the 24px buoy
                             }
                         }
-                        .frame(width: 24, height: 24)
-                        .shadow(color: .black.opacity(0.3), radius: 2, y: 1)
+                        .frame(width: 30, height: 24)
                         
-                        // Label
-                        if let name = buoy.name.isEmpty ? nil : buoy.name {
-                            Text(name)
-                                .font(.system(size: 8, weight: .black))
-                                .padding(.horizontal, 4)
-                                .padding(.vertical, 1)
-                                .background(.black.opacity(0.6))
-                                .clipShape(RoundedRectangle(cornerRadius: 2))
-                        }
+                        // This spacer ensures the "base" (bottom of the shape) is at height 20
+                        Spacer().frame(height: 20)
                     }
+                    .frame(width: 40, height: 40)
+                    .shadow(color: .black.opacity(0.4), radius: 3, y: 1)
                 }
+                .frame(width: 40, height: 40)
             }
         }
     }
@@ -126,23 +132,23 @@ struct SphericalBuoyShape: View {
 struct SparBuoyShape: View {
     let color: Color
     var body: some View {
-        ZStack(alignment: .top) {
+        ZStack(alignment: .bottom) {
             // Pole
             Rectangle()
                 .fill(.black)
-                .frame(width: 2, height: 20)
+                .frame(width: 2, height: 24)
             
             // Floating Base
             Capsule()
                 .fill(color)
                 .frame(width: 8, height: 12)
-                .offset(y: 4)
+                .offset(y: -4)
             
             // Flag
             Rectangle()
                 .fill(color)
                 .frame(width: 10, height: 8)
-                .offset(x: 5)
+                .offset(x: 5, y: -16)
         }
     }
 }
@@ -150,17 +156,52 @@ struct SparBuoyShape: View {
 struct MarkSetBotShape: View {
     let color: Color
     var body: some View {
-        ZStack {
-            // Twin Pontoons
-            HStack(spacing: 8) {
-                Capsule().fill(.black).frame(width: 4, height: 14)
-                Capsule().fill(.black).frame(width: 4, height: 14)
+        ZStack(alignment: .bottom) {
+            // 1. Robotic Base (The "Bot" part)
+            ZStack {
+                // Main chassis
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(Color(white: 0.3))
+                    .frame(width: 22, height: 6)
+                
+                // Pontoon details
+                HStack(spacing: 12) {
+                    Capsule().fill(Color(white: 0.2)).frame(width: 4, height: 8)
+                    Capsule().fill(Color(white: 0.2)).frame(width: 4, height: 8)
+                }
+                .offset(y: 1)
+                
+                // GPS / Antenna Mast
+                Rectangle()
+                    .fill(Color(white: 0.2))
+                    .frame(width: 1, height: 12)
+                    .offset(x: 8, y: -6)
             }
             
-            // Top Cylinder (low taper)
-                CylindricalBuoyShape(color: color)
-                .scaleEffect(0.6)
-                .offset(y: -2)
+            // 2. The Mark (The "Cylinder" part)
+            VStack(spacing: 0) {
+                // Top cap
+                Ellipse()
+                    .fill(color.opacity(0.8))
+                    .frame(width: 14, height: 4)
+                
+                // Main body
+                Rectangle()
+                    .fill(LinearGradient(colors: [color, color.opacity(0.8)], startPoint: .top, endPoint: .bottom))
+                    .frame(width: 14, height: 12)
+                
+                // Connection taper
+                Path { path in
+                    path.move(to: CGPoint(x: 0, y: 0))
+                    path.addLine(to: CGPoint(x: 14, y: 0))
+                    path.addLine(to: CGPoint(x: 18, y: 3))
+                    path.addLine(to: CGPoint(x: -4, y: 3))
+                    path.closeSubpath()
+                }
+                .fill(Color(white: 0.25))
+                .frame(width: 14, height: 3)
+            }
+            .offset(y: -5)
         }
     }
 }

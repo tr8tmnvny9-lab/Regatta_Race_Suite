@@ -125,6 +125,25 @@ pub struct CourseLine {
     pub p2: Option<LatLon>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum CourseElementType {
+    StartLine,
+    FinishLine,
+    Mark,
+    Gate,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CourseElement {
+    pub id: String,
+    #[serde(rename = "type")]
+    pub element_type: CourseElementType,
+    pub name: String,
+    pub marks: Vec<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct CourseState {
@@ -202,6 +221,13 @@ pub struct BoatState {
     pub speed_setting: f64,
     #[serde(default)]
     pub path_progress: f64,
+    // Racing Metrics
+    #[serde(default)]
+    pub leg_index: u32,
+    #[serde(default)]
+    pub dtf_m: f64,
+    #[serde(default)]
+    pub rank: u32,
 }
 
 // ─── Penalty (RRS + Appendix UF) ─────────────────────────────────────────────
@@ -372,6 +398,10 @@ pub struct Team {
     #[serde(default)]
     pub crew_members: Vec<String>,
     pub status: TeamStatus,
+    #[serde(default)]
+    pub ranking: u32,
+    #[serde(default)]
+    pub score: u32, // Cumulative regatta score (lower is better, typically)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -398,6 +428,7 @@ pub struct Pairing {
     pub flight_id: String,
     pub team_id: String,
     pub boat_id: String,
+    pub race_index: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -436,6 +467,8 @@ pub struct RaceState {
     pub course: CourseState,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub current_procedure: Option<ProcedureGraph>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub active_course_order: Option<Vec<CourseElement>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub default_location: Option<DefaultLocation>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -490,6 +523,7 @@ impl Default for RaceState {
             weather: None,
             course: CourseState::default(),
             current_procedure: None,
+            active_course_order: None,
             default_location: None,
             current_node_id: None,
             waiting_for_trigger: false,

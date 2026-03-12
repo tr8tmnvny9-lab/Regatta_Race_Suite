@@ -145,6 +145,10 @@ struct LiveBoat: Identifiable, Codable, Equatable {
     var sog: Double?
     var color: String?
     var role: BoatRole = .sailboat
+    var rank: Int?
+    var dtf: Double?
+    var legIndex: Int?
+    var teamName: String?
     
     enum BoatRole: String, Codable {
         case sailboat = "SAILBOAT"
@@ -157,6 +161,7 @@ struct LiveBoat: Identifiable, Codable, Equatable {
     enum CodingKeys: String, CodingKey {
         case id, speed, heading, cog, sog, color, role
         case lat, lon
+        case rank, dtf, legIndex, teamName
     }
     
     init(id: String, pos: LatLon, speed: Double, heading: Double, color: String? = nil, role: BoatRole = .sailboat) {
@@ -179,6 +184,10 @@ struct LiveBoat: Identifiable, Codable, Equatable {
         sog = try? container.decode(Double.self, forKey: .sog)
         color = try? container.decode(String.self, forKey: .color)
         role = (try? container.decode(BoatRole.self, forKey: .role)) ?? .sailboat
+        rank = try? container.decode(Int.self, forKey: .rank)
+        dtf = try? container.decode(Double.self, forKey: .dtf)
+        legIndex = try? container.decode(Int.self, forKey: .legIndex)
+        teamName = try? container.decode(String.self, forKey: .teamName)
         
         let la = (try? container.decode(Double.self, forKey: .lat)) ?? 0
         let lo = (try? container.decode(Double.self, forKey: .lon)) ?? 0
@@ -194,6 +203,10 @@ struct LiveBoat: Identifiable, Codable, Equatable {
         try container.encode(sog, forKey: .sog)
         try container.encode(color, forKey: .color)
         try container.encode(role, forKey: .role)
+        try container.encode(rank, forKey: .rank)
+        try container.encode(dtf, forKey: .dtf)
+        try container.encode(legIndex, forKey: .legIndex)
+        try container.encode(teamName, forKey: .teamName)
         try container.encode(pos.lat, forKey: .lat)
         try container.encode(pos.lon, forKey: .lon)
     }
@@ -214,6 +227,9 @@ final class RaceStateModel: ObservableObject {
     @Published var timeRemaining: Double = 0
     @Published var activeFlags: [String] = []
     
+    // Performance / Resource Isolation Flag
+    @Published var isBroadcastModeActive: Bool = false
+    
     // Course
     @Published var course = CourseState()
     
@@ -233,8 +249,112 @@ final class RaceStateModel: ObservableObject {
     // History
     @Published var logs: [LogEntry] = []
     
+    // Team Mapping Data
+    @Published var activeFlightId: String?
+    @Published var teamsMap: [String: String] = [:] // id -> name
+    @Published var boatToTeamId: [String: String] = [:] // boatId -> teamId
+    
+    // Fleet Configuration
+    @Published var boatProfiles: [BoatProfile] = [.defaultProfile]
+    
+    // --- League Sailing additions ---
+    @Published var leagueTeams: [LeagueTeam] = []
+    @Published var leagueBoats: [LeagueBoat] = []
+    @Published var leagueSchedule: LeagueSchedule? = nil
+    
     // Race event timing (for recall windows)
     @Published var raceStartTime: Date?
+    
+    // Track last time we pushed a team update to avoid race conditions with backend sync
+    private var lastTeamPushTimestamp: Date = .distantPast
+    
+    // Reference to client for synchronization (set by App.swift)
+    var raceEngine: RaceEngineClient?
+
+    // ─── Team Management (Optimistic UI) ───────────────────────────────────
+    
+    func addLeagueTeam(name: String, club: String) {
+        let newTeam = LeagueTeam(id: UUID().uuidString, name: name, club: club, ranking: 0, score: 0)
+        
+        // Optimistic update
+        DispatchQueue.main.async {
+            self.leagueTeams.append(newTeam)
+            self.leagueTeams.sort(by: { $0.name < $1.name })
+            
+            self.lastTeamPushTimestamp = Date()
+            // Sync to backend
+            self.raceEngine?.setTeams(teams: self.leagueTeams)
+        }
+    }
+    
+    func removeLeagueTeam(id: String) {
+        // Optimistic update
+        DispatchQueue.main.async {
+            self.leagueTeams.removeAll(where: { $0.id == id })
+            
+            self.lastTeamPushTimestamp = Date()
+            // Sync to backend
+            self.raceEngine?.setTeams(teams: self.leagueTeams)
+        }
+    }
+    
+    func clearAllTeams() {
+        DispatchQueue.main.async {
+            self.leagueTeams = []
+            self.lastTeamPushTimestamp = Date()
+            self.raceEngine?.setTeams(teams: [])
+        }
+    }
+    
+    func updateBoatColor(id: String, colorHex: String) {
+        DispatchQueue.main.async {
+            if let idx = self.leagueBoats.firstIndex(where: { $0.id == id }) {
+                self.leagueBoats[idx].color = colorHex
+                // If backend needs the color later, sync here
+            }
+        }
+    }
+    
+    func triggerConnectivityRefresh() {
+        // This is called by RaceEngineClient when it detects a socket failure
+        // We can use this to nudge ConnectionManager or just log it
+        print("🔄 RaceStateModel: Connectivity refresh triggered by engine client")
+    }
+
+    func generateLeagueSchedule(boatCount: Int, flightCount: Int) {
+        print("⚡️ RaceStateModel: Generating schedule instantly (local fallback)")
+        
+        // 1. Prepare boats (Preserve existing colors if available)
+        var boats: [LeagueBoat] = []
+        for i in 1...boatCount {
+            let idStr = "\(i)"
+            let existingColor = self.leagueBoats.first(where: { $0.id == idStr })?.color ?? "#FFFFFF"
+            boats.append(LeagueBoat(id: idStr, name: "Boat \(i)", color: existingColor))
+        }
+        
+        // Save back so the UI has them eagerly
+        DispatchQueue.main.async {
+            self.leagueBoats = boats
+        }
+        
+        // 2. Generate locally
+        let schedule = LeaguePairingGenerator.generate(
+            teams: self.leagueTeams,
+            boats: boats,
+            flightCount: flightCount
+        )
+        
+        // 3. Update UI instantly
+        DispatchQueue.main.async {
+            self.leagueSchedule = schedule
+            print("✅ RaceStateModel: Local schedule applied (\(schedule.pairings.count) pairings)")
+        }
+        
+        // 4. Sync with backend
+        // We still tell the backend to generate so it has the state, 
+        // but our local state is already 'optimistic'
+        self.raceEngine?.generateFlights(flightCount: flightCount, boatCount: boatCount)
+    }
 
     func applyStateUpdate(_ json: [String: Any]) {
         if let statusStr = json["status"] as? String {
@@ -287,5 +407,116 @@ final class RaceStateModel: ObservableObject {
             }
             self.activeProcedureNodes = parsedNodes
         }
+        
+        // Logs Processing
+        if let newLogs = json["logs"] as? [[String: Any]] {
+            var parsedLogs: [LogEntry] = []
+            for l in newLogs {
+                if let id = l["id"] as? String,
+                   let timestamp = l["timestamp"] as? Int64,
+                   let catStr = l["category"] as? String,
+                   let category = LogCategory(rawValue: catStr),
+                   let source = l["source"] as? String,
+                   let message = l["message"] as? String {
+                    let isFlagged = l["protestFlagged"] as? Bool ?? false
+                    parsedLogs.append(LogEntry(id: id, timestamp: timestamp, category: category, source: source, message: message, isFlagged: isFlagged))
+                }
+            }
+            self.logs = parsedLogs.sorted(by: { $0.timestamp > $1.timestamp })
+        }
+        
+        // Flight & Team Mapping
+        if let active = json["activeFlightId"] as? String {
+            self.activeFlightId = active
+        }
+        
+        // 1. Teams Sync
+        if let teamsDict = json["teams"] as? [String: Any] {
+            // Protection: If we recently pushed a change (< 2 seconds ago), 
+            // ignore incoming empty or significantly smaller team lists to prevent overwrite race.
+            let recentlyPushed = Date().timeIntervalSince(lastTeamPushTimestamp) < 2.0
+            
+            if recentlyPushed && teamsDict.isEmpty && !self.leagueTeams.isEmpty {
+                print("🛡️ Sync Protection: Ignored empty team update from backend (recently pushed local changes)")
+            } else {
+                var parsedTeams: [LeagueTeam] = []
+                for (idStr, tdValue) in teamsDict {
+                    guard let td = tdValue as? [String: Any] else { continue }
+                    
+                    if let name = td["name"] as? String,
+                       let club = td["club"] as? String {
+                        let ranking = td["ranking"] as? Int ?? 0
+                        parsedTeams.append(LeagueTeam(id: idStr, name: name, club: club, ranking: ranking))
+                    }
+                }
+                self.leagueTeams = parsedTeams.sorted(by: { $0.name < $1.name })
+                self.teamsMap = parsedTeams.reduce(into: [String: String]()) { $0[$1.id] = $1.name }
+            }
+        }
+        
+        // 2. Flights Sync
+        var flightIdToIndex: [String: Int] = [:]
+        if let flightsData = json["flights"] as? [String: Any] {
+            for (fid, fdValue) in flightsData {
+                if let fd = fdValue as? [String: Any], let num = fd["flightNumber"] as? Int {
+                    flightIdToIndex[fid] = num - 1
+                }
+            }
+        }
+        
+        // 3. Pairings Sync
+        if let pairingsData = json["pairings"] as? [[String: Any]] {
+            var schedulePairings: [LeaguePairing] = []
+            for p in pairingsData {
+                guard let fid = p["flightId"] as? String,
+                      let bid = p["boatId"] as? String,
+                      let ridx = p["raceIndex"] as? Int,
+                      let fidx = flightIdToIndex[fid] else {
+                    continue
+                }
+                
+                let tid = p["teamId"] as? String
+                
+                schedulePairings.append(LeaguePairing(
+                    flightIndex: fidx,
+                    raceIndex: ridx,
+                    boatId: bid,
+                    teamId: tid
+                ))
+            }
+            
+            if !schedulePairings.isEmpty {
+                let maxFlight = (schedulePairings.map { $0.flightIndex }.max() ?? 0) + 1
+                
+                // Robust boat count: extract largest number from boatId string or default to 6
+                let boatIds = schedulePairings.map { $0.boatId }
+                let allNumbers = boatIds.compactMap { id -> Int? in
+                    let digits = id.filter { $0.isNumber }
+                    return Int(digits)
+                }
+                let maxBoat = allNumbers.max() ?? 6
+                
+                self.leagueSchedule = LeagueSchedule(
+                    flightCount: maxFlight,
+                    boatCount: maxBoat,
+                    pairings: schedulePairings
+                )
+                print("✅ Successfully parsed \(schedulePairings.count) pairings for \(maxFlight) flights.")
+            } else if recentlyPushed(field: "flights") {
+                // Keep current schedule if we just generated
+            } else {
+                self.leagueSchedule = nil
+            }
+            
+            if let active = self.activeFlightId, let activeIdx = flightIdToIndex[active] {
+                self.boatToTeamId = schedulePairings
+                    .filter { $0.flightIndex == activeIdx }
+                    .reduce(into: [String: String]()) { $0[$1.boatId] = $1.teamId ?? "" }
+            }
+        }
+    }
+    
+    private func recentlyPushed(field: String) -> Bool {
+        return Date().timeIntervalSince(lastTeamPushTimestamp) < 2.0
     }
 }

@@ -14,12 +14,24 @@ class UWBNodeBLEClient: NSObject, ObservableObject, CBCentralManagerDelegate, CB
     let serviceUUID = CBUUID(string: "A1B2C3D4-E5F6-7890-1234-56789ABCDEF0")
     let positionCharUUID = CBUUID(string: "A1B2C3D4-E5F6-7890-1234-56789ABCDEF1")
     
+    let emulator = UWBEmulator()
+    
     override init() {
         super.init()
         centralManager = CBCentralManager(delegate: self, queue: nil)
+        
+        emulator.onPacketGenerated = { [weak self] data in
+            self?.handleSimulatedPacket(data)
+        }
     }
     
     func start() {
+        if UserDefaults.standard.bool(forKey: "uwbEmulatorEnabled") {
+            isConnected = true
+            emulator.start()
+            return
+        }
+        
         if centralManager.state == .poweredOn {
             centralManager.scanForPeripherals(withServices: [serviceUUID], options: nil)
         }
@@ -68,10 +80,20 @@ class UWBNodeBLEClient: NSObject, ObservableObject, CBCentralManagerDelegate, CB
     
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         guard let data = characteristic.value else { return }
+        handleRawData(data)
+    }
+    
+    private func handleSimulatedPacket(_ data: Data) {
+        handleRawData(data)
+    }
+    
+    private func handleRawData(_ data: Data) {
         // Parse mock packet: [x_line: f32, y_line: f32, ... ]
         // For now, mock DTL (Distance To Line) extraction
         if data.count >= 8 {
-            let yLine = data.subdata(in: 4..<8).withUnsafeBytes { $0.load(as: Float32.self) }
+            let yLine = data.withUnsafeBytes { buffer in
+                buffer.load(fromByteOffset: 4, as: Float32.self)
+            }
             DispatchQueue.main.async {
                 self.dtlCm = Double(yLine) * 100.0 // meters to cm
             }

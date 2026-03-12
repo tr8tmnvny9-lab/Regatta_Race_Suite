@@ -38,6 +38,7 @@
 		FCFDADF78404C6C5690CD6CE /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F772A3509F1E5DAE18F9797 /* HapticManager.swift */; };
 		FDFA2F70BF451E139B148E95 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = DB7CE095A03E7E306620595A /* GRDB */; };
 		FE294B4221DC106D4B4FC862 /* UWBNodeBLEClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78154548506C43105EE1420B /* UWBNodeBLEClient.swift */; };
+		3AC24189E7944203D02CA602 /* UWBEmulator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AC24189E7944203D02CA601 /* UWBEmulator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -73,6 +74,7 @@
 		EB45313BA789CB9F357A23B5 /* SettingsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSheet.swift; sourceTree = "<group>"; };
 		F0DCDBA57044E2970612F6C5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		FD96D2A8833FCA2614285D83 /* ConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationView.swift; sourceTree = "<group>"; };
+		3AC24189E7944203D02CA601 /* UWBEmulator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UWBEmulator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -137,6 +139,7 @@
 			isa = PBXGroup;
 			children = (
 				78154548506C43105EE1420B /* UWBNodeBLEClient.swift */,
+				3AC24189E7944203D02CA601 /* UWBEmulator.swift */,
 			);
 			path = BLE;
 			sourceTree = "<group>";
@@ -332,6 +335,7 @@
 				5447CC08A9AA72E9E5F3F372 /* TrackerEndpointConfig.swift in Sources */,
 				FE294B4221DC106D4B4FC862 /* UWBNodeBLEClient.swift in Sources */,
 				2BCC441472BC27F007B03617 /* WelcomeView.swift in Sources */,
+				3AC24189E7944203D02CA602 /* UWBEmulator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

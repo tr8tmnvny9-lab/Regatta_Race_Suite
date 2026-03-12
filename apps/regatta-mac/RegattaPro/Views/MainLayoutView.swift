@@ -36,39 +36,54 @@ struct MainLayoutView: View {
     
     var body: some View {
         ZStack {
-            // ─── Background Layer (Tactical Map is always underlying) ────────
-            TacticalMapView()
-                .ignoresSafeArea()
-            
-            // ─── Content Layer (Glass Panels) ────────────────────────────────
-            HStack(spacing: 20) {
-                // Left Navigation Sidebar
-                SidebarView(selectedSection: $selectedSection)
-                    .allowsHitTesting(true)
+            // ─── Standard Operational Workspace ──────────────────────────────
+            if !raceState.isBroadcastModeActive {
+                // ─── Background Layer (Tactical Map is always underlying) ────────
+                TacticalMapView()
+                    .ignoresSafeArea()
                 
-                // Main Workspace
-                VStack(spacing: 20) {
-                    // Title Bar / Sub-Header
-                    HeaderView(section: selectedSection)
+                // ─── Content Layer (Glass Panels) ────────────────────────────────
+                HStack(spacing: 20) {
+                    // Left Navigation Sidebar
+                    SidebarView(selectedSection: $selectedSection)
                         .allowsHitTesting(true)
                     
-                    // Active Detail View
-                    DetailView(section: selectedSection)
+                    // Main Workspace
+                    VStack(spacing: 20) {
+                        // Title Bar / Sub-Header
+                        HeaderView(section: selectedSection)
+                        
+                        // Active Detail View
+                        DetailView(section: selectedSection)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    
+                    // Right Telemetry Wing
+                    TelemetryWing()
                         .allowsHitTesting(true)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                
-                // Right Telemetry Wing
-                TelemetryWing()
-                    .allowsHitTesting(true)
+                .padding(24)
             }
-            .padding(24)
             
-            // ─── Overlays ────────────────────────────────────────────────────
-            // Procedure Architect is now handled in DetailView
+            // ─── Regatta Live Broadcast Overlay ──────────────────────────────
+            if raceState.isBroadcastModeActive {
+                RegattaLiveDashboard(isPresented: $raceState.isBroadcastModeActive)
+                    .transition(.opacity)
+                    .zIndex(100)
+            }
         }
         .background(RegattaDesign.Colors.darkNavy)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: selectedSection)
+        .animation(.default, value: raceState.isBroadcastModeActive)
+        // Trigger for opening the Regatta Live broadcast dashboard
+        .onChange(of: selectedSection) { old, new in
+            if new == .regattaLive {
+                // Instantly open dashboard
+                raceState.isBroadcastModeActive = true
+                // Revert selection behind the scenes so we return cleanly when exit is pressed
+                selectedSection = old == .regattaLive ? .overview : old
+            }
+        }
     }
 }
 
@@ -79,14 +94,18 @@ struct SidebarView: View {
     
     var body: some View {
         VStack(spacing: 12) {
-            // Brand Logo
-            Image(systemName: "sailboat.fill")
-                .font(.system(size: 24))
-                .foregroundStyle(RegattaDesign.Gradients.primary)
-                .padding(.vertical, 20)
+            Button(action: {
+                selectedSection = .overview
+            }) {
+                Image(systemName: "sailboat.fill")
+                    .font(.system(size: 24))
+                    .foregroundStyle(RegattaDesign.Gradients.primary)
+            }
+            .buttonStyle(.plain)
+            .padding(.vertical, 20)
             
             ForEach(AppSection.allCases.filter {
-                $0 != .procedureArchitect && $0 != .systemArchitecture
+                $0 != .procedureArchitect && $0 != .systemArchitecture && $0 != .overview
             }) { section in
                 NavButton(
                     icon: section.iconName,
@@ -190,10 +209,6 @@ struct DetailView: View {
             FleetControlView()
                 .opacity(section == .fleetControl ? 1 : 0)
                 .allowsHitTesting(section == .fleetControl)
-            
-            RegattaLiveView()
-                .opacity(section == .regattaLive ? 1 : 0)
-                .allowsHitTesting(section == .regattaLive)
                 
             ProcedureArchitectView()
                 .opacity(section == .procedureArchitect ? 1 : 0)
@@ -204,7 +219,7 @@ struct DetailView: View {
                 .allowsHitTesting(section == .systemArchitecture)
             
             if section == .settings {
-                Text("Settings Native Coming Soon")
+                SettingsContainerView()
             }
         }
     }
@@ -465,6 +480,47 @@ extension Color {
         case "cyan": self = RegattaDesign.Colors.cyan
         default: self = .yellow
         }
+    }
+    
+    init(regattaHex: String) {
+        if regattaHex.hasPrefix("#") {
+            self.init(hex: regattaHex)
+        } else {
+            self.init(name: regattaHex)
+        }
+    }
+    
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (255, 255, 255, 255)
+        }
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue:  Double(b) / 255,
+            opacity: Double(a) / 255
+        )
+    }
+    
+    func toHex() -> String? {
+        let nsColor = NSColor(self)
+        guard let rgbColor = nsColor.usingColorSpace(.sRGB) else { return nil }
+        let red = Int(round(rgbColor.redComponent * 255.0))
+        let green = Int(round(rgbColor.greenComponent * 255.0))
+        let blue = Int(round(rgbColor.blueComponent * 255.0))
+        return String(format: "#%02X%02X%02X", red, green, blue)
     }
 }
 

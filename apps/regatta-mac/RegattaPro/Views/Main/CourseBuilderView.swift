@@ -38,41 +38,52 @@ struct CourseBuilderView: View {
                                 
                                 ForEach(raceState.course.marks) { buoy in
                                     MarkListCard(buoy: buoy, isSelected: mapInteraction.selectedBuoyIds.contains(buoy.id) || mapInteraction.selectedBuoyId == buoy.id) {
-                                        // On click, if shift is held, toggle. Else isolate select.
-                                        if let event = NSApp.currentEvent, event.modifierFlags.contains(.shift) {
-                                            if mapInteraction.selectedBuoyIds.contains(buoy.id) {
-                                                mapInteraction.selectedBuoyIds.remove(buoy.id)
-                                            } else {
-                                                mapInteraction.selectedBuoyIds.insert(buoy.id)
-                                            }
-                                        } else {
-                                            mapInteraction.selectedBuoyIds = [buoy.id]
-                                            mapInteraction.selectedBuoyId = buoy.id // Legacy
-                                            DispatchQueue.main.async { 
-                                                mapInteraction.explicitMapRegion = MKCoordinateRegion(center: buoy.pos.coordinate, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01))
-                                            }
-                                        }
+                                        selectMark(buoy.id)
                                     }
                                 }
                             }
                         }
                         
-                        // Show Inspector based on selection count
-                        if mapInteraction.selectedBuoyIds.count > 1 {
-                            GroupInspector(selectedIds: mapInteraction.selectedBuoyIds)
-                        } else if let selectedId = mapInteraction.selectedBuoyIds.first ?? mapInteraction.selectedBuoyId,
-                           let buoy = raceState.course.marks.first(where: { $0.id == selectedId }) {
-                            BuoyInspector(buoy: Binding(
-                                get: { buoy },
-                                set: { updated in
-                                    if let idx = raceState.course.marks.firstIndex(where: { $0.id == selectedId }) {
-                                        raceState.course.marks[idx] = updated
-                                        raceEngine.updateBuoyConfig(buoy: updated)
-                                    }
+                        // Show Inspector(s)
+                        VStack(spacing: 0) {
+                            if !mapInteraction.selectedBuoyIds.isEmpty {
+                                HStack {
+                                    Spacer()
+                                    Button(action: { 
+                                        mapInteraction.selectedBuoyIds = []
+                                        mapInteraction.selectedBuoyId = nil
+                                    }) {
+                                        Text("DESELECT ALL")
+                                            .font(.system(size: 9, weight: .bold))
+                                            .foregroundStyle(.secondary)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(Color.white.opacity(0.1))
+                                            .clipShape(Capsule())
+                                    }.buttonStyle(.plain)
                                 }
-                            ), onDelete: {
-                                deleteBuoy(id: selectedId)
-                            })
+                                .padding(.top, 10)
+                            }
+
+                            if let selectedId = mapInteraction.selectedBuoyId ?? mapInteraction.selectedBuoyIds.first,
+                               let buoy = raceState.course.marks.first(where: { $0.id == selectedId }) {
+                                BuoyInspector(buoy: Binding(
+                                    get: { buoy },
+                                    set: { updated in
+                                        if let idx = raceState.course.marks.firstIndex(where: { $0.id == selectedId }) {
+                                            raceState.course.marks[idx] = updated
+                                            raceEngine.updateBuoyConfig(buoy: updated)
+                                        }
+                                    }
+                                ), onDelete: {
+                                    deleteBuoy(id: selectedId)
+                                })
+                            }
+                            
+                            if mapInteraction.selectedBuoyIds.count > 1 {
+                                GroupInspector(selectedIds: mapInteraction.selectedBuoyIds)
+                                    .padding(.top, 10)
+                            }
                         }
                         
                         Spacer()
@@ -104,9 +115,61 @@ struct CourseBuilderView: View {
         }
     }
     
+    private func selectMark(_ id: String) {
+        let buoy = raceState.course.marks.first(where: { $0.id == id })
+        
+        var idsToSelect = Set<String>([id])
+        
+        // Find sibling if it's a paired mark
+        if let b = buoy {
+            let isSibling: (Buoy) -> Bool = { other in
+                if other.id == b.id { return false }
+                if other.type != b.type { return false }
+                
+                // Unified prefix cleaning for Gates, Start, and Finish marks
+                let suffixes = [" P", " S", " Pin", " Boat", " (Port)", " (Starboard)"]
+                var cleanA = b.name
+                var cleanB = other.name
+                for s in suffixes {
+                    if cleanA.hasSuffix(s) { cleanA = String(cleanA.dropLast(s.count)) }
+                    if cleanB.hasSuffix(s) { cleanB = String(cleanB.dropLast(s.count)) }
+                }
+                return cleanA == cleanB
+            }
+            
+            if let sibling = raceState.course.marks.first(where: isSibling) {
+                idsToSelect.insert(sibling.id)
+            }
+        }
+        
+        // Handle selection mechanics
+        if let event = NSApp.currentEvent, event.modifierFlags.contains(.shift) {
+            // Toggle logic for multi-select
+            if mapInteraction.selectedBuoyIds.isSuperset(of: idsToSelect) {
+                mapInteraction.selectedBuoyIds.subtract(idsToSelect)
+            } else {
+                mapInteraction.selectedBuoyIds.formUnion(idsToSelect)
+            }
+        } else {
+            // Isolate selection
+            mapInteraction.selectedBuoyIds = idsToSelect
+            mapInteraction.selectedBuoyId = id // Primary focus
+            
+            if let b = buoy {
+                DispatchQueue.main.async {
+                    mapInteraction.explicitMapRegion = MKCoordinateRegion(
+                        center: b.pos.coordinate,
+                        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                    )
+                }
+            }
+        }
+    }
+    
     private func deleteBuoy(id: String) {
         raceState.course.marks.removeAll(where: { $0.id == id })
         if mapInteraction.selectedBuoyId == id { mapInteraction.selectedBuoyId = nil }
+        mapInteraction.selectedBuoyIds.remove(id)
     }
 }
 
@@ -361,11 +424,18 @@ struct BuoyInspector: View {
         for i in raceState.course.marks.indices {
             if isSibling(raceState.course.marks[i]) {
                 var sibling = raceState.course.marks[i]
+                
+                // Rely on the generic keypath assignment which covers all types safely
                 sibling[keyPath: changedKeyPath] = newValue
+                
                 raceState.course.marks[i] = sibling
                 raceEngine.updateBuoyConfig(buoy: sibling)
             }
         }
+        
+        // Final nudge to ensure RaceState publishes the change
+        let temp = raceState.course
+        raceState.course = temp
     }
 }
 
@@ -501,8 +571,13 @@ struct SavedTemplatesCard: View {
                         Text(template.name).font(.system(size: 11, weight: .bold))
                         Spacer()
                         Button(action: {
-                            mapInteraction.activeTemplate = template
-                            mapInteraction.activeTool = .placeTemplate
+                            if mapInteraction.activeTemplate?.id == template.id && mapInteraction.activeTool == .placeTemplate {
+                                mapInteraction.activeTool = .cursor
+                                mapInteraction.activeTemplate = nil
+                            } else {
+                                mapInteraction.activeTemplate = template
+                                mapInteraction.activeTool = .placeTemplate
+                            }
                         }) {
                             Text(mapInteraction.activeTemplate?.id == template.id && mapInteraction.activeTool == .placeTemplate ? "PLACING..." : "PLACE")
                                 .font(.system(size: 9, weight: .bold))

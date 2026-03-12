@@ -1,196 +1,331 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-// Temporary Model definition until we link to the Rust Native Core Data Model
-struct TeamNode: Identifiable, Hashable, Codable {
-    var id: UUID = UUID()
-    var name: String
-    var club: String
-}
-
-struct PairingRow: Identifiable {
-    let id = UUID()
-    let boatId: String // e.g., "USA 1"
-    var teamA: TeamNode?
-    var teamB: TeamNode?
-}
-
 struct FleetControlView: View {
-    @State private var unassignedTeams: [TeamNode] = [
-        TeamNode(name: "NYYC American Magic", club: "NYYC"),
-        TeamNode(name: "Emirates Team NZ", club: "RNZYS"),
-        TeamNode(name: "INEOS Britannia", club: "RYS"),
-        TeamNode(name: "Luna Rossa", club: "CVS")
-    ]
+    @EnvironmentObject var raceState: RaceStateModel
+    @EnvironmentObject var raceEngine: RaceEngineClient
     
-    // Flight 1 Example
-    @State private var flightPairs: [PairingRow] = [
-        PairingRow(boatId: "FRA 28"),
-        PairingRow(boatId: "SWE 11"),
-        PairingRow(boatId: "AUS 99")
-    ]
+    @State private var boatCount: Int = 6
+    @State private var flightCount: Int = 15
+    @State private var newTeamName: String = ""
+    @State private var newTeamClub: String = ""
+    @State private var teamToDelete: LeagueTeam?
+    @State private var showingDeleteConfirmation = false
     
-    @State private var sortOrder = [KeyPathComparator(\TeamNode.name)]
-
     var body: some View {
-        VStack(spacing: 20) {
-            HStack(spacing: 20) {
-                // Left: Team Roster
-                GlassPanel(title: "Team Roster", icon: "person.3.fill") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Spacer()
-                            Button(action: addTeam) {
-                                Label("Add Team", systemImage: "plus")
-                                    .font(RegattaDesign.Fonts.label)
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .tint(RegattaDesign.Colors.electricBlue)
-                        }
-                        
-                        Table(unassignedTeams, sortOrder: $sortOrder) {
-                            TableColumn("Team Name", value: \.name) { team in
-                                HStack {
+        HStack(spacing: 20) {
+            // LEFT COLUMN: Team Roster & Diagnostics
+            VStack(spacing: 20) {
+                teamRosterSection
+                
+                GlassPanel(title: "Fleet Health", icon: "waveform.path.ecg") {
+                    FleetHealthDashboard()
+                }
+                .frame(height: 300)
+            }
+            .frame(width: 320)
+            
+            // RIGHT COLUMN: Scheduling Matrix
+            VStack(spacing: 20) {
+                generatorControlsSection
+                scheduleMatrixSection
+            }
+        }
+        .padding(20)
+    }
+}
+
+// MARK: - Sections
+
+extension FleetControlView {
+    
+    private var teamRosterSection: some View {
+        GlassPanel(title: "Team Roster (\(raceState.leagueTeams.count))", icon: "person.3.fill") {
+            VStack(spacing: 12) {
+                HStack {
+                    Spacer()
+                    Button("Clear All", role: .destructive) {
+                        raceState.clearAllTeams()
+                    }
+                    .buttonStyle(.borderless)
+                    .font(.caption)
+                    .foregroundStyle(.red.opacity(0.8))
+                }
+                
+                HStack {
+                    TextField("Team Name", text: $newTeamName)
+                        .textFieldStyle(.plain)
+                        .padding(8)
+                        .background(Color.white.opacity(0.05))
+                        .cornerRadius(8)
+                    
+                    TextField("Club", text: $newTeamClub)
+                        .textFieldStyle(.plain)
+                        .padding(8)
+                        .background(Color.white.opacity(0.05))
+                        .cornerRadius(8)
+                    
+                    Button(action: addTeam) {
+                        Image(systemName: "plus")
+                            .foregroundStyle(.white)
+                            .padding(8)
+                            .background(RegattaDesign.Colors.electricBlue)
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(newTeamName.isEmpty)
+                }
+                .padding(.bottom, 8)
+                
+                ScrollView {
+                    VStack(spacing: 8) {
+                        ForEach(raceState.leagueTeams) { team in
+                            HStack {
+                                VStack(alignment: .leading) {
                                     Text(team.name)
                                         .fontWeight(.bold)
-                                    Spacer()
-                                    Image(systemName: "line.3.horizontal")
+                                    Text(team.club)
+                                        .font(.caption)
                                         .foregroundStyle(.secondary)
                                 }
-                                .padding(8)
-                                .background(Color.white.opacity(0.05))
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                                .onDrag {
-                                    let provider = NSItemProvider(object: team.id.uuidString as NSString)
-                                    return provider
+                                Spacer()
+                                Button(action: { 
+                                    teamToDelete = team
+                                    showingDeleteConfirmation = true
+                                }) {
+                                    Image(systemName: "trash")
+                                        .foregroundStyle(.red.opacity(0.6))
                                 }
+                                .buttonStyle(.plain)
                             }
-                            TableColumn("Club", value: \.club)
+                            .padding(10)
+                            .background(Color.white.opacity(0.05))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
-                        .tableStyle(.inset)
                     }
                 }
-                .frame(maxWidth: .infinity)
+            }
+        }
+        .confirmationDialog(
+            "Are you sure you want to delete \(teamToDelete?.name ?? "this team")?",
+            isPresented: $showingDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Delete Team", role: .destructive) {
+                if let team = teamToDelete {
+                    deleteTeam(team)
+                }
+            }
+            Button("Cancel", role: .cancel) {
+                teamToDelete = nil
+            }
+        } message: {
+            Text("This action cannot be undone and will remove the team from all races.")
+        }
+    }
+    
+    private var generatorControlsSection: some View {
+        GlassPanel(title: "Pairing Generator", icon: "wand.and.stars") {
+            HStack(spacing: 20) {
+                VStack(alignment: .leading) {
+                    Text("FLIGHTS")
+                        .font(RegattaDesign.Fonts.label)
+                        .foregroundStyle(.secondary)
+                    Stepper("\(flightCount)", value: $flightCount, in: 1...50)
+                }
                 
-                // Right: Flight Schedule
-                GlassPanel(title: "Flight Schedule", icon: "calendar") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Text("LEAGUE ROUND-ROBIN")
+                VStack(alignment: .leading) {
+                    Text("BOATS")
+                        .font(RegattaDesign.Fonts.label)
+                        .foregroundStyle(.secondary)
+                    Stepper("\(boatCount)", value: $boatCount, in: 2...12)
+                }
+                
+                Spacer()
+                
+                Button(action: generateSchedule) {
+                    HStack {
+                        if !raceEngine.isReady {
+                            ProgressView()
+                                .controlSize(.small)
+                                .padding(.trailing, 4)
+                        }
+                        Label(raceEngine.isReady ? "GENERATE SCHEDULE" : "QUEUE GENERATION", systemImage: "play.fill")
+                            .font(RegattaDesign.Fonts.label)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(raceEngine.isReady ? AnyShapeStyle(RegattaDesign.Gradients.primary) : AnyShapeStyle(Color.gray.opacity(0.3)))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .frame(height: 100)
+    }
+    
+    private var scheduleMatrixSection: some View {
+        GlassPanel(title: "Flight Schedule Matrix", icon: "calendar") {
+            if let schedule = raceState.leagueSchedule {
+                ScrollView([.horizontal, .vertical]) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        // Header
+                        HStack(spacing: 2) {
+                            Text("RACE")
                                 .font(RegattaDesign.Fonts.label)
-                                .foregroundStyle(RegattaDesign.Colors.cyan)
-                            Spacer()
-                            Button(action: autoGenerate) {
-                                Label("Auto-Generate", systemImage: "wand.and.stars")
-                                    .font(RegattaDesign.Fonts.label)
+                                .frame(width: 80)
+                                .padding(8)
+                                .background(Color.black.opacity(0.2))
+                            
+                            ForEach(1..<(schedule.boatCount + 1), id: \.self) { bIdx in
+                                BoatHeaderView(boatId: "\(bIdx)")
                             }
-                            .buttonStyle(.bordered)
                         }
                         
-                        ScrollView {
-                            VStack(spacing: 12) {
-                                ForEach(flightPairs) { row in
-                                    HStack {
-                                        Text(row.boatId)
-                                            .font(RegattaDesign.Fonts.mono)
-                                            .frame(width: 80, alignment: .leading)
-                                        
-                                        DropZoneCell(team: row.teamA, onDrop: { teamId in
-                                            assignTeam(teamId: teamId, to: row.id)
-                                        })
-                                    }
-                                    .padding(12)
-                                    .background(Color.black.opacity(0.2))
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(Color.white.opacity(0.05), lineWidth: 1)
-                                    )
-                                }
+                        // Flights
+                        ForEach(0..<schedule.flightCount, id: \.self) { fIdx in
+                            flightHeader(index: fIdx)
+                            
+                            let pairings = schedule.pairings.filter { $0.flightIndex == fIdx }
+                            let maxRace = pairings.map { $0.raceIndex }.max() ?? 0
+                            
+                            ForEach(0..<(maxRace + 1), id: \.self) { rIdx in
+                                let racePairings = pairings.filter { $0.raceIndex == rIdx }
+                                raceRow(flightIdx: fIdx, raceIdx: rIdx, boatCount: schedule.boatCount, pairings: racePairings)
                             }
                         }
                     }
                 }
-                .frame(maxWidth: .infinity)
+            } else {
+                emptyScheduleView
             }
-            .frame(maxHeight: .infinity)
+        }
+    }
+    
+    private func flightHeader(index: Int) -> some View {
+        Text("FLIGHT \(index + 1)")
+            .font(RegattaDesign.Fonts.label)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 12)
+            .background(RegattaDesign.Colors.cyan.opacity(0.1))
+            .foregroundStyle(RegattaDesign.Colors.cyan)
+            .clipShape(RoundedRectangle(cornerRadius: 4))
+            .padding(.top, 10)
+    }
+    
+    private func raceRow(flightIdx: Int, raceIdx: Int, boatCount: Int, pairings: [LeaguePairing]) -> some View {
+        HStack(spacing: 2) {
+            Text("Race \(raceIdx + 1)")
+                .font(RegattaDesign.Fonts.mono)
+                .frame(width: 80)
+                .padding(8)
+                .background(Color.white.opacity(0.05))
             
-            // BOTTOM: Fleet Health Dashboard
-            GlassPanel(title: "Fleet Diagnostics", icon: "waveform.path.ecg") {
-                FleetHealthDashboard()
+            ForEach(1..<(boatCount + 1), id: \.self) { bIdx in
+                PairingCell(boatId: "\(bIdx)", pairings: pairings)
             }
-            .frame(height: 300)
         }
     }
     
-    // --- Actions ---
-    private func addTeam() {
-        // TODO: Show Add Team Sheet
-        unassignedTeams.append(TeamNode(name: "Alinghi", club: "SNG"))
-    }
-    
-    private func autoGenerate() {
-        // TODO: Hook into Rust matrix algorithms
-        print("Auto-generating schedule")
-    }
-    
-    private func assignTeam(teamId: String, to pairingId: UUID) {
-        // Find team
-        guard let teamIndex = unassignedTeams.firstIndex(where: { $0.id.uuidString == teamId }) else { return }
-        let team = unassignedTeams[teamIndex]
-        
-        // Find row
-        guard let rowIndex = flightPairs.firstIndex(where: { $0.id == pairingId }) else { return }
-        
-        // Move
-        unassignedTeams.remove(at: teamIndex)
-        // If there was an old team, push it back
-        if let oldTeam = flightPairs[rowIndex].teamA {
-            unassignedTeams.append(oldTeam)
+    private var emptyScheduleView: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "calendar.badge.plus")
+                .font(.system(size: 40))
+                .foregroundStyle(.secondary)
+            Text("No schedule generated yet.\nAdd teams and configure your flight plan.")
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
         }
-        
-        flightPairs[rowIndex].teamA = team
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
-// Custom Drop Zone Cell
-struct DropZoneCell: View {
-    let team: TeamNode?
-    let onDrop: (String) -> Void
-    @State private var isTargeted = false
+// MARK: - Components
+
+struct BoatHeaderView: View {
+    @EnvironmentObject var raceState: RaceStateModel
+    let boatId: String
     
     var body: some View {
-        ZStack {
-            if let team = team {
-                HStack {
-                    Image(systemName: "person.3.fill")
-                        .foregroundStyle(.blue)
-                    Text(team.name)
-                        .fontWeight(.medium)
+        let boat = raceState.leagueBoats.first(where: { $0.id == boatId })
+        let name = boat?.name ?? "BOAT \(boatId)"
+        let colorHex = boat?.color ?? "#FFFFFF"
+        
+        let colorBinding = Binding<Color>(
+            get: { Color(hex: colorHex) },
+            set: { newColor in
+                if let hexString = newColor.toHex() {
+                    raceState.updateBoatColor(id: boatId, colorHex: hexString)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            } else {
-                Text("Drag Team Here")
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
             }
+        )
+        
+        HStack {
+            Text(name)
+                .font(RegattaDesign.Fonts.label)
+                .foregroundStyle(Color(hex: colorHex))
+            Spacer()
+            ColorPicker("", selection: colorBinding)
+                .labelsHidden()
         }
-        .padding(.vertical, 4)
-        .padding(.horizontal, 8)
-        .background(isTargeted ? Color.blue.opacity(0.2) : Color.clear)
-        .cornerRadius(6)
-        .onDrop(of: [.plainText], isTargeted: $isTargeted) { providers in
-            if let first = providers.first {
-                first.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { (data, error) in
-                    if let stringData = data as? Data, let idString = String(data: stringData, encoding: .utf8) {
-                        DispatchQueue.main.async {
-                            onDrop(idString)
-                        }
-                    }
-                }
-                return true
-            }
-            return false
-        }
+        .frame(width: 140)
+        .padding(8)
+        .background(Color.black.opacity(0.2))
     }
 }
+
+struct PairingCell: View {
+    @EnvironmentObject var raceState: RaceStateModel
+    let boatId: String
+    let pairings: [LeaguePairing]
+    
+    var body: some View {
+        let teamId = pairings.first(where: { $0.boatId == boatId })?.teamId
+        let team = raceState.leagueTeams.first(where: { $0.id == teamId })
+        let teamName = team?.name ?? "-"
+        let boatColorHex = raceState.leagueBoats.first(where: { $0.id == boatId })?.color ?? "#FFFFFF"
+        let boatColor = Color(hex: boatColorHex)
+        
+        VStack(spacing: 2) {
+            Text(teamName)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(teamName == "-" ? Color.secondary : Color.white)
+            
+            if let club = team?.club, !club.isEmpty {
+                Text(club)
+                    .font(.system(size: 9))
+                    .foregroundStyle(.secondary.opacity(0.8))
+            }
+        }
+        .frame(width: 140)
+        .padding(8)
+        .background(teamName == "-" ? Color.clear : boatColor.opacity(0.12))
+        .overlay(
+            Rectangle()
+                .fill(teamName == "-" ? Color.clear : boatColor)
+                .frame(width: 4),
+            alignment: .leading
+        )
+    }
+}
+
+// MARK: - Actions
+
+extension FleetControlView {
+    
+    private func addTeam() {
+        guard !newTeamName.isEmpty else { return }
+        raceState.addLeagueTeam(name: newTeamName, club: newTeamClub)
+        newTeamName = ""
+        newTeamClub = ""
+    }
+    
+    private func deleteTeam(_ team: LeagueTeam) {
+        raceState.removeLeagueTeam(id: team.id)
+    }
+    
+    private func generateSchedule() {
+        raceState.generateLeagueSchedule(boatCount: boatCount, flightCount: flightCount)
+    }
+}
+

@@ -95,6 +95,11 @@ class TrackerConnectionManager: ObservableObject {
     private func sampleAndTransmitTelemetry() {
         guard let sessionId = sessionId else { return }
         
+        // Feed real GPS into UWB Emulator if it's active
+        if let lastLocation = location?.manager.location {
+            ble?.emulator.ingestRealGPS(lastLocation)
+        }
+        
         // Build position
         var lat = location?.currentPosition?.latitude ?? 0.0
         var lon = location?.currentPosition?.longitude ?? 0.0

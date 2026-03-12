@@ -9,6 +9,10 @@ struct SettingsSheet: View {
     @EnvironmentObject var bleClient: UWBNodeBLEClient
     @EnvironmentObject var raceState: RaceStateModel
     @Environment(\.dismiss) var dismiss
+    
+    @AppStorage("uwbEmulatorEnabled") private var uwbEmulatorEnabled = false
+    @State private var devTapCount = 0
+    @State private var showDebugMenu = false
 
     var body: some View {
         NavigationStack {
@@ -103,8 +107,35 @@ struct SettingsSheet: View {
                     Text("HARDWARE STATUS")
                         .font(RegattaFont.label(11))
                         .foregroundColor(.white.opacity(0.4))
+                        .onTapGesture {
+                            devTapCount += 1
+                            if devTapCount >= 7 {
+                                showDebugMenu = true
+                            }
+                        }
                 }
                 .listRowBackground(Color.white.opacity(0.05))
+                
+                // Hidden Debug Section
+                if showDebugMenu {
+                    Section {
+                        Toggle(isOn: $uwbEmulatorEnabled) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Enable UWB Emulator (GPS Spline)")
+                                    .foregroundColor(.statusWarn)
+                                Text("Injects synthetic 20Hz packets into BLE layer.")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.white.opacity(0.4))
+                            }
+                        }
+                        .tint(.statusWarn)
+                    } header: {
+                        Text("DEVELOPER TOOLS")
+                            .font(RegattaFont.label(11))
+                            .foregroundColor(.statusWarn)
+                    }
+                    .listRowBackground(Color.white.opacity(0.05))
+                }
 
                 // Section: Backend Endpoint
                 Section {

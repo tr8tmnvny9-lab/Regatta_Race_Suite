@@ -173,3 +173,58 @@ A full-screen, animated live topology of the Regatta Suite data infrastructure. 
   - Layer colours reference
   - Connection type legend (solid=bidir, dashed=unidir) with colour swatches
   - Live counters: Active Edges / Total, Particle Count, Current Command Target
+
+## ⚙️ App Settings
+
+The Settings section is a modular, sidebar-driven configuration hub following the Apple Liquid Glass aesthetic.
+
+- [ ] **Navigation & Layout**
+    - Embedded sidebar within the Settings workspace for quick switching between categories.
+    - Each section header responds to specific multi-tap/click interactions for developer access.
+    - Uses `.ultraThinMaterial` on all glass panels for maximum depth.
+
+- [ ] **Settings: Fleet Profiles**
+    - Manage geometric boat profiles (Length, Width, Pole Length).
+    - Configure UWB Tracker mounting offsets (X, Y, Z).
+    - Push live updates to the fleet via Socket.IO.
+    - **Hidden Developer Tools**: 7-click trigger on "FLEET PROFILES" label to reveal the UWB Emulator toggle.
+
+- [ ] **Settings: Network & Connectivity**
+    - **Backend Bridge**: Real-time status of the local Rust sidecar (SidecarManager).
+    - **Command Target**: Toggle and status for Nokia SNPN (Local) vs AWS Cloud (Remote).
+    - **Sync Latency**: Visual readout of ms delay to both endpoints.
+    - **UDP Broadcast**: Stats on incoming telemetry from trackers.
+
+- [ ] **Settings: Identity & Auth**
+    - View active Supabase account email and JWT status.
+    - Logout functionality.
+    - Organization/Regatta permission level dashboard.
+
+- [ ] **Settings: Hardware Integrations (Future)**
+    - Mapping for Horns, Lights, and VHF repeaters.
+
+## 📺 Regatta Live (Broadcast View)
+
+A standalone, broadcast-oriented fullscreen view distinct from the standard Regatta Pro operational interface. It removes standard sidebars and telemetry wings to maximize visual real estate for public display, commentary, or VIP viewing.
+
+- [ ] **Layout & Scalability (Vectorized)**
+    - **CRITICAL: Vector Scalable Graphics**: All UI elements (maps, leaderboards, HUDs) must be strictly vector-based (using SwiftUI `GeometryReader`, strictly proportional sizing, and scalable SF Symbols/Paths) to guarantee absolute sharpness and correct proportions across highly variable screen sizes (from laptops to massive LED broadcast walls).
+    - **Fullscreen Standalone View**: Overlays the main operational UI, claiming 100% of the screen.
+    - **Thematic Consistency**: Incorporate the signature "Liquid Glass" and moving wave background animations to maintain brand identity and visual fluidity even in this stripped-down broadcast environment.
+    - **Prominent Navigation Exit**: A dedicated, clearly visible "Exit Regatta Live" button to safely return to the standard operational view without getting stuck.
+
+- [ ] **Performance & Resource Isolation**
+    - **Lazy Loading & Sandbox**: Regatta Live components (especially video streams and heavy vector maps) must consume *zero* network bandwidth and UI rendering resources until the view is actively launched.
+    - **Background Throttling**: When Regatta Live is active, the standard Regatta Pro background views (course builder, procedure architect, standard map) must have their rendering pipelines paused and data polling throttled to ensure 100% of system resources are dedicated to the smooth 60fps presentation of the broadcast view.
+
+- [ ] **Data Components & Interactive Graphics**
+    - **Live Race Leaderboard**: Real-time positions, distances to next mark (DTM), and animated position swapping (e.g., when a boat overtakes another).
+    - **Overall Regatta Scoreboard**: Cumulative standings for the entire event/league shown between races.
+    - **Time & Procedure HUD**: Live Race Clock (countdowns/elapsed time), Current Procedure Status, and Local World Time.
+    - **Telemetry Lower Thirds**: TV-style dynamic popups showing instant performance data (Speed, VMG, Wind data) when a boat executes a maneuver (tack/gybe) or rounds a mark.
+    - **Predictive Ghosting**: Visual layline shadows or "ghost boats" showing the predicted intersection of boats approaching a mark based on current speed and heading.
+
+- [ ] **Visual Action Zones**
+    - **Tactical Map (2D/3D)**: High-resolution tracker-based map showing boat positions, laylines, and course boundaries.
+    - **Live Video Feeds**: Support for up to 4 simultaneous live video streams.
+    - **Dynamic Tiling/Splitting**: Ability to flexibly arrange the Tactical Map, Video Feeds, and Leaderboards using dynamic quad, 50/50, or picture-in-picture (PiP) configurations.

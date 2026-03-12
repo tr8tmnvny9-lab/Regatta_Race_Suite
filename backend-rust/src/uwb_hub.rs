@@ -226,7 +226,10 @@ async fn process_packet(
             .as_millis() as u64;
 
         // Collect into a single OCS event (Phase 6: aggregate all nodes in epoch)
-        }
+        let _ = ocs_tx.try_send(OcsEvent {
+            epoch_ms,
+            boats: vec![node],
+        });
     }
 }
 

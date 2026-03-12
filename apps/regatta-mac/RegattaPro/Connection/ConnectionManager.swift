@@ -33,11 +33,18 @@ final class ConnectionManager: ObservableObject {
     @Published var mode: ConnectionMode = .offline
     @Published var isConnected: Bool = false
     @Published var latencyMs: Double = 0
+    
+    private let pingSession: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 2.0
+        config.timeoutIntervalForResource = 2.0
+        return URLSession(configuration: config)
+    }()
 
     // Cloud endpoint (production)
     private let cloudURL = URL(string: "https://regatta-backend.fly.dev")!
-    // Local sidecar (always try this first)
-    private let localURL = URL(string: "http://localhost:3001")!
+    // Local sidecar (health checked at 3001)
+    private let localURL = URL(string: "http://127.0.0.1:3001")!
 
     private var pathMonitor: NWPathMonitor?
     private var bonjourBrowser: NWBrowser?
@@ -154,7 +161,7 @@ final class ConnectionManager: ObservableObject {
         let start = Date()
         do {
             let healthURL = url.appendingPathComponent("health")
-            let (_, response) = try await URLSession.shared.data(from: healthURL)
+            let (_, response) = try await pingSession.data(from: healthURL)
             guard (response as? HTTPURLResponse)?.statusCode == 200 else { return nil }
             return Date().timeIntervalSince(start) * 1000
         } catch {

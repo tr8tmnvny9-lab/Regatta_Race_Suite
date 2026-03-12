@@ -373,6 +373,9 @@ pub async fn on_connect(
                             is_simulating: is_simulating.unwrap_or(false),
                             speed_setting: speed_setting.unwrap_or(8.0),
                             path_progress: path_progress.unwrap_or(0.0),
+                            leg_index: 0,
+                            dtf_m: 0.0,
+                            rank: 0,
                         };
                         state.boats.insert(boat_id.clone(), boat);
                     }
@@ -1390,6 +1393,35 @@ pub async fn on_connect(
         });
     }
 
+    // ── set-teams ─────────────────────────────────────────────────────────────
+    {
+        let socket = socket.clone();
+        let shared = shared.clone();
+        socket.on("set-teams", move |s: SocketRef, Data::<Value>(data)| {
+            let shared = shared.clone();
+            async move {
+                info!("📥 Received set-teams event with data: {:?}", data);
+                if let Ok(teams_vec) = serde_json::from_value::<Vec<crate::state::Team>>(data.clone()) {
+                    info!("✅ Successfully parsed {} teams", teams_vec.len());
+                    {
+                        let mut state = shared.write().await;
+                        state.teams.clear();
+                        for team in teams_vec {
+                            state.teams.insert(team.id.clone(), team);
+                        }
+                        let _ = save_state(&state).await;
+                    }
+                    let state = shared.read().await;
+                    let _ = s.broadcast().emit("state-update", &*state);
+                    let _ = s.emit("state-update", &*state);
+                    info!("📡 Broadcasted state-update with new teams.");
+                } else {
+                    warn!("❌ Failed to parse set-teams payload: {}", data);
+                }
+            }
+        });
+    }
+
     // ── generate-flights ──────────────────────────────────────────────────────
     {
         let socket = socket.clone();
@@ -1397,19 +1429,24 @@ pub async fn on_connect(
         socket.on("generate-flights", move |s: SocketRef, Data::<Value>(data)| {
             let shared = shared.clone();
             async move {
-                let target_races = data["targetRaces"].as_u64().unwrap_or(15) as u32;
+                let flight_count = data["flightCount"].as_u64().unwrap_or(15) as u32;
                 let boats = data["boats"].as_u64().unwrap_or(6) as u32;
+                
+                info!("📥 Received generate-flights event: {} flights, {} boats", flight_count, boats);
                 
                 let (flights, pairings) = {
                     let state = shared.read().await;
                     let teams: Vec<crate::state::Team> = state.teams.values().cloned().collect();
-                    crate::flight_engine::FlightEngine::generate_rotation_schedule(teams, boats, target_races)
+                    info!("📊 Engine generating from {} teams", teams.len());
+                    crate::flight_engine::FlightEngine::generate_rotation_schedule(teams, boats, flight_count)
                 };
                 
                 if flights.is_empty() {
-                    warn!("Flight generation aborted: Not enough teams or boats (0 flights).");
+                    warn!("❌ Flight generation aborted: Not enough teams or boats (0 flights produced).");
                     return;
                 }
+                
+                info!("✅ Engine produced {} flights and {} pairings", flights.len(), pairings.len());
                 
                 {
                     let mut state = shared.write().await;
@@ -1431,6 +1468,83 @@ pub async fn on_connect(
                 let _ = s.emit("state-update", &*state);
                 
                 info!("Generated new fair rotation schedule spanning {} flights.", state.flights.len());
+            }
+        });
+    }
+
+    // ── commit-race-results ──────────────────────────────────────────────────
+    {
+        let socket = socket.clone();
+        let shared = shared.clone();
+        let auth = auth.clone();
+        socket.on("commit-race-results", move |s: SocketRef, _data: Data<Value>| {
+            let shared = shared.clone();
+            let auth = auth.clone();
+            async move {
+                if auth.get_role(&s.id.to_string()).await.as_deref() != Some("director") {
+                    warn!("Unauthorized commit-race-results attempt by: {}", s.id);
+                    return;
+                }
+
+                {
+                    let mut state = shared.write().await;
+                    
+                    let active_flight_id = match &state.active_flight_id {
+                        Some(id) => id.clone(),
+                        None => {
+                            warn!("Cannot commit results: NO ACTIVE FLIGHT");
+                            return;
+                        }
+                    };
+
+                    let mut boat_to_team: std::collections::HashMap<String, String> = std::collections::HashMap::new();
+                    for p in &state.pairings {
+                        if p.flight_id == active_flight_id {
+                            boat_to_team.insert(p.boat_id.clone(), p.team_id.clone());
+                        }
+                    }
+
+                    let mut team_points: std::collections::HashMap<String, u32> = std::collections::HashMap::new();
+                    for boat in state.boats.values() {
+                        let rank = boat.rank;
+                        if rank > 0 {
+                            if let Some(team_id) = boat_to_team.get(&boat.boat_id) {
+                                *team_points.entry(team_id.clone()).or_insert(0) += rank;
+                            }
+                        }
+                    }
+
+                    let mut updates = 0;
+                    for (team_id, points) in team_points {
+                        if let Some(team) = state.teams.get_mut(&team_id) {
+                            info!("🏆 committing {} pts to Team: {}", points, team.name);
+                            team.score += points;
+                            updates += 1;
+                        }
+                    }
+
+                    if updates > 0 {
+                        let mut teams_vec: Vec<_> = state.teams.values().cloned().collect();
+                        teams_vec.sort_by_key(|t| if t.score == 0 { 9999 } else { t.score });
+                        
+                        let mut rank: u32 = 1;
+                        for sorted_team in teams_vec {
+                            if let Some(t) = state.teams.get_mut(&sorted_team.id) {
+                                if t.score > 0 {
+                                    t.ranking = rank;
+                                    rank += 1;
+                                } else {
+                                    t.ranking = 0;
+                                }
+                            }
+                        }
+                    }
+
+                    let _ = s.broadcast().emit("state-update", &*state);
+                    let _ = s.emit("state-update", &*state);
+                }
+
+                emit_log(&shared, &s, LogCategory::System, "Director".to_string(), "Committed race results".to_string(), None, false).await;
             }
         });
     }
