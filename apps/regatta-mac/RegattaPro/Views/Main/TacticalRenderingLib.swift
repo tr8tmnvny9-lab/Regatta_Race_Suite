@@ -183,15 +183,20 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
         // 3. Clipper: Layline Diamond
         let envelope = findDiamondEnvelope(marks: raceState.course.marks, twd: raceState.twd)
         
+        // ONLY SHOW if laylines are enabled on at least one mark (user request)
+        let leilinesActive = raceState.course.marks.contains(where: { $0.showLaylines })
+        guard leilinesActive, let env = envelope else { return }
+        
         context.setStrokeColor(NSColor.white.withAlphaComponent(0.15).cgColor)
         context.setLineWidth(1.0 / zoomScale)
         
         // 4. NSGraphicsContext Sync for Text
+        // Use flipped: true because MapKit coordinate system is natively flipped (Y increases downwards)
         NSGraphicsContext.saveGraphicsState()
-        let nsContext = NSGraphicsContext(cgContext: context, flipped: false)
+        let nsContext = NSGraphicsContext(cgContext: context, flipped: true)
         NSGraphicsContext.current = nsContext
         
-        // Draw up to 40 lines downwind (increased range for deeper courses)
+        // Draw up to 40 lines downwind
         for i in 1...40 {
             let distanceMeters = Double(i) * mapInteraction.heightToMarkSpacing
             let distPoints = distanceMeters * pointsPerMeter
@@ -201,46 +206,48 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
                                      y: originMP.y + distPoints * Double(downwindVec.y))
             
             // Define a very long line to be clipped
-            let lineHalfWidth = 20000.0 * pointsPerMeter // Increased search width
-            let p1MP = MKMapPoint(x: centerMP.x - lineHalfWidth * Double(perpVec.x),
-                                 y: centerMP.y - lineHalfWidth * Double(perpVec.y))
-            let p2MP = MKMapPoint(x: centerMP.x + lineHalfWidth * Double(perpVec.x),
-                                 y: centerMP.y + lineHalfWidth * Double(perpVec.y))
+            let lineHalfWidth = 30000.0 * pointsPerMeter 
+            let perpX = Double(perpVec.x)
+            let perpY = Double(perpVec.y)
             
             // Clip line to full layline diamond envelope
-            var startT = -Double.greatestFiniteMagnitude
-            var endT = Double.greatestFiniteMagnitude
+            var startT = -lineHalfWidth
+            var endT = lineHalfWidth
             
-            if let env = envelope {
-                // Intersect line P(t) = C + t*V with the 4 planes of the diamond
-                // t = (k - dir . C) / (dir . V)
-                let directions = [env.uS, env.uS, env.uP, env.uP]
-                let limits = [env.minS, env.maxS, env.minP, env.maxP]
+            // Robust Diamond Intersection
+            // Plane conditions: minS <= P.uS <= maxS AND minP <= P.uP <= maxP
+            // P(t) = C + t*V
+            
+            let systems = [(env.uS, env.minS, env.maxS), (env.uP, env.minP, env.maxP)]
+            for (u, kMin, kMax) in systems {
+                let vDot = Double(u.x) * perpX + Double(u.y) * perpY
+                let cDot = Double(u.x) * centerMP.x + Double(u.y) * centerMP.y
                 
-                for (u, k) in zip(directions, limits) {
-                    let dotV = Double(u.x) * Double(perpVec.x) + Double(u.y) * Double(perpVec.y)
-                    let dotC = Double(u.x) * centerMP.x + Double(u.y) * centerMP.y
-                    if abs(dotV) > 1e-9 {
-                        let t = (k - dotC) / dotV
-                        if dotV > 0 {
-                            // Plane is facing one way
-                            endT = min(endT, t)
-                        } else {
-                            // Plane is facing the other way
-                            startT = max(startT, t)
-                        }
+                if abs(vDot) > 1e-10 {
+                    let t1 = (kMin - cDot) / vDot
+                    let t2 = (kMax - cDot) / vDot
+                    
+                    if vDot > 0 {
+                        startT = max(startT, min(t1, t2))
+                        endT = min(endT, max(t1, t2))
+                    } else {
+                        startT = max(startT, min(t1, t2))
+                        endT = min(endT, max(t1, t2))
+                    }
+                } else {
+                    // Line is parallel to plane, check if it's inside
+                    if cDot < kMin || cDot > kMax {
+                        startT = 0; endT = -1 // Force out of bounds
                     }
                 }
             }
             
-            // Fallback or combine with start/endMP if envelope was missing or failed
-            let finalStartT = (envelope != nil && startT < endT) ? startT : -lineHalfWidth
-            let finalEndT = (envelope != nil && startT < endT) ? endT : lineHalfWidth
+            if startT >= endT { continue }
             
-            let startMP = MKMapPoint(x: centerMP.x + finalStartT * Double(perpVec.x),
-                                    y: centerMP.y + finalStartT * Double(perpVec.y))
-            let endMP = MKMapPoint(x: centerMP.x + finalEndT * Double(perpVec.x),
-                                  y: centerMP.y + finalEndT * Double(perpVec.y))
+            let startMP = MKMapPoint(x: centerMP.x + startT * perpX,
+                                    y: centerMP.y + startT * perpY)
+            let endMP = MKMapPoint(x: centerMP.x + endT * perpX,
+                                  y: centerMP.y + endT * perpY)
             
             let p1 = point(for: startMP)
             let p2 = point(for: endMP)
@@ -260,8 +267,7 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
             let totalLen = hypot(p1.x - p2.x, p1.y - p2.y)
             let distFromCenterToP1 = hypot(dx, dy)
             
-            // Only draw if the line actually has some length and isn't out of bounds
-            if totalLen > gapWidth && finalStartT < finalEndT {
+            if totalLen > gapWidth {
                 let ratio = (gapWidth / 2) / distFromCenterToP1
                 let gapP1 = CGPoint(x: center.x + dx * ratio, y: center.y + dy * ratio)
                 let gapP2 = CGPoint(x: center.x - dx * ratio, y: center.y - dy * ratio)
@@ -269,16 +275,10 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
                 context.strokeLineSegments(between: [p1, gapP1])
                 context.strokeLineSegments(between: [p2, gapP2])
                 
-                // Draw Text with flipped coordinate system to correct rotation
-                context.saveGState()
-                context.translateBy(x: center.x, y: center.y)
-                // The context is already flipped by MapKit/AppKit. 
-                // To rotate 180 degrees:
-                context.rotate(by: .pi)
-                
-                let textRect = CGRect(x: -size.width/2, y: -size.height/2, width: size.width, height: size.height)
+                // Draw Text
+                // Since flipped: true, Y increases downwards. Text will be upright relative to MapKit.
+                let textRect = CGRect(x: center.x - size.width/2, y: center.y - size.height/2, width: size.width, height: size.height)
                 labelText.draw(in: textRect, withAttributes: attrs)
-                context.restoreGState()
             }
         }
         NSGraphicsContext.restoreGraphicsState()
