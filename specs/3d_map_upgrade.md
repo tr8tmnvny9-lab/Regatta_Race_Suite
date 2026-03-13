@@ -2,45 +2,53 @@
 
 - **Status**: Draft / Planning
 - **Target**: Regatta Pro (Mac/iOS) - Regatta Live Section
-- **Core Tech**: SceneKit (SCNView), Metal Shaders
+- **Core Tech**: SceneKit (SCNView), Custom Metal Shaders
 
 ## 1. Vision
-A premium, high-performance 3D visualization of the race course, inspired by SailGP live broadcasts. This view is an alternative visualization mode **exclusively within the Regatta Live section**, ensuring the core Tactical and Designer views remain optimized.
+A premium, high-performance 3D visualization of the race course. This view acts as a **pure visual wrapper** on top of the live race state feed, providing a "SailGP-style" broadcast experience.
 
-## 2. 3D Environment
+## 2. 3D Environment & Assets
 
-### Sea State
-- **Surface**: Custom shader-based water plane. Semi-transparent teal/blue with subtle wind-influenced waves.
-- **Rules Visualization**: 
-    - **2/3 Boat Length Zones**: Persistent semi-transparent disks on the water around each mark.
-    - **Active Rule Cones**: Visual highlighting when a boat enters a mark zone.
+### Sea State (Optimized)
+- **Surface**: Custom shader-based water plane (`SCNShaderModifier`).
+- **Texture**: Tiled seamless water texture with wind-driven wave animations.
+- **Optimization**: No real-time ray tracing; environment-mapped reflections only. High interpolation quality for smooth visuals.
 
 ### J70 3D Boat Model
-- **Components**: Hull (team color), Mast, Keel, Sails (Main, Jib, Jennaker).
-- **Sailing Modes (Visual States)**:
-    - **Upwind**: Sails tight, boat heeled (leeward).
-    - **Reaching**: Sails eased, boat flat.
-    - **Downwind**: Asymmetric spinnaker (Jennaker) deployed.
+- **Components**: Hull, Mast, Sails (Main, Jib, Jennaker), Keel.
+- **Dynamic Identification**: 
+    - Hull and sails match **Boat Color** from telemetry.
+    - **Boat Number** rendered on the bow and sail.
+    - Floating **Team Name Tag** billboarded above the mast.
+- **Sailing Modes**:
+    - **Upwind**: Sails tight, boat heeled (leeward) based on IMU Roll.
+    - **Downwind**: Asymmetric spinnaker (Jennaker) deployed when wind angle > 90°.
     - **Maneuvers**: Procedural animations for tacks and gybes.
+
+### Course Marks (Buoys)
+- **Standard Assets**: Cylindrical, Spherical, and Spar buoys.
+- **MarkSetBot**: Specialized 3D model with dual-pontoon base, orange/yellow inflatable canopy, and central antenna.
+- **Rules Mapping**: 2/3 boat length zones visualized as semi-transparent disks on the water.
 
 ## 3. Technical Architecture
 
-### Frontend (Swift / SceneKit)
-- **ThreeDMapView**: `SCNView` wrapper for SwiftUI.
-- **Node System**:
-    - `BoatNode`: Subclass of `SCNNode` with state-driven sail/heel logic.
-    - `BuoyNode`: 3D models for different mark types (Cylindrical, Spar, etc.).
-- **Camera**: Dynamic follow-cam with user override (orbit/zoom).
-- **HUD Layer**: AR-style overlays for Speed, VMG, and Rank using SpriteKit or SwiftUI.
+### Pure Visual Wrapper Topology
+- **Dumb Rendering**: The 3D engine does not calculate state, rules, or core physics. It strictly subscribes to the `RaceStateModel` feed.
+- **Dashboard Integration**: Modular view component designed for the drag-and-drop live dashboard (alongside 2D map, cameras, etc.).
+
+### Camera & Tracking Systems
+- **Drone View**: Intelligent follow-cam tracking lead boats or selected targets with smooth damping.
+- **Broadcast Node**: Fixed view from the Committee Boat (Starboard end of start line) looking down the course/start area.
+- **Auto-Switching**: Context-aware camera transitions (e.g., focus on the start during the sequence).
 
 ### Data & Performance
-- **Data Flow**: Subscribes to `RaceStateModel` (via `RaceEngineClient`).
-- **Interpolation**: Linear/Dead-reckoning for smooth movement at lower telemetry rates.
-- **Optimization**: Low-poly assets, static batching of course elements, and LOD for distant boats.
+- **Sync**: Direct mapping of `RaceStateModel` properties (LatLon, Heading, Roll, Speed).
+- **Smoothness**: Linear/Dead-reckoning interpolation to handle 1Hz-10Hz telemetry updates.
+- **Performance**: Low-poly assets and shader optimizations targeting 60FPS on M-series Macs.
 
 ## 4. Implementation Phasing
-1. **Foundation**: Base `SCNScene` with water and coordinate mapping.
-2. **Assets**: Import J70 model and course marks.
-3. **Dynamics**: Link boat rotation/heel to TWD and boat state.
-4. **Rules**: Add the 2/3 boat length zones and entry highlights.
-5. **Polishing**: Visual effects (wakes, spray) and SailGP-style HUD.
+1. **Foundation**: Base `SCNScene` with shader-driven water and coordinate mapping.
+2. **Assets**: Integration of J70 and MarkSetBot models.
+3. **Dynamics**: Linking boat heel/sails to IMU data and wind state.
+4. **Cameras**: Implementation of Drone and Broadcast tracking logic.
+5. **HUD & Wrap**: Final SailGP-style overlays and drag-and-drop UI integration.
