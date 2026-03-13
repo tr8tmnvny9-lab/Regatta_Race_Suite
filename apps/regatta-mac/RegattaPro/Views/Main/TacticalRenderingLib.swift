@@ -177,6 +177,16 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
         // 2. Prepare Vector Math
         let pointsPerMeter = MKMapPointsPerMeterAtLatitude(originCoord.latitude)
         
+        // Find the downwind-most point of the course to limit line rendering
+        var maxDownwindDistMeters = 0.0
+        for m in raceState.course.marks {
+            let mp = MKMapPoint(m.pos.coordinate)
+            let dx = mp.x - originMP.x
+            let dy = mp.y - originMP.y
+            let projPoints = dx * Double(downwindVec.x) + dy * Double(downwindVec.y)
+            maxDownwindDistMeters = max(maxDownwindDistMeters, projPoints / pointsPerMeter)
+        }
+        
         // Perpendicular unit vector (line direction)
         let perpVec = CGPoint(x: -downwindVec.y, y: downwindVec.x)
         
@@ -187,18 +197,30 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
         let leilinesActive = raceState.course.marks.contains(where: { $0.showLaylines })
         guard leilinesActive, let env = envelope else { return }
         
+        // 4. Configure Context for Sharpness
+        context.saveGState()
+        context.setAllowsAntialiasing(true)
+        context.setShouldAntialias(true)
+        context.interpolationQuality = .high
+        
         context.setStrokeColor(NSColor.white.withAlphaComponent(0.15).cgColor)
         context.setLineWidth(1.0 / zoomScale)
         
-        // 4. NSGraphicsContext Sync for Text
+        // 5. NSGraphicsContext Sync for Text
         // Use flipped: true because MapKit coordinate system is natively flipped (Y increases downwards)
         NSGraphicsContext.saveGraphicsState()
         let nsContext = NSGraphicsContext(cgContext: context, flipped: true)
         NSGraphicsContext.current = nsContext
         
-        // Draw up to 40 lines downwind
-        for i in 1...40 {
+        // Draw lines downwind until we reach the bottom of the course
+        for i in 1...60 { // Increased limit but we will break early
             let distanceMeters = Double(i) * mapInteraction.heightToMarkSpacing
+            
+            // Stop rendering if we are significantly past the bottom mark (starting line)
+            if distanceMeters > maxDownwindDistMeters + (mapInteraction.heightToMarkSpacing * 0.5) {
+                break
+            }
+            
             let distPoints = distanceMeters * pointsPerMeter
             
             // Center point strictly along the axis from the Top Mark
@@ -214,10 +236,6 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
             var startT = -lineHalfWidth
             var endT = lineHalfWidth
             
-            // Robust Diamond Intersection
-            // Plane conditions: minS <= P.uS <= maxS AND minP <= P.uP <= maxP
-            // P(t) = C + t*V
-            
             let systems = [(env.uS, env.minS, env.maxS), (env.uP, env.minP, env.maxP)]
             for (u, kMin, kMax) in systems {
                 let vDot = Double(u.x) * perpX + Double(u.y) * perpY
@@ -226,18 +244,11 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
                 if abs(vDot) > 1e-10 {
                     let t1 = (kMin - cDot) / vDot
                     let t2 = (kMax - cDot) / vDot
-                    
-                    if vDot > 0 {
-                        startT = max(startT, min(t1, t2))
-                        endT = min(endT, max(t1, t2))
-                    } else {
-                        startT = max(startT, min(t1, t2))
-                        endT = min(endT, max(t1, t2))
-                    }
+                    startT = max(startT, min(t1, t2))
+                    endT = min(endT, max(t1, t2))
                 } else {
-                    // Line is parallel to plane, check if it's inside
                     if cDot < kMin || cDot > kMax {
-                        startT = 0; endT = -1 // Force out of bounds
+                        startT = 0; endT = -1 
                     }
                 }
             }
@@ -254,13 +265,15 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
             let center = point(for: centerMP)
             
             let labelText = "\(Int(distanceMeters))"
-            let font = NSFont.monospacedSystemFont(ofSize: 10.0 / zoomScale, weight: .bold)
+            // Use a slightly larger base font and weight for better crispness when scaled
+            let font = NSFont.monospacedSystemFont(ofSize: 11.0 / zoomScale, weight: .bold)
             let attrs: [NSAttributedString.Key: Any] = [
                 .font: font,
-                .foregroundColor: NSColor.white.withAlphaComponent(0.4)
+                .foregroundColor: NSColor.white.withAlphaComponent(0.4),
+                .expansion: 0.05 // Subtle tracking for readability
             ]
             let size = labelText.size(withAttributes: attrs)
-            let gapWidth = size.width + (10.0 / zoomScale)
+            let gapWidth = size.width + (12.0 / zoomScale)
             
             let dx = p1.x - center.x
             let dy = p1.y - center.y
@@ -276,12 +289,12 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
                 context.strokeLineSegments(between: [p2, gapP2])
                 
                 // Draw Text
-                // Since flipped: true, Y increases downwards. Text will be upright relative to MapKit.
                 let textRect = CGRect(x: center.x - size.width/2, y: center.y - size.height/2, width: size.width, height: size.height)
                 labelText.draw(in: textRect, withAttributes: attrs)
             }
         }
         NSGraphicsContext.restoreGraphicsState()
+        context.restoreGState()
     }
     
     private func intersectPoints(p1: MKMapPoint, p2: MKMapPoint, p3: MKMapPoint, p4: MKMapPoint) -> MKMapPoint? {
