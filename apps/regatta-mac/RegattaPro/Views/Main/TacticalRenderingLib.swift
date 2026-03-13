@@ -207,17 +207,17 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
         context.setLineWidth(1.0 / zoomScale)
         
         // 5. NSGraphicsContext Sync for Text
-        // Use flipped: true because MapKit coordinate system is natively flipped (Y increases downwards)
+        // We use flipped: false to keep standard orientation, then manually transform.
         NSGraphicsContext.saveGraphicsState()
-        let nsContext = NSGraphicsContext(cgContext: context, flipped: true)
+        let nsContext = NSGraphicsContext(cgContext: context, flipped: false)
         NSGraphicsContext.current = nsContext
         
         // Draw lines downwind until we reach the bottom of the course
-        for i in 1...60 { // Increased limit but we will break early
+        for i in 1...80 { 
             let distanceMeters = Double(i) * mapInteraction.heightToMarkSpacing
             
-            // Stop rendering if we are significantly past the bottom mark (starting line)
-            if distanceMeters > maxDownwindDistMeters + (mapInteraction.heightToMarkSpacing * 0.5) {
+            // Stricter break condition: Stop as soon as we pass the last mark
+            if distanceMeters > maxDownwindDistMeters + 1.0 {
                 break
             }
             
@@ -228,7 +228,7 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
                                      y: originMP.y + distPoints * Double(downwindVec.y))
             
             // Define a very long line to be clipped
-            let lineHalfWidth = 30000.0 * pointsPerMeter 
+            let lineHalfWidth = 40000.0 * pointsPerMeter 
             let perpX = Double(perpVec.x)
             let perpY = Double(perpVec.y)
             
@@ -260,37 +260,43 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
             let endMP = MKMapPoint(x: centerMP.x + endT * perpX,
                                   y: centerMP.y + endT * perpY)
             
+            // Round to integer pixels for crispness
             let p1 = point(for: startMP)
             let p2 = point(for: endMP)
-            let center = point(for: centerMP)
+            let centerPt = point(for: centerMP)
+            let drawCenter = CGPoint(x: round(centerPt.x), y: round(centerPt.y))
             
             let labelText = "\(Int(distanceMeters))"
-            // Use a slightly larger base font and weight for better crispness when scaled
             let font = NSFont.monospacedSystemFont(ofSize: 11.0 / zoomScale, weight: .bold)
             let attrs: [NSAttributedString.Key: Any] = [
                 .font: font,
-                .foregroundColor: NSColor.white.withAlphaComponent(0.4),
-                .expansion: 0.05 // Subtle tracking for readability
+                .foregroundColor: NSColor.white.withAlphaComponent(0.4)
             ]
             let size = labelText.size(withAttributes: attrs)
-            let gapWidth = size.width + (12.0 / zoomScale)
+            let gapWidth = size.width + (14.0 / zoomScale)
             
-            let dx = p1.x - center.x
-            let dy = p1.y - center.y
-            let totalLen = hypot(p1.x - p2.x, p1.y - p2.y)
+            let dx = p1.x - drawCenter.x
+            let dy = p1.y - drawCenter.y
+            let totalLineLen = hypot(p1.x - p2.x, p1.y - p2.y)
             let distFromCenterToP1 = hypot(dx, dy)
             
-            if totalLen > gapWidth {
+            if totalLineLen > gapWidth {
                 let ratio = (gapWidth / 2) / distFromCenterToP1
-                let gapP1 = CGPoint(x: center.x + dx * ratio, y: center.y + dy * ratio)
-                let gapP2 = CGPoint(x: center.x - dx * ratio, y: center.y - dy * ratio)
+                let gapP1 = CGPoint(x: drawCenter.x + dx * ratio, y: drawCenter.y + dy * ratio)
+                let gapP2 = CGPoint(x: drawCenter.x - dx * ratio, y: drawCenter.y - dy * ratio)
                 
                 context.strokeLineSegments(between: [p1, gapP1])
                 context.strokeLineSegments(between: [p2, gapP2])
                 
-                // Draw Text
-                let textRect = CGRect(x: center.x - size.width/2, y: center.y - size.height/2, width: size.width, height: size.height)
+                // Draw Text with manual flip for absolute orientation control
+                context.saveGState()
+                context.translateBy(x: drawCenter.x, y: drawCenter.y)
+                // AppKit flipped contexts sometimes need -1 on Y to correct character mirroring
+                context.scaleBy(x: 1, y: -1)
+                
+                let textRect = CGRect(x: -size.width/2, y: -size.height/2, width: size.width, height: size.height)
                 labelText.draw(in: textRect, withAttributes: attrs)
+                context.restoreGState()
             }
         }
         NSGraphicsContext.restoreGraphicsState()
