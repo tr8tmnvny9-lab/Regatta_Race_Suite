@@ -131,6 +131,8 @@ struct BroadcastSlotView: View {
             // Look up boat for data overlay
             let boat = raceState.boats.first(where: { $0.id == id })
             BroadcastVideoFeedNode(boat: boat)
+        case .threeDMap:
+            Race3DView(model: raceState)
         case .replay:
             BroadcastVideoFeedNode(boat: nil, customLabel: "REPLAY")
         case .jury:

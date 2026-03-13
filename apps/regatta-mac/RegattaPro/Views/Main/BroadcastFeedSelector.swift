@@ -14,6 +14,7 @@ struct BroadcastFeedSelector: View {
                 
                 HStack(spacing: 8) {
                     FeedDragSource(type: "map", id: "map", label: "TACTICAL MAP", icon: "map.fill")
+                    FeedDragSource(type: "3dmap", id: "3dmap", label: "3D LIVE VIEW", icon: "square.3.layers.3d")
                     FeedDragSource(type: "replay", id: "replay", label: "REPLAY", icon: "arrow.counterclockwise.circle.fill")
                     FeedDragSource(type: "jury", id: "jury", label: "JURY VIEW", icon: "gavel.fill")
                 }

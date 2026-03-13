@@ -9,6 +9,8 @@ struct MapSettingsView: View {
     @State private var latDeltaString: String = ""
     @State private var lonDeltaString: String = ""
     
+    @State private var showingSponsorSettings = false
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 30) {
             Text("MAP & NAVIGATION")
@@ -134,25 +136,49 @@ struct MapSettingsView: View {
                         }
                     }
                     .toggleStyle(RegattaDesign.ToggleStyles.glass)
-                    
-                    if mapInteraction.showHeightToMark {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Text("LINE SPACING")
-                                    .font(RegattaDesign.Fonts.label)
-                                Spacer()
-                                Text("\(Int(mapInteraction.heightToMarkSpacing))m")
-                                    .font(RegattaDesign.Fonts.mono)
-                                    .foregroundStyle(RegattaDesign.Colors.cyan)
-                            }
-                            Slider(value: $mapInteraction.heightToMarkSpacing, in: 10...500, step: 10)
-                                .tint(RegattaDesign.Colors.electricBlue)
+                }
+            }
+            .frame(maxWidth: 600)
+            
+            GlassPanel(title: "3D Visualization", icon: "square.3.layers.3d.down.right") {
+                VStack(alignment: .leading, spacing: 20) {
+                    Toggle(isOn: $mapInteraction.show3DWall) {
+                        VStack(alignment: .leading) {
+                            Text("3D SPONSOR WALL")
+                                .font(RegattaDesign.Fonts.label)
+                            Text("Render a translucent curtain along the course boundary.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
                         }
+                    }
+                    .toggleStyle(RegattaDesign.ToggleStyles.glass)
+                    
+                    if mapInteraction.show3DWall {
+                        Toggle(isOn: $mapInteraction.show3DLogos) {
+                            Text("SHOW SPONSOR LOGOS")
+                                .font(RegattaDesign.Fonts.label)
+                        }
+                        .toggleStyle(RegattaDesign.ToggleStyles.glass)
+                        .padding(.leading, 32)
+                        
+                        Button(action: { showingSponsorSettings = true }) {
+                            Label("MANAGE SPONSOR LOGOS", systemImage: "photo.on.rectangle.angled")
+                                .font(RegattaDesign.Fonts.label)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 10)
+                                .background(Color.white.opacity(0.1))
+                                .cornerRadius(8)
+                        }
+                        .buttonStyle(.plain)
                         .padding(.leading, 32)
                     }
                 }
             }
             .frame(maxWidth: 600)
+            .sheet(isPresented: $showingSponsorSettings) {
+                SponsorSettingsView()
+                    .environmentObject(mapInteraction)
+            }
             
             Spacer()
         }

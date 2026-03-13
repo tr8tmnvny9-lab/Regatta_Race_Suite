@@ -8,6 +8,7 @@ enum BroadcastSlotContent: Equatable, Codable {
     case camera(id: String)
     case replay
     case jury
+    case threeDMap
 }
 
 /// The available structural layouts for the Center Stage
@@ -49,6 +50,8 @@ class BroadcastStageModel: ObservableObject {
                 slots[slotIndex] = .replay
             case "jury":
                 slots[slotIndex] = .jury
+            case "3dmap":
+                slots[slotIndex] = .threeDMap
             default:
                 break
             }

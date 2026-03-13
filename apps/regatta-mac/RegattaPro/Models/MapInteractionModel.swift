@@ -78,6 +78,11 @@ final class MapInteractionModel: ObservableObject {
     @Published var showHeightToMark: Bool = true
     @Published var heightToMarkSpacing: Double = 50.0
     
+    // 3D Specific Settings
+    @Published var show3DWall: Bool = true
+    @Published var show3DLogos: Bool = true
+    @Published var sponsorLogoPath: String = "" // Placeholder for dynamic asset
+    
     // Persist the last used course zoom to maintain parity between views
     @Published var lastAppliedCourseRegion: MKCoordinateRegion?
     
