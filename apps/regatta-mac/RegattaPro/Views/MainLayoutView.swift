@@ -374,6 +374,35 @@ struct RegattaDesign {
             endPoint: .bottomTrailing
         )
     }
+    
+    // Custom Styles
+    struct ToggleStyles {
+        static var glass: GlassToggleStyle { GlassToggleStyle() }
+    }
+}
+
+struct GlassToggleStyle: ToggleStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack {
+            configuration.label
+            Spacer()
+            RoundedRectangle(cornerRadius: 16)
+                .fill(configuration.isOn ? RegattaDesign.Gradients.primary : AnyShapeStyle(Color.white.opacity(0.1)))
+                .frame(width: 44, height: 24)
+                .overlay(
+                    Circle()
+                        .fill(.white)
+                        .padding(2)
+                        .offset(x: configuration.isOn ? 10 : -10)
+                        .shadow(radius: 2)
+                )
+                .onTapGesture {
+                    withAnimation(.spring()) {
+                        configuration.isOn.toggle()
+                    }
+                }
+        }
+    }
 }
 
 // ─── Glass View Modifiers ───────────────────────────────────────────────────

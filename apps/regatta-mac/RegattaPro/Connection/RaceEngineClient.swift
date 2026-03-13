@@ -396,6 +396,9 @@ final class RaceEngineClient: ObservableObject {
                         }
                     }
                     
+                    // Update Zone Detection
+                    self.stateModel?.updateZoneDetection(newBoats)
+                    
                     // Throttled update to avoid bridge/render congestion
                     self.updateBoatsThrottled(newBoats)
                 }

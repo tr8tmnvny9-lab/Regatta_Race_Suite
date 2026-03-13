@@ -265,6 +265,9 @@ final class RaceStateModel: ObservableObject {
     // Race event timing (for recall windows)
     @Published var raceStartTime: Date?
     
+    // Zone Detection (Rule 18 triggers)
+    @Published var boatZoneEntries: [String: Set<String>] = [:] // boatId -> set of markIds
+    
     // Track last time we pushed a team update to avoid race conditions with backend sync
     private var lastTeamPushTimestamp: Date = .distantPast
     
@@ -518,5 +521,42 @@ final class RaceStateModel: ObservableObject {
     
     private func recentlyPushed(field: String) -> Bool {
         return Date().timeIntervalSince(lastTeamPushTimestamp) < 2.0
+    }
+    
+    // ─── Zone Detection ───────────────────────────────────────────────────────
+    
+    private func updateZoneDetection(_ newBoats: [LiveBoat]) {
+        // We use a safe boat length of 12m if profile is missing
+        let boatLength = self.boatProfiles.first?.maxLengthHull ?? 12.0
+        // We assume 3x boat length for rule detection unless otherwise specified
+        let zoneRadius = boatLength * 3.0 
+        
+        for boat in newBoats {
+            let boatLoc = CLLocation(latitude: boat.pos.lat, longitude: boat.pos.lon)
+            var currentEnteredMarks = Set<String>()
+            
+            for mark in self.course.marks {
+                let markLoc = CLLocation(latitude: mark.pos.lat, longitude: mark.pos.lon)
+                let distance = boatLoc.distance(from: markLoc)
+                
+                if distance <= zoneRadius {
+                    currentEnteredMarks.insert(mark.id)
+                    
+                    // If just entered, log it
+                    if !(boatZoneEntries[boat.id]?.contains(mark.id) ?? false) {
+                        let logMsg = "Boat \(boat.teamName ?? boat.id) ENTERED the zone of \(mark.name)"
+                        print("⚓️ [ZONE] \(logMsg)")
+                        // Future: Push to backend logs
+                    }
+                } else {
+                    // If just left, log it
+                    if (boatZoneEntries[boat.id]?.contains(mark.id) ?? false) {
+                        let logMsg = "Boat \(boat.teamName ?? boat.id) LEFT the zone of \(mark.name)"
+                        print("⚓️ [ZONE] \(logMsg)")
+                    }
+                }
+            }
+            boatZoneEntries[boat.id] = currentEnteredMarks
+        }
     }
 }

@@ -92,6 +92,68 @@ struct MapSettingsView: View {
             }
             .frame(maxWidth: 600)
             
+            GlassPanel(title: "Tactical Overlays", icon: "square.stack.3d.up.fill") {
+                VStack(alignment: .leading, spacing: 20) {
+                    // Mark Zones
+                    Toggle(isOn: $mapInteraction.showMarkZones) {
+                        VStack(alignment: .leading) {
+                            Text("MARK ZONES")
+                                .font(RegattaDesign.Fonts.label)
+                            Text("Displays 2x or 3x boat length circles around all marks for RRS determination.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .toggleStyle(RegattaDesign.ToggleStyles.glass)
+                    
+                    if mapInteraction.showMarkZones {
+                        HStack {
+                            Text("ZONE MULTIPLIER")
+                                .font(RegattaDesign.Fonts.label)
+                            Spacer()
+                            Picker("", selection: $mapInteraction.markZoneMultiplier) {
+                                Text("2x").tag(2.0)
+                                Text("3x").tag(3.0)
+                            }
+                            .pickerStyle(.segmented)
+                            .frame(width: 120)
+                        }
+                        .padding(.leading, 32)
+                    }
+                    
+                    Divider().opacity(0.1)
+                    
+                    // Height to Mark
+                    Toggle(isOn: $mapInteraction.showHeightToMark) {
+                        VStack(alignment: .leading) {
+                            Text("HEIGHT TO MARK")
+                                .font(RegattaDesign.Fonts.label)
+                            Text("Horizontal lines perpendicular to the wind to judge relative positioning.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .toggleStyle(RegattaDesign.ToggleStyles.glass)
+                    
+                    if mapInteraction.showHeightToMark {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("LINE SPACING")
+                                    .font(RegattaDesign.Fonts.label)
+                                Spacer()
+                                Text("\(Int(mapInteraction.heightToMarkSpacing))m")
+                                    .font(RegattaDesign.Fonts.mono)
+                                    .foregroundStyle(RegattaDesign.Colors.cyan)
+                            }
+                            Slider(value: $mapInteraction.heightToMarkSpacing, in: 10...500, step: 10)
+                                .tint(RegattaDesign.Colors.electricBlue)
+                        }
+                        .padding(.leading, 32)
+                    }
+                }
+            }
+            .frame(maxWidth: 600)
+            
             Spacer()
         }
         .padding(40)

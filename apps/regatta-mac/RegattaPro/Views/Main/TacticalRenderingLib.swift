@@ -94,6 +94,8 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
         context.setLineCap(.round)
         
         drawBoundaries(in: context, zoomScale: zoomScale)
+        drawMarkZones(in: context, zoomScale: zoomScale)
+        drawHeightToMarkLines(in: context, zoomScale: zoomScale)
         drawCourseLines(in: context, zoomScale: zoomScale)
         drawLaylines(in: context, zoomScale: zoomScale)
         
@@ -105,6 +107,177 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
             let p2 = point(for: MKMapPoint(end))
             context.strokeLineSegments(between: [p1, p2])
         }
+    }
+    
+    private func getBoatLength() -> Double {
+        return provider?.raceState.boatProfiles.first?.maxLengthHull ?? 12.0
+    }
+    
+    private func drawMarkZones(in context: CGContext, zoomScale: MKZoomScale) {
+        guard let raceState = provider?.raceState,
+              let mapInteraction = provider?.mapInteraction,
+              mapInteraction.showMarkZones else { return }
+        
+        let multiplier = mapInteraction.markZoneMultiplier
+        let boatLength = getBoatLength()
+        let radiusMeters = boatLength * multiplier
+        
+        context.setLineWidth(1.0 / zoomScale)
+        context.setStrokeColor(NSColor.white.withAlphaComponent(0.3).cgColor)
+        context.setFillColor(NSColor.lightGray.withAlphaComponent(0.1).cgColor)
+        
+        for buoy in raceState.course.marks {
+            let center = getCoord(buoy)
+            let mp = MKMapPoint(center)
+            
+            // Calculate radius in map points
+            // 1 map point is roughly 1 meter at the equator, but we should be more precise
+            let pointsPerMeter = MKMapPointsPerMeterAtLatitude(center.latitude)
+            let radiusPoints = radiusMeters * pointsPerMeter
+            
+            let rect = rect(for: MKMapRect(
+                origin: MKMapPoint(x: mp.x - radiusPoints, y: mp.y - radiusPoints),
+                size: MKMapSize(width: radiusPoints * 2, height: radiusPoints * 2)
+            ))
+            
+            context.addEllipse(in: rect)
+            context.drawPath(using: .fillStroke)
+        }
+    }
+    
+    private func drawHeightToMarkLines(in context: CGContext, zoomScale: MKZoomScale) {
+        guard let raceState = provider?.raceState,
+              let mapInteraction = provider?.mapInteraction,
+              mapInteraction.showHeightToMark,
+              !raceState.course.marks.isEmpty else { return }
+        
+        // 1. Identify Upper Mark (strictly against wind vector)
+        let twdRadiant = raceState.twd * .pi / 180
+        let windVec = CGPoint(x: sin(twdRadiant), y: -cos(twdRadiant))
+        
+        var upperMark: Buoy?
+        var maxProjection = -Double.greatestFiniteMagnitude
+        
+        for m in raceState.course.marks {
+            let mp = MKMapPoint(m.pos.coordinate)
+            // Projection onto wind vector (against wind = positive)
+            let proj = -(Double(windVec.x) * mp.x + Double(windVec.y) * mp.y)
+            if proj > maxProjection {
+                maxProjection = proj
+                upperMark = m
+            }
+        }
+        
+        guard let originMark = upperMark else { return }
+        let originCoord = getCoord(originMark)
+        let originMP = MKMapPoint(originCoord)
+        
+        // 2. Prepare Vector Math
+        let pointsPerMeter = MKMapPointsPerMeterAtLatitude(originCoord.latitude)
+        let spacingPoints = mapInteraction.heightToMarkSpacing * pointsPerMeter
+        
+        // Perpendicular unit vector (line direction)
+        let perpVec = CGPoint(x: -windVec.y, y: windVec.x)
+        
+        // 3. Clipper: Layline Diamond
+        let envelope = findDiamondEnvelope(marks: raceState.course.marks, twd: raceState.twd)
+        
+        context.setStrokeColor(NSColor.white.withAlphaComponent(0.15).cgColor)
+        context.setLineWidth(1.0 / zoomScale)
+        
+        // Draw 20 lines downwind
+        for i in 1...20 {
+            let distanceMeters = Double(i) * mapInteraction.heightToMarkSpacing
+            let distPoints = distanceMeters * pointsPerMeter
+            
+            // Center point on the axis
+            let centerMP = MKMapPoint(x: originMP.x + distPoints * Double(windVec.x),
+                                     y: originMP.y + distPoints * Double(windVec.y))
+            
+            // Define a long line to be clipped
+            let lineHalfWidth = 5000.0 * pointsPerMeter // 5km wide line
+            let p1MP = MKMapPoint(x: centerMP.x - lineHalfWidth * Double(perpVec.x),
+                                 y: centerMP.y - lineHalfWidth * Double(perpVec.y))
+            let p2MP = MKMapPoint(x: centerMP.x + lineHalfWidth * Double(perpVec.x),
+                                 y: centerMP.y + lineHalfWidth * Double(perpVec.y))
+            
+            // Clip line to layline diamond if envelope exists
+            var start = p1MP
+            var end = p2MP
+            
+            if let env = envelope {
+                // Simplified clipping: Project onto envelope vectors
+                // In reality, we should intersect with the diamond edges
+                // For now, let's use a large segment and rely on the fact that we'll draw text in the middle
+                
+                //インターセクト check with laylines
+                let laypoints = calculateLaylinePoints(
+                    from: originMark,
+                    coordinate: originCoord,
+                    twd: raceState.twd,
+                    boundary: raceState.course.courseBoundary,
+                    envelope: env
+                )
+                
+                if laypoints.count >= 2 {
+                    let l1_start = MKMapPoint(laypoints[0][0])
+                    let l1_end = MKMapPoint(laypoints[0][1])
+                    let l2_start = MKMapPoint(laypoints[1][0])
+                    let l2_end = MKMapPoint(laypoints[1][1])
+                    
+                    if let i1 = intersectPoints(p1: p1MP, p2: p2MP, p3: l1_start, p4: l1_end) { start = i1 }
+                    if let i2 = intersectPoints(p1: p1MP, p2: p2MP, p3: l2_start, p4: l2_end) { end = i2 }
+                }
+            }
+            
+            let p1 = point(for: start)
+            let p2 = point(for: end)
+            let center = point(for: centerMP)
+            
+            // Draw Line with Gap for text
+            let labelText = "\(Int(distanceMeters))"
+            let font = NSFont.monospacedSystemFont(ofSize: 10.0 / zoomScale, weight: .bold)
+            let attrs: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: NSColor.white.withAlphaComponent(0.4)
+            ]
+            let size = labelText.size(withAttributes: attrs)
+            let gapWidth = size.width + (10.0 / zoomScale)
+            
+            // Vector from center to p1
+            let dx = p1.x - center.x
+            let dy = p1.y - center.y
+            let len = hypot(dx, dy)
+            
+            if len > gapWidth / 2 {
+                let ratio = (gapWidth / 2) / len
+                let gapP1 = CGPoint(x: center.x + dx * ratio, y: center.y + dy * ratio)
+                let gapP2 = CGPoint(x: center.x - dx * ratio, y: center.y - dy * ratio)
+                
+                context.strokeLineSegments(between: [p1, gapP1])
+                context.strokeLineSegments(between: [p2, gapP2])
+                
+                // Draw Text
+                let textRect = CGRect(x: center.x - size.width/2, y: center.y - size.height/2, width: size.width, height: size.height)
+                labelText.draw(in: textRect, withAttributes: attrs)
+            }
+        }
+    }
+    
+    private func intersectPoints(p1: MKMapPoint, p2: MKMapPoint, p3: MKMapPoint, p4: MKMapPoint) -> MKMapPoint? {
+        let x1 = p1.x, y1 = p1.y
+        let x2 = p2.x, y2 = p2.y
+        let x3 = p3.x, y3 = p3.y
+        let x4 = p4.x, y4 = p4.y
+        let den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+        if den == 0 { return nil }
+        let t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den
+        let u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den
+        // We only check t because p1-p2 is our infinite line, p3-p4 is the layline segment
+        if u >= 0 && u <= 1 {
+            return MKMapPoint(x: x1 + t * (x2 - x1), y: y1 + t * (y2 - y1))
+        }
+        return nil
     }
     
     private func getCoord(_ buoy: Buoy) -> CLLocationCoordinate2D {

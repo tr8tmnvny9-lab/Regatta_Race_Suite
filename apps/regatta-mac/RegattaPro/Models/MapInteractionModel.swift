@@ -71,6 +71,13 @@ final class MapInteractionModel: ObservableObject {
     @Published var liveMapRegion: MKCoordinateRegion?
     @Published var isLiveMapAutoTracking: Bool = true
     
+    // Performance View Settings (Standard state is ON)
+    @Published var showMarkZones: Bool = true
+    @Published var markZoneMultiplier: Double = 3.0
+    
+    @Published var showHeightToMark: Bool = true
+    @Published var heightToMarkSpacing: Double = 50.0
+    
     // Persist the last used course zoom to maintain parity between views
     @Published var lastAppliedCourseRegion: MKCoordinateRegion?
     
