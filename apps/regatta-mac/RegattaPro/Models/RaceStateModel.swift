@@ -525,7 +525,7 @@ final class RaceStateModel: ObservableObject {
     
     // ─── Zone Detection ───────────────────────────────────────────────────────
     
-    private func updateZoneDetection(_ newBoats: [LiveBoat]) {
+    func updateZoneDetection(_ newBoats: [LiveBoat]) {
         // We use a safe boat length of 12m if profile is missing
         let boatLength = self.boatProfiles.first?.maxLengthHull ?? 12.0
         // We assume 3x boat length for rule detection unless otherwise specified

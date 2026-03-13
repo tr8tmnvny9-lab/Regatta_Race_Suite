@@ -387,7 +387,7 @@ struct GlassToggleStyle: ToggleStyle {
             configuration.label
             Spacer()
             RoundedRectangle(cornerRadius: 16)
-                .fill(configuration.isOn ? RegattaDesign.Gradients.primary : AnyShapeStyle(Color.white.opacity(0.1)))
+                .fill(configuration.isOn ? AnyShapeStyle(RegattaDesign.Gradients.primary) : AnyShapeStyle(Color.white.opacity(0.1)))
                 .frame(width: 44, height: 24)
                 .overlay(
                     Circle()
