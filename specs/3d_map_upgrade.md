@@ -48,9 +48,11 @@ A premium, high-performance 3D visualization of the race course. This view acts 
 - **Broadcast Node**: Fixed view from the Committee Boat (Starboard end of start line) looking down the course.
 - **Auto-Switching**: Intelligent camera transitions based on race events (e.g., focus on the start during the countdown).
 
-### Data Pipeline
-- **Sync**: Subscribes to `RaceEngineClient` telemetry.
-- **Smoothness**: Linear/Dead-reckoning interpolation to ensure fluid motion even at 1Hz updates.
+### Data & Performance
+- **Sync**: Direct mapping of `RaceStateModel` properties (LatLon, Heading, Roll, Speed).
+- **Precision**: 1 SceneKit unit = 1 Centimeter (0.01m). Required for high-accuracy UWB tracker visualization.
+- **Smoothness**: Linear/Dead-reckoning interpolation to handle 1Hz-10Hz telemetry updates.
+- **Performance**: Low-poly assets and shader optimizations targeting 60FPS on M-series Macs. No heavy sea floor geometry.
 
 ## 4. Implementation Phasing
 1. **Foundation**: Base `SCNScene` with shader-driven water and coordinate mapping.
