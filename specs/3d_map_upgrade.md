@@ -25,30 +25,37 @@ A premium, high-performance 3D visualization of the race course. This view acts 
     - **Downwind**: Asymmetric spinnaker (Jennaker) deployed when wind angle > 90°.
     - **Maneuvers**: Procedural animations for tacks and gybes.
 
-### Course Marks (Buoys)
+### Course Marks & Boundaries
 - **Standard Assets**: Cylindrical, Spherical, and Spar buoys.
-- **MarkSetBot**: Specialized 3D model with dual-pontoon base, orange/yellow inflatable canopy, and central antenna.
+- **MarkSetBot**: Specialized 3D model with dual-pontoon base and orange/yellow inflatable canopy.
+- **Course Border (The Sponsor Wall)**: 
+    - A translucent, 3D hanging curtain (2-4m tall) along the course boundary.
+    - Supports dynamic logo projection/texturing for sponsors.
 - **Rules Mapping**: 2/3 boat length zones visualized as semi-transparent disks on the water.
 
 ## 3. Technical Architecture
 
 ### Pure Visual Wrapper Topology
-- **Dumb Rendering**: The 3D engine does not calculate state, rules, or core physics. It strictly subscribes to the `RaceStateModel` feed.
-- **Dashboard Integration**: Modular view component designed for the drag-and-drop live dashboard (alongside 2D map, cameras, etc.).
+- **Dumb Rendering**: The 3D engine does not calculate state. It strictly subscribes to `RaceStateModel` transforms.
+- **Dashboard Integration**: Modular view component compatible with the drag-and-drop live control center.
 
-### Camera & Tracking Systems
-- **Drone View**: Intelligent follow-cam tracking lead boats or selected targets with smooth damping.
-- **Broadcast Node**: Fixed view from the Committee Boat (Starboard end of start line) looking down the course/start area.
-- **Auto-Switching**: Context-aware camera transitions (e.g., focus on the start during the sequence).
+### Configuration & Settings
+- **Sponsor Management**: Dedicated settings panel to manage logos and border visibility.
+- **Dynamic Texturing**: Real-time application of logo assets to the 3D curtain geometry.
 
-### Data & Performance
-- **Sync**: Direct mapping of `RaceStateModel` properties (LatLon, Heading, Roll, Speed).
-- **Smoothness**: Linear/Dead-reckoning interpolation to handle 1Hz-10Hz telemetry updates.
-- **Performance**: Low-poly assets and shader optimizations targeting 60FPS on M-series Macs.
+### Camera & Tracking
+- **Drone View**: follow-cam tracking target boat or lead group.
+- **Broadcast Node**: Fixed view from the Committee Boat (Starboard end of start line) looking down the course.
+- **Auto-Switching**: Intelligent camera transitions based on race events (e.g., focus on the start during the countdown).
+
+### Data Pipeline
+- **Sync**: Subscribes to `RaceEngineClient` telemetry.
+- **Smoothness**: Linear/Dead-reckoning interpolation to ensure fluid motion even at 1Hz updates.
 
 ## 4. Implementation Phasing
 1. **Foundation**: Base `SCNScene` with shader-driven water and coordinate mapping.
-2. **Assets**: Integration of J70 and MarkSetBot models.
-3. **Dynamics**: Linking boat heel/sails to IMU data and wind state.
-4. **Cameras**: Implementation of Drone and Broadcast tracking logic.
-5. **HUD & Wrap**: Final SailGP-style overlays and drag-and-drop UI integration.
+2. **Assets**: Import J70, MarkSetBot models, and construct the Course Border Wall.
+3. **Dynamics**: Link boat heel/sails to telemetry and wind state.
+4. **Settings**: Implement the Sponsor Management UI and dynamic wall texturing.
+5. **Cameras**: Implement Drone and Broadcast tracking logic.
+6. **HUD & Polish**: Add boat ID overlays and visual effects (wakes/spray).
