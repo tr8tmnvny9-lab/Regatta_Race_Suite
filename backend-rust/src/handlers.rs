@@ -227,7 +227,11 @@ pub async fn on_connect(
             let shared = shared.clone();
             let auth = auth.clone();
             async move {
-                let token = data["type"].as_str().unwrap_or("unknown");
+                let token = data["token"]
+                    .as_str()
+                    .or_else(|| data["type"].as_str())
+                    .or_else(|| data["role"].as_str())
+                    .unwrap_or("unknown");
                 
                 let mut client_type = "unknown".to_string();
                 
@@ -266,11 +270,39 @@ pub async fn on_connect(
 
                 auth.set_role(&s.id.to_string(), &client_type).await;
                 info!("Client {}: registered and authenticated securely as Role: {}", s.id, client_type);
+                
+                // Map the tracker socket to the specific physical boat
+                if client_type == "tracker" {
+                    let bid = data["boatId"].as_str().unwrap_or("virtual-boat-1");
+                    auth.set_tracker_boat(&s.id.to_string(), bid).await;
+                    info!("Client {}: mapped hardware to Boat ID: {}", s.id, bid);
+                }
 
                 let _ = s.join(client_type.to_string());
 
                 let state = shared.read().await;
                 let _ = s.emit("init-state", &*state);
+            }
+        });
+    }
+
+    // ── webrtc-signaling & video frames ───────────────────────────────────────
+    {
+        let socket = socket.clone();
+        socket.on("webrtc-offer", move |s: SocketRef, Data::<Value>(data)| {
+            async move { let _ = s.broadcast().emit("webrtc-offer", &data); }
+        });
+        socket.on("webrtc-answer", move |s: SocketRef, Data::<Value>(data)| {
+            async move { let _ = s.broadcast().emit("webrtc-answer", &data); }
+        });
+        socket.on("webrtc-ice-candidate", move |s: SocketRef, Data::<Value>(data)| {
+            async move { let _ = s.broadcast().emit("webrtc-ice-candidate", &data); }
+        });
+        
+        socket.on("video-frame", move |s: SocketRef, Data::<Value>(data)| {
+            async move {
+                // Pass video chunks directly to all connected broadcast monitors
+                let _ = s.broadcast().emit("video-frame", &data);
             }
         });
     }
@@ -294,10 +326,21 @@ pub async fn on_connect(
             let shared = shared.clone();
             let dead_boats = dead_boats.clone();
             async move {
+                info!("🛠️ [RAW-DEBUG] track-update raw event fired! payload: {:?}", data);
+                
                 let boat_id = match data["boatId"].as_str() {
                     Some(id) => id.to_string(),
-                    None => return,
+                    None => {
+                        error!("🛠️ [RAW-DEBUG] track-update missing boatId!! payload: {:?}", data);
+                        return;
+                    }
                 };
+                
+                if boat_id == "virtual-boat-1" {
+                    info!("📥 [D3-RUST-RECV] Heartbeat: virtual-boat-1 track-update received and echoing");
+                } else {
+                    info!("📡 Received track-update for boat_id: {}", boat_id);
+                }
 
                 // Check blacklist
                 if dead_boats.read().await.contains(&boat_id) {
@@ -1074,8 +1117,10 @@ pub async fn on_connect(
                         let mut state = shared.write().await;
                         state.wind = wind;
                         let _ = save_state(&state).await;
+                        // Broadcast both specific wind update and full state update for reliability
                         let _ = s.broadcast().emit("wind-updated", &state.wind);
                         let _ = s.emit("wind-updated", &state.wind);
+                        let _ = s.broadcast().emit("state-update", &*state);
                     }
                     Err(e) => error!("Failed to parse wind payload from frontend! Error: {e} | Raw Data: {}", data),
                 }
@@ -1607,8 +1652,10 @@ pub async fn on_connect(
                             rounding: Some(crate::state::Rounding::Port),
                             pair_id: None,
                             gate_direction: None,
-                            design: Some(crate::state::BuoyDesign::Buoy),
-                            disable_laylines: false,
+                            design: Some(crate::state::BuoyDesign::Cylindrical),
+                            label: None,
+                            show_laylines: true,
+                            layline_direction: 0.0,
                         });
                     }
                 }
@@ -1617,6 +1664,77 @@ pub async fn on_connect(
                 let _ = s.broadcast().emit("state-update", &*state);
                 let _ = s.emit("state-update", &*state);
                 let _ = save_state(&state).await;
+            }
+        });
+    }
+
+    // ── override-marks ────────────────────────────────────────────────────────
+    {
+        let socket = socket.clone();
+        let shared = shared.clone();
+        let auth = auth.clone();
+        socket.on("override-marks", move |s: SocketRef, Data::<Value>(data)| {
+            let shared = shared.clone();
+            let auth = auth.clone();
+            async move {
+                if auth.get_role(&s.id.to_string()).await.as_deref() != Some("director") {
+                    warn!("Unauthorized override-marks attempt by: {}", s.id);
+                    return;
+                }
+                
+                if let Some(marks_array) = data.as_array() {
+                    let mut parsed_marks = Vec::new();
+                    for m in marks_array {
+                        if let (Some(id), Some(lat), Some(lon)) = (
+                            m["id"].as_str(),
+                            m["lat"].as_f64(),
+                            m["lon"].as_f64()
+                        ) {
+                            let buoy_type_str = m["type"].as_str().unwrap_or("MARK");
+                            let b_type = match buoy_type_str.to_uppercase().as_str() {
+                                "START" => crate::state::BuoyType::Start,
+                                "FINISH" => crate::state::BuoyType::Finish,
+                                "GATE" => crate::state::BuoyType::Gate,
+                                _ => crate::state::BuoyType::Mark,
+                            };
+                            
+                            parsed_marks.push(crate::state::Buoy {
+                                id: id.to_string(),
+                                buoy_type: b_type,
+                                name: m["name"].as_str().unwrap_or("Mark").to_string(),
+                                pos: crate::state::LatLon { lat, lon },
+                                color: m["color"].as_str().map(|s| s.to_string()),
+                                rounding: m["rounding"].as_str().map(|s| match s.to_uppercase().as_str() {
+                                    "PORT" => crate::state::Rounding::Port,
+                                    "STARBOARD" => crate::state::Rounding::Starboard,
+                                    _ => crate::state::Rounding::Port,
+                                }),
+                                pair_id: m["pair_id"].as_str().map(|s| s.to_string()),
+                                gate_direction: m["gate_direction"].as_str().map(|s| s.to_string()),
+                                design: m["design"].as_str().map(|s| match s.to_lowercase().as_str() {
+                                    "marksetbot" => crate::state::BuoyDesign::Marksetbot,
+                                    "spar" => crate::state::BuoyDesign::Spar,
+                                    _ => crate::state::BuoyDesign::Cylindrical,
+                                }),
+                                label: m["label"].as_str().map(|s| s.to_string()),
+                                show_laylines: m["showLaylines"].as_bool().unwrap_or(false),
+                                layline_direction: m["laylineDirection"].as_f64().unwrap_or(0.0),
+                            });
+                        }
+                    }
+                    
+                    {
+                        let mut state = shared.write().await;
+                        state.course.marks = parsed_marks;
+                    }
+                    
+                    let state = shared.read().await;
+                    let _ = s.broadcast().emit("course-updated", &state.course);
+                    let _ = s.emit("course-updated", &state.course);
+                    let _ = s.broadcast().emit("state-update", &*state);
+                    let _ = s.emit("state-update", &*state);
+                    let _ = save_state(&state).await;
+                }
             }
         });
     }
@@ -1649,12 +1767,21 @@ pub async fn on_connect(
                         }
                         if let Some(design) = data["design"].as_str() {
                             state.course.marks[idx].design = match design.to_lowercase().as_str() {
-                                "spherical" => Some(crate::state::BuoyDesign::Buoy),
-                                "cylindrical" => Some(crate::state::BuoyDesign::Tube),
-                                "spar" => Some(crate::state::BuoyDesign::Pole),
+                                "spherical" => Some(crate::state::BuoyDesign::Spherical),
+                                "cylindrical" => Some(crate::state::BuoyDesign::Cylindrical),
+                                "spar" => Some(crate::state::BuoyDesign::Spar),
                                 "marksetbot" => Some(crate::state::BuoyDesign::Marksetbot),
-                                _ => Some(crate::state::BuoyDesign::Buoy),
+                                _ => Some(crate::state::BuoyDesign::Cylindrical),
                             };
+                        }
+                        if let Some(show) = data["showLaylines"].as_bool() {
+                            state.course.marks[idx].show_laylines = show;
+                        }
+                        if let Some(dir) = data["laylineDirection"].as_f64() {
+                            state.course.marks[idx].layline_direction = dir;
+                        }
+                        if let Some(label) = data["label"].as_str() {
+                            state.course.marks[idx].label = Some(label.to_string());
                         }
                     }
                 }

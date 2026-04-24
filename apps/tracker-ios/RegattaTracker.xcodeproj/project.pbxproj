@@ -3,16 +3,18 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		012AB2F11AA42678BCC749A5 /* RacePhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3B120C4BCA27690F73DF06C /* RacePhase.swift */; };
+		09AB2C1F4894954AC0D22750 /* VirtualSailingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD91716086B3AE406F5FEAA5 /* VirtualSailingViewModel.swift */; };
 		1C95B5418D67FB9EE75E1931 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D71A2C2FA25A17C47E7A44 /* LocationManager.swift */; };
 		2BCC441472BC27F007B03617 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DC7083DEB2F26F49759C5C /* WelcomeView.swift */; };
 		2C8BA7D651F24EBE11989890 /* TrackerConnectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67CD6AA02F2B5BE3B120C004 /* TrackerConnectionManager.swift */; };
 		2F2E1B2E9C92992DB5975E25 /* ConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD96D2A8833FCA2614285D83 /* ConfigurationView.swift */; };
 		30ABAE196F808BCDB533AA6C /* FailsafeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0605CD6A7EF7476AD1ADB54 /* FailsafeManager.swift */; };
+		40A1E9E65EA6B9A758C9A5B3 /* QRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3409A239A7D2B8CE3776F562 /* QRScannerView.swift */; };
 		42E12E81FA9AAFDD17E9A580 /* SettingsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB45313BA789CB9F357A23B5 /* SettingsSheet.swift */; };
 		4D716A9EC2BF5433F5F74FE0 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = E47A823FC0E1B75083C5E747 /* DesignTokens.swift */; };
 		5447CC08A9AA72E9E5F3F372 /* TrackerEndpointConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = B827EE37C626221D4FF52685 /* TrackerEndpointConfig.swift */; };
@@ -32,13 +34,14 @@
 		B2A31D501E0B932991695601 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6DB85EBF1DC09278D38A171A /* CoreLocation.framework */; };
 		B45C23E80AB3F1FEA40605F3 /* AuthenticationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A3001805F504CDC34B4B5F46 /* AuthenticationServices.framework */; };
 		C5A64E51CF75ADDB9C566BD9 /* StartLineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1602576B9A1C1595485ADAA4 /* StartLineView.swift */; };
+		DEA3D100CF61AAD2CDA33E9C /* UWBEmulator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B2109A5618E344746FD22E6 /* UWBEmulator.swift */; };
+		E1627791473C708C015457A7 /* VirtualSailingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4476A35F5BF2ACE122FF3292 /* VirtualSailingView.swift */; };
 		E7D9DD40B8F8A79335A53F13 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 20F4AD67AE975BC07336548B /* Supabase */; };
 		F1C59B2F6123F3F3AE6A9FB0 /* LiveStreamManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31001CAD6FF4A896396C8965 /* LiveStreamManager.swift */; };
 		F4700EA1B11969469CB7176C /* CoreHaptics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 36C3185347A23BA5E454F81D /* CoreHaptics.framework */; };
 		FCFDADF78404C6C5690CD6CE /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F772A3509F1E5DAE18F9797 /* HapticManager.swift */; };
 		FDFA2F70BF451E139B148E95 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = DB7CE095A03E7E306620595A /* GRDB */; };
 		FE294B4221DC106D4B4FC862 /* UWBNodeBLEClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78154548506C43105EE1420B /* UWBNodeBLEClient.swift */; };
-		3AC24189E7944203D02CA602 /* UWBEmulator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AC24189E7944203D02CA601 /* UWBEmulator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -49,11 +52,14 @@
 		1602576B9A1C1595485ADAA4 /* StartLineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartLineView.swift; sourceTree = "<group>"; };
 		2237607B6CDF36438DDF2753 /* CryptoKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CryptoKit.framework; path = System/Library/Frameworks/CryptoKit.framework; sourceTree = SDKROOT; };
 		31001CAD6FF4A896396C8965 /* LiveStreamManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveStreamManager.swift; sourceTree = "<group>"; };
+		3409A239A7D2B8CE3776F562 /* QRScannerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = QRScannerView.swift; sourceTree = "<group>"; };
 		36C3185347A23BA5E454F81D /* CoreHaptics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreHaptics.framework; path = System/Library/Frameworks/CoreHaptics.framework; sourceTree = SDKROOT; };
+		3B2109A5618E344746FD22E6 /* UWBEmulator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UWBEmulator.swift; sourceTree = "<group>"; };
 		431013F9E66D21D8847384A7 /* Network.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Network.framework; path = System/Library/Frameworks/Network.framework; sourceTree = SDKROOT; };
 		4415AC5BA2BD86998A1C5163 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		4476A35F5BF2ACE122FF3292 /* VirtualSailingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VirtualSailingView.swift; sourceTree = "<group>"; };
 		49E260D58A844987FE11DC74 /* JoinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoinView.swift; sourceTree = "<group>"; };
-		4E9D0449303145F2205B198F /* RegattaTracker.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = RegattaTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4E9D0449303145F2205B198F /* RegattaTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RegattaTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		67CD6AA02F2B5BE3B120C004 /* TrackerConnectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackerConnectionManager.swift; sourceTree = "<group>"; };
 		68A1933BF6E72C381724E01C /* CountdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountdownView.swift; sourceTree = "<group>"; };
 		6A04454AC9197A5252BCBA2F /* MotionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionManager.swift; sourceTree = "<group>"; };
@@ -73,8 +79,8 @@
 		E47A823FC0E1B75083C5E747 /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
 		EB45313BA789CB9F357A23B5 /* SettingsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSheet.swift; sourceTree = "<group>"; };
 		F0DCDBA57044E2970612F6C5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		FD91716086B3AE406F5FEAA5 /* VirtualSailingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VirtualSailingViewModel.swift; sourceTree = "<group>"; };
 		FD96D2A8833FCA2614285D83 /* ConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationView.swift; sourceTree = "<group>"; };
-		3AC24189E7944203D02CA601 /* UWBEmulator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UWBEmulator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -138,8 +144,8 @@
 		3AC24189E7944203D02CA6AF /* BLE */ = {
 			isa = PBXGroup;
 			children = (
+				3B2109A5618E344746FD22E6 /* UWBEmulator.swift */,
 				78154548506C43105EE1420B /* UWBNodeBLEClient.swift */,
-				3AC24189E7944203D02CA601 /* UWBEmulator.swift */,
 			);
 			path = BLE;
 			sourceTree = "<group>";
@@ -171,7 +177,9 @@
 				B8C2C8B57F8154048455FEA4 /* MainHUDView.swift */,
 				EB45313BA789CB9F357A23B5 /* SettingsSheet.swift */,
 				1602576B9A1C1595485ADAA4 /* StartLineView.swift */,
+				4476A35F5BF2ACE122FF3292 /* VirtualSailingView.swift */,
 				13DC7083DEB2F26F49759C5C /* WelcomeView.swift */,
+				3409A239A7D2B8CE3776F562 /* QRScannerView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -206,6 +214,7 @@
 			children = (
 				A3B120C4BCA27690F73DF06C /* RacePhase.swift */,
 				AB31D4E77D86F6F2322E120A /* RaceStateModel.swift */,
+				FD91716086B3AE406F5FEAA5 /* VirtualSailingViewModel.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -281,7 +290,7 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					10B994E451C69276B58C2E87 = {
-						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -299,7 +308,7 @@
 				F4995148CC881755F7262C13 /* XCRemoteSwiftPackageReference "GRDB.swift" */,
 				D71E5BD8C9A8ED8D29EF769A /* XCRemoteSwiftPackageReference "supabase-swift" */,
 			);
-			preferredProjectObjectVersion = 77;
+			productRefGroup = 0E9EEAD34F9EF50FEFCA4ABD /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -333,9 +342,12 @@
 				5554EAB45FD991797DA9958B /* SupabaseAuthManager.swift in Sources */,
 				2C8BA7D651F24EBE11989890 /* TrackerConnectionManager.swift in Sources */,
 				5447CC08A9AA72E9E5F3F372 /* TrackerEndpointConfig.swift in Sources */,
+				DEA3D100CF61AAD2CDA33E9C /* UWBEmulator.swift in Sources */,
 				FE294B4221DC106D4B4FC862 /* UWBNodeBLEClient.swift in Sources */,
+				E1627791473C708C015457A7 /* VirtualSailingView.swift in Sources */,
+				09AB2C1F4894954AC0D22750 /* VirtualSailingViewModel.swift in Sources */,
 				2BCC441472BC27F007B03617 /* WelcomeView.swift in Sources */,
-				3AC24189E7944203D02CA602 /* UWBEmulator.swift in Sources */,
+				40A1E9E65EA6B9A758C9A5B3 /* QRScannerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -408,7 +420,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = RegattaTracker/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -416,7 +429,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.regatta.RegattaTracker;
+				PRODUCT_BUNDLE_IDENTIFIER = com.oscarkinnala.regatta.RegattaTracker;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -481,15 +494,16 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "-";
-				DEVELOPMENT_TEAM = "";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 9FD2QLR92N;
 				INFOPLIST_FILE = RegattaTracker/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.regatta.RegattaTracker;
+				PRODUCT_BUNDLE_IDENTIFIER = com.oscarkinnala.regatta.RegattaTracker;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

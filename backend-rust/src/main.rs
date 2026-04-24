@@ -155,6 +155,42 @@ async fn run_engine_tick(
     }
 }
 
+// ─── Tracker Disconnection Reaper Task ────────────────────────────────────────
+
+async fn run_tracker_reaper_tick(shared: SharedState, io: SocketIo) {
+    let mut interval = tokio::time::interval(Duration::from_secs(2));
+    loop {
+        interval.tick().await;
+
+        let now_ms = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis() as i64;
+
+        let mut dropped_boats = Vec::new();
+        {
+            let mut state = shared.write().await;
+            
+            // Remove boats that haven't sent a telemetry ping in over 15 seconds!
+            state.boats.retain(|id, boat| {
+                let diff = now_ms - boat.timestamp;
+                if diff > 15_000 {
+                    dropped_boats.push(id.clone());
+                    false // Remove
+                } else {
+                    true // Retain
+                }
+            });
+        }
+
+        if !dropped_boats.is_empty() {
+            tracing::info!("Reaper dropped dead trackers: {:?}", dropped_boats);
+            let state = shared.read().await;
+            let _ = io.emit("state-update", &*state);
+        }
+    }
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 #[tokio::main]
@@ -222,8 +258,10 @@ async fn main() {
     let ocs_tx_tick = ocs_tx.clone();
     tokio::spawn(start_uwb_hub(uwb_config, ocs_tx));
 
-    // Build Socket.IO layer
-    let (socket_layer, io) = SocketIo::builder().build_layer();
+    // Build Socket.IO layer with massively expanded payload capacity for Base64 Video
+    let (socket_layer, io) = SocketIo::builder()
+        .max_payload(10_000_000) // 10MB
+        .build_layer();
 
     // Clone refs for socket handler
     let shared_sock = shared.clone();
@@ -245,6 +283,7 @@ async fn main() {
     tokio::spawn(run_engine_tick(engine.clone(), shared.clone(), io.clone(), ocs_tx_tick));
     tokio::spawn(start_auto_director(shared.clone(), io.clone()));
     tokio::spawn(start_ranking_engine(shared.clone(), io.clone()));
+    tokio::spawn(run_tracker_reaper_tick(shared.clone(), io.clone()));
 
     // Phase 1: AWS Aurora Cloud Sync (Heartbeat & State Mirroring)
     if let Ok(db_url) = std::env::var("AURORA_DB_URL") {

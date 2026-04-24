@@ -88,9 +88,9 @@ pub enum Rounding {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum BuoyDesign {
-    Pole,
-    Buoy,
-    Tube,
+    Cylindrical,
+    Spherical,
+    Spar,
     Marksetbot,
 }
 
@@ -112,8 +112,12 @@ pub struct Buoy {
     pub gate_direction: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub design: Option<BuoyDesign>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub label: Option<String>,
     #[serde(default)]
-    pub disable_laylines: bool,
+    pub show_laylines: bool,
+    #[serde(default)]
+    pub layline_direction: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -144,6 +148,18 @@ pub struct CourseElement {
     pub marks: Vec<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CourseSettings {
+    #[serde(default = "default_true")]
+    pub show_mark_zones: bool,
+    #[serde(default = "default_multiplier")]
+    pub mark_zone_multiplier: f64,
+}
+
+fn default_true() -> bool { true }
+fn default_multiplier() -> f64 { 3.0 }
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct CourseState {
@@ -154,6 +170,15 @@ pub struct CourseState {
     pub finish_line: Option<CourseLine>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub course_boundary: Option<Vec<LatLon>>,
+    pub settings: CourseSettings,
+}
+impl Default for CourseSettings {
+    fn default() -> Self {
+        Self {
+            show_mark_zones: true,
+            mark_zone_multiplier: 3.0,
+        }
+    }
 }
 
 // ─── Wind & Weather ───────────────────────────────────────────────────────────
@@ -376,6 +401,26 @@ pub struct LogEntry {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub jury_notes: Option<String>,
 }
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct TrackerMount {
+    pub offset_x: f64,
+    pub offset_y: f64,
+    pub offset_z: f64,
+    pub mounting_azimuth: f64,
+    pub mounting_elevation: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BoatProfile {
+    pub id: String,
+    pub name: String,
+    pub max_length_pole: f64,
+    pub max_length_hull: f64,
+    pub max_width_deck: f64,
+    pub mount: TrackerMount,
+}
 
 // ─── Fleet & League Management ────────────────────────────────────────────────
 
@@ -500,6 +545,8 @@ pub struct RaceState {
     #[serde(default)]
     pub teams: HashMap<String, Team>,
     #[serde(default)]
+    pub boat_profiles: Vec<BoatProfile>,
+    #[serde(default)]
     pub flights: HashMap<String, Flight>,
     #[serde(default)]
     pub pairings: Vec<Pairing>,
@@ -537,6 +584,20 @@ impl Default for RaceState {
             fleet_history: HashMap::new(),
             fleet_settings: None,
             teams: HashMap::new(),
+            boat_profiles: vec![BoatProfile {
+                id: "default".to_string(),
+                name: "J70".to_string(),
+                max_length_pole: 7.0,
+                max_length_hull: 6.9,
+                max_width_deck: 2.2,
+                mount: TrackerMount {
+                    offset_x: 1.5,
+                    offset_y: 0.0,
+                    offset_z: 0.1,
+                    mounting_azimuth: 0.0,
+                    mounting_elevation: 0.0,
+                },
+            }],
             flights: HashMap::new(),
             pairings: Vec::new(),
             active_flight_id: None,

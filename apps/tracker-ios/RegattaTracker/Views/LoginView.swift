@@ -179,6 +179,20 @@ struct LoginView: View {
                     .frame(height: 50)
                     .cornerRadius(12)
                     .shadow(color: .black.opacity(0.1), radius: 5)
+                    
+                    Button(action: {
+                        authManager.isAuthenticated = true
+                        authManager.hasSeenWelcome = true
+                    }) {
+                        Text("Skip Login")
+                            .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                            .foregroundColor(.yellow.opacity(0.9))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 44)
+                            .background(Color.white.opacity(0.08))
+                            .cornerRadius(12)
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.yellow.opacity(0.3), lineWidth: 1))
+                    }
                 }
                 .padding(30)
                 .trueLiquidGlass(cornerRadius: 30)

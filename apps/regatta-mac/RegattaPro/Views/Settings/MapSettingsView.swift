@@ -3,6 +3,7 @@ import MapKit
 
 struct MapSettingsView: View {
     @EnvironmentObject var mapInteraction: MapInteractionModel
+    @EnvironmentObject var raceEngine: RaceEngineClient
     
     @State private var latString: String = ""
     @State private var lonString: String = ""
@@ -106,6 +107,7 @@ struct MapSettingsView: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
+                    .onChange(of: mapInteraction.showMarkZones) { _ in mapInteraction.syncSettings(to: raceEngine) }
                     .toggleStyle(RegattaDesign.ToggleStyles.glass)
                     
                     if mapInteraction.showMarkZones {
@@ -117,6 +119,7 @@ struct MapSettingsView: View {
                                 Text("2x").tag(2.0)
                                 Text("3x").tag(3.0)
                             }
+                            .onChange(of: mapInteraction.markZoneMultiplier) { _ in mapInteraction.syncSettings(to: raceEngine) }
                             .pickerStyle(.segmented)
                             .frame(width: 120)
                         }
@@ -151,6 +154,7 @@ struct MapSettingsView: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
+                    .onChange(of: mapInteraction.show3DWall) { _ in mapInteraction.syncSettings(to: raceEngine) }
                     .toggleStyle(RegattaDesign.ToggleStyles.glass)
                     
                     if mapInteraction.show3DWall {
@@ -158,6 +162,7 @@ struct MapSettingsView: View {
                             Text("SHOW SPONSOR LOGOS")
                                 .font(RegattaDesign.Fonts.label)
                         }
+                        .onChange(of: mapInteraction.show3DLogos) { _ in mapInteraction.syncSettings(to: raceEngine) }
                         .toggleStyle(RegattaDesign.ToggleStyles.glass)
                         .padding(.leading, 32)
                         
@@ -171,6 +176,26 @@ struct MapSettingsView: View {
                         }
                         .buttonStyle(.plain)
                         .padding(.leading, 32)
+                    }
+                    
+                    Divider().opacity(0.1)
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("3D MAP SENSITIVITY")
+                                .font(RegattaDesign.Fonts.label)
+                            Spacer()
+                            Text(String(format: "%.1fx", mapInteraction.mapSensitivity))
+                                .font(.caption.monospacedDigit())
+                                .foregroundStyle(RegattaDesign.Colors.electricBlue)
+                        }
+                        
+                        Slider(value: $mapInteraction.mapSensitivity, in: 0.1...2.0, step: 0.1)
+                            .accentColor(RegattaDesign.Colors.electricBlue)
+                        
+                        Text("Adjust mouse and trackpad panning/zoom speed for the 3D map.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }

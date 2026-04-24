@@ -2,6 +2,7 @@
 // Regatta Tracker — Configuration and session management settings.
 
 import SwiftUI
+import CoreLocation
 
 struct SettingsSheet: View {
     @EnvironmentObject var authManager: SupabaseAuthManager
@@ -11,8 +12,8 @@ struct SettingsSheet: View {
     @Environment(\.dismiss) var dismiss
     
     @AppStorage("uwbEmulatorEnabled") private var uwbEmulatorEnabled = false
-    @State private var devTapCount = 0
-    @State private var showDebugMenu = false
+    @AppStorage("trackerBoatId") private var trackerBoatId = ""
+    @State private var showingVirtualSailing = false
 
     var body: some View {
         NavigationStack {
@@ -103,39 +104,70 @@ struct SettingsSheet: View {
                         }
                     }
                     .tint(.purple)
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Boat ID")
+                            .foregroundColor(.white.opacity(0.6))
+                        TextField("Device name", text: $trackerBoatId)
+                            .textFieldStyle(.roundedBorder)
+                            .font(RegattaFont.data(14))
+                        Text("Leave empty to use device name: \(UIDevice.current.name)")
+                            .font(.system(size: 10))
+                            .foregroundColor(.white.opacity(0.3))
+                    }
                 } header: {
                     Text("HARDWARE STATUS")
                         .font(RegattaFont.label(11))
                         .foregroundColor(.white.opacity(0.4))
-                        .onTapGesture {
-                            devTapCount += 1
-                            if devTapCount >= 7 {
-                                showDebugMenu = true
-                            }
-                        }
                 }
                 .listRowBackground(Color.white.opacity(0.05))
                 
-                // Hidden Debug Section
-                if showDebugMenu {
-                    Section {
-                        Toggle(isOn: $uwbEmulatorEnabled) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Enable UWB Emulator (GPS Spline)")
-                                    .foregroundColor(.statusWarn)
-                                Text("Injects synthetic 20Hz packets into BLE layer.")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(.white.opacity(0.4))
+                // SIMULATION & TESTING
+                Section {
+                    Button {
+                        dismiss() // Close settings FIRST
+                        
+                        // Small delay to ensure sheet dismissal is underway before presenting fullScreenCover
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            let vm = VirtualSailingViewModel()
+                            
+                            // 🏁 Spawn on the first course mark if available, else use GPS/Helsinki
+                            var spawnCoord: CoreLocation.CLLocationCoordinate2D? = nil
+                            if let firstMark = raceState.course.marks.first {
+                                spawnCoord = CoreLocation.CLLocationCoordinate2D(latitude: firstMark.pos.lat, longitude: firstMark.pos.lon)
+                                print("📍 Sim Spawn: Spawning at course mark '\(firstMark.name)' (\(firstMark.pos.lat), \(firstMark.pos.lon))")
                             }
+
+                            
+                            vm.virtualWindDir = raceState.twd
+                            vm.start(initialLocation: spawnCoord)
+                            connection.virtualSailingModel = vm
                         }
-                        .tint(.statusWarn)
-                    } header: {
-                        Text("DEVELOPER TOOLS")
-                            .font(RegattaFont.label(11))
-                            .foregroundColor(.statusWarn)
+                    } label: {
+                        HStack {
+                            Image(systemName: "gamecontroller.fill")
+                                .foregroundColor(.cyanAccent)
+                            Text("ENTER VIRTUAL SAILING MODE")
+                                .foregroundColor(.white)
+                        }
                     }
-                    .listRowBackground(Color.white.opacity(0.05))
+                    
+                    Toggle(isOn: $uwbEmulatorEnabled) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Enable UWB Emulator (GPS Spline)")
+                                .foregroundColor(.statusWarn)
+                            Text("Injects synthetic 20Hz packets into BLE layer.")
+                                .font(.system(size: 10))
+                                .foregroundColor(.white.opacity(0.4))
+                        }
+                    }
+                    .tint(.statusWarn)
+                } header: {
+                    Text("SIMULATION & TESTING")
+                        .font(RegattaFont.label(11))
+                        .foregroundColor(.cyanAccent)
                 }
+                .listRowBackground(Color.white.opacity(0.05))
 
                 // Section: Backend Endpoint
                 Section {

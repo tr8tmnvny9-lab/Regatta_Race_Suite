@@ -15,49 +15,45 @@
 import Foundation
 import Combine
 import AVFoundation
+import CoreImage
+import CoreVideo
+import UIKit
 
 // MARK: - Manager
 
-class LiveStreamManager: ObservableObject {
+class LiveStreamManager: NSObject, ObservableObject {
     @Published var isStreaming = false
     @Published var connectionState: String = "idle"
-
+    weak var connectionManager: TrackerConnectionManager?
+    
     // AWS KVS channel info — set before calling connect()
     var channelARN: String = ""
     var region:     String = "eu-west-1"
 
     // Local media capture
     private var captureSession: AVCaptureSession?
-    private var cancellables = Set<AnyCancellable>()
+    private let videoOutput = AVCaptureVideoDataOutput()
+    private let ciContext = CIContext()
+    
+    private var lastFrameTime: Date = Date()
+    private let fpsLimit: Double = 10.0 // 10 FPS
 
-    init() {}
+    override init() {
+        super.init()
+    }
 
     // MARK: - Public
 
-    /// Connects to the AWS KVS Signaling Channel and begins streaming.
-    /// In production, `token` is a short-lived STS token fetched from the Rust backend.
+    /// Connects to the local WebSocket (AWS stubbed)
     func connect(channelARN: String, token: String, region: String) {
         self.channelARN = channelARN
         self.region     = region
 
-        print("📡 LiveStreamManager: connecting to KVS channel \(channelARN) [\(region)]")
+        print("📡 LiveStreamManager: Starting local AV stream override [\(region)]")
         connectionState = "connecting"
 
-        // ── Production: uncomment after CocoaPod integration ─────────────────
-        // let config = KVSSignalingConfig(
-        //     channelARN: channelARN,
-        //     region: region,
-        //     clientId: "regatta-tracker-\(UUID().uuidString)",
-        //     credentialsProvider: StaticCredentialsProvider(token: token)
-        // )
-        // signalingClient = KVSSignalingClient(config: config)
-        // signalingClient?.delegate = self
-        // signalingClient?.connect()
-        // ─────────────────────────────────────────────────────────────────────
-
-        // Stub: simulate connection after a brief delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            self?.connectionState = "connected (stub)"
+            self?.connectionState = "connected (local bridge)"
             self?.isStreaming = true
             self?.startLocalCapture()
         }
@@ -69,32 +65,82 @@ class LiveStreamManager: ObservableObject {
         connectionState = "idle"
         captureSession?.stopRunning()
         captureSession = nil
-
-        // Production: signalingClient?.disconnect()
     }
     
     func setBandwidthThrottling(pauseHighRes: Bool) {
         print("📡 LiveStreamManager: setBandwidthThrottling(pauseHighRes: \(pauseHighRes))")
-        // Production: Adjust KVS bitrates or pause tracks based on priority
     }
 
     // MARK: - Local camera capture
 
     private func startLocalCapture() {
-        let session = AVCaptureSession()
-        session.sessionPreset = .hd1280x720
+        AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+            guard granted, let self = self else {
+                print("⚠️ LiveStreamManager: Camera permission denied!")
+                return
+            }
+            
+            DispatchQueue.main.async {
+                let session = AVCaptureSession()
+                session.sessionPreset = .medium // ~480x360
+                
+                guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
+                      let input = try? AVCaptureDeviceInput(device: camera) else {
+                    print("⚠️ LiveStreamManager: no camera found!")
+                    return
+                }
 
-        guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
-              let input = try? AVCaptureDeviceInput(device: camera) else {
-            print("⚠️ LiveStreamManager: no camera, running in audio-only mode")
-            return
+                if session.canAddInput(input) { session.addInput(input) }
+                
+                self.videoOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32BGRA)]
+                self.videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "videoQueue"))
+
+                if session.canAddOutput(self.videoOutput) { session.addOutput(self.videoOutput) }
+                
+                if let connection = self.videoOutput.connection(with: .video) {
+                    if #available(iOS 17.0, *) {
+                        if connection.isVideoRotationAngleSupported(90) {
+                            connection.videoRotationAngle = 90
+                        }
+                    } else {
+                        if connection.isVideoOrientationSupported {
+                            connection.videoOrientation = .portrait
+                        }
+                    }
+                }
+
+                self.captureSession = session
+                DispatchQueue.global(qos: .userInitiated).async { [weak session] in
+                    session?.startRunning()
+                }
+            }
         }
+    }
+}
 
-        if session.canAddInput(input) { session.addInput(input) }
-
-        captureSession = session
-        DispatchQueue.global(qos: .userInitiated).async {
-            session.startRunning()
-        }
+extension LiveStreamManager: AVCaptureVideoDataOutputSampleBufferDelegate {
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        guard isStreaming else { return }
+        
+        let now = Date()
+        if now.timeIntervalSince(lastFrameTime) < (1.0 / fpsLimit) { return }
+        lastFrameTime = now
+        
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
+        guard let cgImage = ciContext.createCGImage(ciImage, from: ciImage.extent) else { return }
+        
+        // Flip the raw buffer properly if orientation is inverted
+        let uiImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: .up)
+        guard let jpegData = uiImage.jpegData(compressionQuality: 0.3) else { return }
+        let base64String = jpegData.base64EncodedString()
+        
+        let bid = connectionManager?.boatId ?? "virtual-boat-1"
+        let payload: [String: Any] = [
+            "boatId": bid,
+            "frame": base64String
+        ]
+            
+        connectionManager?.transmitEvent(name: "video-frame", payload: payload)
     }
 }

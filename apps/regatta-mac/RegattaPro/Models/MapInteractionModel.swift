@@ -83,6 +83,9 @@ final class MapInteractionModel: ObservableObject {
     @Published var show3DLogos: Bool = true
     @Published var sponsorLogoPath: String = "" // Placeholder for dynamic asset
     
+    // Sensitivity
+    @Published var mapSensitivity: Double = 1.0
+    
     // Persist the last used course zoom to maintain parity between views
     @Published var lastAppliedCourseRegion: MKCoordinateRegion?
     
@@ -97,5 +100,16 @@ final class MapInteractionModel: ObservableObject {
             liveMapRegion = designerRegion
             isLiveMapAutoTracking = false
         }
+    }
+    
+    func syncSettings(to engine: RaceEngineClient?) {
+        let s = CourseSettings(
+            showMarkZones: showMarkZones,
+            markZoneMultiplier: markZoneMultiplier,
+            show3DWall: show3DWall,
+            show3DLogos: show3DLogos,
+            sponsorLogoPath: sponsorLogoPath
+        )
+        engine?.updateCourseSettings(settings: s)
     }
 }

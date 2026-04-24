@@ -2,6 +2,7 @@ import Foundation
 import OSLog
 import Combine
 import CoreLocation
+import AppKit
 
 private let log = Logger(subsystem: "com.regatta.pro", category: "RaceEngine")
 
@@ -32,9 +33,11 @@ final class RaceEngineClient: ObservableObject {
         isConnecting = true
         
         // Socket.IO v4 transport
-        let wsString = cleanURL.absoluteString
-            .replacingOccurrences(of: "http", with: "ws")
-            + "/socket.io/?EIO=4&transport=websocket"
+        var wsString = cleanURL.absoluteString.replacingOccurrences(of: "http", with: "ws")
+        if wsString.hasSuffix("/") {
+            wsString.removeLast()
+        }
+        wsString += "/socket.io/?EIO=4&transport=websocket"
         
         guard let url = URL(string: wsString) else { 
             isConnecting = false
@@ -174,7 +177,8 @@ final class RaceEngineClient: ObservableObject {
             "color": buoy.color ?? "Yellow",
             "rounding": buoy.rounding ?? "Port",
             "design": buoy.design ?? "Cylindrical",
-            "showLaylines": buoy.showLaylines
+            "showLaylines": buoy.showLaylines,
+            "laylineDirection": buoy.laylineDirection
         ]
         sendEvent("update-buoy-config", data: data)
     }
@@ -184,12 +188,23 @@ final class RaceEngineClient: ObservableObject {
         sendEvent("set-boundary", data: data)
     }
     
+    func updateCourseSettings(settings: CourseSettings) {
+        let data: [String: Any] = [
+            "showMarkZones": settings.showMarkZones,
+            "markZoneMultiplier": settings.markZoneMultiplier,
+            "show3DWall": settings.show3DWall,
+            "show3DLogos": settings.show3DLogos,
+            "sponsorLogoPath": settings.sponsorLogoPath
+        ]
+        sendEvent("update-course-settings", data: data)
+    }
+    
     func setRaceStatus(_ status: RaceStatus) {
         sendEvent("set-race-status", data: ["status": status.rawValue])
     }
     
     func setWind(speed: Double, direction: Double) {
-        sendEvent("set-wind", data: ["speed": speed, "direction": direction])
+        sendEvent("update-wind", data: ["speed": speed, "direction": direction])
     }
     
     func overrideMarks(marks: [Buoy]) {
@@ -203,7 +218,8 @@ final class RaceEngineClient: ObservableObject {
                 "color": buoy.color ?? "Yellow",
                 "rounding": buoy.rounding ?? "Port",
                 "design": buoy.design ?? "Cylindrical",
-                "showLaylines": buoy.showLaylines
+                "showLaylines": buoy.showLaylines,
+                "laylineDirection": buoy.laylineDirection
             ]
         }
         sendEvent("override-marks", data: serializedMarks)
@@ -348,13 +364,19 @@ final class RaceEngineClient: ObservableObject {
         }
         
         if payload.starts(with: "0") {
-            log.info("Socket.IO Handshake accepted: \(payload)")
+            log.info("📡 Engine.IO Open received, sending Socket.IO Connect (40)")
+            webSocketTask?.send(.string("40")) { _ in }
+            return
+        }
+        
+        if payload.starts(with: "40") {
+            log.info("✅ Socket.IO Handshake complete: \(payload)")
             DispatchQueue.main.async {
                 self.isReady = true
                 self.flushQueue()
             }
             // Register as director to receive state and have write permissions
-            sendEvent("register", data: ["type": "director"])
+            sendEvent("register", data: ["role": "director", "type": "director"])
             return
         }
         
@@ -367,20 +389,79 @@ final class RaceEngineClient: ObservableObject {
                 return
             }
             
+            // Diagnostic logging for ANY event
+            if eventName.contains("boat") || eventName.contains("track") {
+                log.debug("📥 [RE-RX] Event: \(eventName)")
+            }
+
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
                 
-                if eventName == "state-update", let stateData = jsonArray[1] as? [String: Any] {
-                    self.stateModel?.applyStateUpdate(stateData)
+                if eventName == "boat-update" {
+                    let boatData = jsonArray[1] as? [String: Any]
+                    let boatId = (boatData?["boat_id"] as? String) ?? (boatData?["boatId"] as? String)
+                    
+                    if boatId == "virtual-boat-1" {
+                        self.stateModel?.diagnosticHeartbeats["D4", default: 0] += 1
+                        print("🚤 [RE-RX] virtual-boat-1 pulse RECEIVED")
+                    }
+                    
+                    if let id = boatId, let data = boatData {
+                        let pos = data["pos"] as? [String: Any]
+                        let lat = (pos?["lat"] as? Double) ?? 0
+                        let lon = (pos?["lon"] as? Double) ?? 0
+                        
+                        let imu = data["imu"] as? [String: Any]
+                        let heading = (imu?["heading"] as? Double) ?? 0
+                        
+                        let vel = data["velocity"] as? [String: Any]
+                        let speed = (vel?["speed"] as? Double) ?? 0
+                        
+                        // Force local receive time to prevent clock-drift deadzone matching
+                        let localReceiveTime = Int64(Date().timeIntervalSince1970 * 1000)
+                        
+                        var boat = LiveBoat(id: id, pos: LatLon(lat: lat, lon: lon), speed: speed, heading: heading, timestamp: localReceiveTime)
+                        
+                        if let tid = self.stateModel?.boatToTeamId[id],
+                           let tName = self.stateModel?.teamsMap[tid] {
+                            boat.teamName = tName
+                        }
+                        self.stateModel?.updateSingleBoat(boat)
+                    }
+                } else if eventName == "init-state" || eventName == "state-update" {
+                    print("🏠 [RE-RX] State/Init received")
+                    if let statePayload = jsonArray[1] as? [String: Any] {
+                        self.stateModel?.applyStateUpdate(statePayload)
+                    }
+                } else if eventName == "course-updated", let courseData = jsonArray[1] as? [String: Any] {
+                    print("🏁 [RE-RX] Course updated")
+                    self.stateModel?.applyCourseUpdate(courseData)
+                } else if eventName == "video-frame", let videoData = jsonArray[1] as? [String: Any], let boatId = videoData["boatId"] as? String, let frame = videoData["frame"] as? String {
+                    
+                    // Swift's Base64 decoder is incredibly strict. Ignore unknown characters (newlines/whitespace introduced by JSON chunks)
+                    let cleanFrame = frame.components(separatedBy: CharacterSet.whitespacesAndNewlines).joined()
+                    
+                    if let data = Data(base64Encoded: cleanFrame, options: .ignoreUnknownCharacters) {
+                        if let image = NSImage(data: data) {
+                            DispatchQueue.main.async {
+                                self.stateModel?.activeVideoFrames[boatId] = image
+                                LiveVideoSystem.shared.updateFrame(for: boatId, image: image)
+                            }
+                        } else {
+                            print("⚠️ [RE-RX] Video frame corrupted. NSImage failed to init from data. Size: \(data.count) bytes.")
+                        }
+                    } else {
+                        print("⚠️ [RE-RX] Video frame Base64 decode failed. Frame length: \(frame.count)")
+                    }
                 } else if eventName == "telemetry-update", let telemetryNodes = jsonArray[1] as? [String: Any] {
                     var newBoats: [LiveBoat] = []
                     for (nodeId, nodeData) in telemetryNodes {
                         if let dict = nodeData as? [String: Any],
                            let lat = dict["lat"] as? Double,
-                           let lng = dict["lng"] as? Double {
+                           let lon = (dict["lng"] as? Double) ?? (dict["lon"] as? Double) {
                             var boat = LiveBoat(
                                 id: nodeId,
-                                pos: LatLon(lat: lat, lon: lng),
+                                pos: LatLon(lat: lat, lon: lon),
                                 speed: (dict["speedKnots"] as? Double) ?? 0,
                                 heading: (dict["course"] as? Double) ?? 0
                             )
@@ -401,10 +482,43 @@ final class RaceEngineClient: ObservableObject {
                     
                     // Throttled update to avoid bridge/render congestion
                     self.updateBoatsThrottled(newBoats)
+                } else if eventName == "track-update" {
+                    // Direct tracker telemetry relayed by the backend
+                    if let dict = jsonArray[1] as? [String: Any],
+                       let boatId = dict["boatId"] as? String {
+                        let pos = dict["pos"] as? [String: Any]
+                        let lat = (pos?["lat"] as? Double) ?? (dict["lat"] as? Double) ?? 0
+                        let lon = (pos?["lon"] as? Double) ?? (dict["lon"] as? Double) ?? 0
+                        
+                        let imu = dict["imu"] as? [String: Any]
+                        let heading = (imu?["heading"] as? Double) ?? (dict["heading"] as? Double) ?? 0
+                        
+                        let vel = dict["velocity"] as? [String: Any]
+                        let speed = (vel?["speed"] as? Double) ?? (dict["speed"] as? Double) ?? 0
+                        
+                        let timestamp = (dict["timestamp"] as? Int64) ?? Int64(Date().timeIntervalSince1970 * 1000)
+                        
+                        var boat = LiveBoat(
+                            id: boatId,
+                            pos: LatLon(lat: lat, lon: lon),
+                            speed: speed,
+                            heading: heading,
+                            timestamp: timestamp
+                        )
+                        
+                        if let tid = self.stateModel?.boatToTeamId[boatId],
+                           let tName = self.stateModel?.teamsMap[tid] {
+                            boat.teamName = tName
+                        }
+                        
+                        self.stateModel?.updateSingleBoat(boat)
+                        log.debug("📡 [RE-RX] track-update: \(boatId) @ (\(lat), \(lon))")
+                    }
                 }
             }
         }
     }
+
 
     private var lastBoatUpdate = Date.distantPast
     private let updateInterval: TimeInterval = 0.05 // Cap at 20fps for performance
@@ -412,8 +526,9 @@ final class RaceEngineClient: ObservableObject {
     private func updateBoatsThrottled(_ newBoats: [LiveBoat]) {
         let now = Date()
         if now.timeIntervalSince(lastBoatUpdate) >= updateInterval {
-            self.stateModel?.boats = newBoats
+            self.stateModel?.mergeBoats(newBoats)
             lastBoatUpdate = now
         }
     }
+
 }

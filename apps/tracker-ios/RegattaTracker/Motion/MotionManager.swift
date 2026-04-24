@@ -20,25 +20,33 @@ class MotionManager: ObservableObject {
     func start() {
         if motionManager.isAccelerometerAvailable {
             motionManager.startAccelerometerUpdates(to: .main) { [weak self] data, _ in
-                self?.accelerometerData = data?.acceleration
+                DispatchQueue.main.async {
+                    self?.accelerometerData = data?.acceleration
+                }
             }
         }
         
         if motionManager.isGyroAvailable {
             motionManager.startGyroUpdates(to: .main) { [weak self] data, _ in
-                self?.gyroData = data?.rotationRate
+                DispatchQueue.main.async {
+                    self?.gyroData = data?.rotationRate
+                }
             }
         }
         
         if motionManager.isMagnetometerAvailable {
             motionManager.startMagnetometerUpdates(to: .main) { [weak self] data, _ in
-                self?.magnetometerData = data?.magneticField
+                DispatchQueue.main.async {
+                    self?.magnetometerData = data?.magneticField
+                }
             }
         }
         
         if CMAltimeter.isRelativeAltitudeAvailable() {
             altimeter.startRelativeAltitudeUpdates(to: .main) { [weak self] data, _ in
-                self?.relativeAltitude = data?.relativeAltitude.doubleValue ?? 0.0
+                DispatchQueue.main.async {
+                    self?.relativeAltitude = data?.relativeAltitude.doubleValue ?? 0.0
+                }
             }
         }
     }

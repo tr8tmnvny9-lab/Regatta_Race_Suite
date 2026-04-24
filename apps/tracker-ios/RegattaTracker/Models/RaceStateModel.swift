@@ -12,6 +12,30 @@
 import Foundation
 import Combine
 
+struct LatLon: Codable, Equatable {
+    var lat: Double
+    var lon: Double
+}
+
+enum BuoyType: String, Codable, Equatable {
+    case mark = "MARK"
+    case start = "START"
+    case finish = "FINISH"
+    case gate = "GATE"
+}
+
+struct Buoy: Codable, Identifiable, Equatable {
+    let id: String
+    var type: BuoyType
+    var name: String
+    var pos: LatLon
+}
+
+
+struct CourseState: Codable {
+    var marks: [Buoy] = []
+}
+
 final class RaceStateModel: ObservableObject {
     // ── Sequence / countdown ──────────────────────────────────────────────────
     @Published var currentPhase: RacePhase = .idle
@@ -19,6 +43,13 @@ final class RaceStateModel: ObservableObject {
     @Published var isJuryMode: Bool = false
     @Published var activeFlags: [String] = []
     @Published var currentNodeId: String = ""
+    
+    // ── Course & Wind ─────────────────────────────────────────────────────────
+    @Published var course: CourseState = CourseState()
+    @Published var twd: Double = 0.0
+    
+    // ── Diagnostics ───────────────────────────────────────────────────────────
+    @Published var diagnosticHeartbeats: [String: Int] = [:]
 
     // ── Fleet ─────────────────────────────────────────────────────────────────
     @Published var assignedBoatNumber: String = ""
@@ -27,6 +58,13 @@ final class RaceStateModel: ObservableObject {
     @Published var isLeagueMode: Bool = false
     @Published var sessionId: String?
 
+    var courseCentroid: LatLon? {
+        guard !course.marks.isEmpty else { return nil }
+        let totalLat = course.marks.reduce(0.0) { $0 + $1.pos.lat }
+        let totalLon = course.marks.reduce(0.0) { $0 + $1.pos.lon }
+        return LatLon(lat: totalLat / Double(course.marks.count), lon: totalLon / Double(course.marks.count))
+    }
+    
     var cancellables = Set<AnyCancellable>()
 
     // ─ Update from backend JSON state-update ─────────────────────────────────
@@ -43,6 +81,29 @@ final class RaceStateModel: ObservableObject {
         if let seqInfo = json["currentSequence"] as? [String: Any],
            let flags = seqInfo["flags"] as? [String] {
             activeFlags = flags
+        }
+        
+        if let wind = json["wind"] as? [String: Any],
+           let dir = wind["direction"] as? Double {
+            self.twd = dir
+        }
+        
+        if let courseJson = json["course"] as? [String: Any],
+           let marksJson = courseJson["marks"] as? [[String: Any]] {
+            var newMarks: [Buoy] = []
+            for m in marksJson {
+                if let id = m["id"] as? String,
+                   let name = m["name"] as? String,
+                   let typeStr = m["type"] as? String,
+                   let posJson = m["pos"] as? [String: Any],
+                   let lat = posJson["lat"] as? Double,
+                   let lon = posJson["lon"] as? Double {
+                    let type = BuoyType(rawValue: typeStr) ?? .mark
+                    newMarks.append(Buoy(id: id, type: type, name: name, pos: LatLon(lat: lat, lon: lon)))
+                }
+            }
+            self.course.marks = newMarks
+
         }
         
         // Fleet parsing for League formats

@@ -218,6 +218,9 @@ struct MainHUDView: View {
         .sheet(isPresented: $showSettings) {
             SettingsSheet()
         }
+        .fullScreenCover(item: $connection.virtualSailingModel) { model in
+            VirtualSailingView(viewModel: model)
+        }
     }
     
     private var phaseColor: Color {

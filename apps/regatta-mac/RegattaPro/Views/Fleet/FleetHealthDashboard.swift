@@ -10,15 +10,15 @@ struct FleetHealthDashboard: View {
                     .font(RegattaDesign.Fonts.label)
                     .foregroundStyle(RegattaDesign.Colors.electricBlue)
                 Spacer()
-                Text("\(raceState.boats.count) TRACKERS ACTIVE")
+                Text("\(raceState.boats.filter { !$0.isGhosted }.count) ACTIVE / \(raceState.boats.count) TOTAL")
                     .font(.system(size: 8, weight: .bold))
                     .foregroundStyle(.secondary)
             }
             
             ScrollView {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 140))], spacing: 12) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 180))], spacing: 12) {
                     ForEach(raceState.boats) { boat in
-                        HealthIndicatorCard(boat: boat)
+                        DiagnosticCard(boat: boat)
                     }
                 }
             }
@@ -26,70 +26,89 @@ struct FleetHealthDashboard: View {
     }
 }
 
-struct HealthIndicatorCard: View {
+struct DiagnosticCard: View {
     let boat: LiveBoat
+    @EnvironmentObject var raceState: RaceStateModel
+    @ObservedObject private var videoSys = LiveVideoSystem.shared
+    
+    // Derived Diagnostic States
+    var hasGPS: Bool { boat.pos.lat != 0 && boat.pos.lon != 0 }
+    var hasVideo: Bool { videoSys.frames[boat.id] != nil }
+    var isGhosted: Bool { boat.isGhosted }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // Boat ID & Role
-            HStack {
-                Image(systemName: roleIcon)
-                    .foregroundStyle(RegattaDesign.Colors.cyan)
-                Text(boat.id)
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+        VStack(alignment: .leading, spacing: 12) {
+            // Header Hierarchy: Team > Boat > Tracker
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(boat.teamName?.uppercased() ?? "UNKNOWN TEAM")
+                        .font(.system(size: 11, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
+                    
+                    HStack(spacing: 8) {
+                        Text("BOAT: \(boat.id)")
+                            .font(.system(size: 9, weight: .bold, design: .monospaced))
+                            .foregroundStyle(Color(hex: boat.color ?? "#00FFFF"))
+                        
+                        Text("TRK: \(boat.id)")
+                            .font(.system(size: 8, weight: .medium, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                    }
+                }
                 Spacer()
-                Circle()
-                    .fill(statusColor)
-                    .frame(width: 6, height: 6)
+                
+                // Ghost Indicator
+                if isGhosted {
+                    Image(systemName: "wifi.exclamationmark")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.yellow)
+                }
             }
             
             Divider().opacity(0.1)
             
-            // Stats Grid
-            VStack(spacing: 6) {
-                HealthStatRow(label: "SIGNAL", value: "88%", icon: "antenna.radiowaves.left.and.right", color: .green)
-                HealthStatRow(label: "BATTERY", value: "74%", icon: "battery.75", color: .green)
-                HealthStatRow(label: "DELAY", value: "120ms", icon: "timer", color: .white)
+            // Diagnostic KPI Blocks
+            HStack(spacing: 6) {
+                StatusBox(label: "GPS", isActive: hasGPS, isGhosted: isGhosted)
+                StatusBox(label: "VIDEO", isActive: hasVideo, isGhosted: isGhosted)
+                StatusBox(label: "ORIENT", isActive: true, isGhosted: isGhosted) // Assumed if telemetry is sending
             }
         }
         .padding(12)
-        .background(Color.white.opacity(0.05))
+        .background(isGhosted ? Color.black.opacity(0.4) : Color.white.opacity(0.05))
         .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(statusColor.opacity(0.2), lineWidth: 1))
-    }
-    
-    private var roleIcon: String {
-        switch boat.role {
-        case .jury: return "scalemessage.fill"
-        case .media: return "camera.fill"
-        default: return "sailboat.fill"
-        }
-    }
-    
-    private var statusColor: Color {
-        // Mock status logic
-        .green
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(isGhosted ? Color.yellow.opacity(0.5) : Color.white.opacity(0.1), lineWidth: 1))
+        .opacity(isGhosted ? 0.6 : 1.0)
     }
 }
 
-struct HealthStatRow: View {
+struct StatusBox: View {
     let label: String
-    let value: String
-    let icon: String
-    let color: Color
+    let isActive: Bool
+    let isGhosted: Bool
+    
+    var statusColor: Color {
+        if isGhosted { return .yellow } // Deadzone timeout warning
+        return isActive ? .green : .red  // Explicit missing capability
+    }
     
     var body: some View {
-        HStack {
-            Image(systemName: icon)
-                .font(.system(size: 8))
-                .foregroundStyle(.secondary)
+        VStack(spacing: 4) {
             Text(label)
-                .font(.system(size: 7, weight: .black))
-                .foregroundStyle(.secondary)
-            Spacer()
-            Text(value)
                 .font(.system(size: 8, weight: .bold, design: .monospaced))
-                .foregroundStyle(color)
+                .foregroundStyle(.white.opacity(0.8))
+            
+            Rectangle()
+                .fill(statusColor)
+                .frame(height: 4)
+                .cornerRadius(2)
         }
+        .padding(6)
+        .background(Color.white.opacity(0.03))
+        .cornerRadius(6)
+        .overlay(
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(statusColor.opacity(0.3), lineWidth: 1)
+        )
     }
 }

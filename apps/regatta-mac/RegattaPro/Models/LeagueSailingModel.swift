@@ -20,6 +20,7 @@ struct LeaguePairing: Identifiable, Codable, Hashable {
     var raceIndex: Int
     var boatId: String
     var teamId: String?
+    var trackerId: String?
 }
 
 struct LeagueSchedule: Codable {
@@ -30,6 +31,58 @@ struct LeagueSchedule: Codable {
     // Helper to get pairings for a specific flight/race
     func pairingsFor(flight: Int, race: Int) -> [LeaguePairing] {
         pairings.filter { $0.flightIndex == flight && $0.raceIndex == race }
+    }
+    
+    // Manual Override Mutators
+    mutating func updateTeam(flight: Int, race: Int, boatId: String, newTeamId: String?, onwards: Bool) {
+        for i in 0..<pairings.count {
+            if onwards {
+                // Apply if flight is greater OR (same flight AND race is >= selected)
+                let matchesTime = (pairings[i].flightIndex > flight) || (pairings[i].flightIndex == flight && pairings[i].raceIndex >= race)
+                if matchesTime && pairings[i].boatId == boatId {
+                    pairings[i].teamId = newTeamId
+                }
+            } else {
+                if pairings[i].flightIndex == flight && pairings[i].raceIndex == race && pairings[i].boatId == boatId {
+                    pairings[i].teamId = newTeamId
+                }
+            }
+        }
+    }
+    
+    mutating func updateBoat(flight: Int, race: Int, targetPairingId: UUID, newBoatId: String, onwards: Bool) {
+        // Since boatID is foundational to how pairs are keyed across races, 
+        // applying onwards by team tracking or pairing UUID is tricky. 
+        // Let's implement looking up the original teamId being manipulated.
+        guard let teamId = pairings.first(where: { $0.id == targetPairingId })?.teamId else { return }
+        
+        for i in 0..<pairings.count {
+            if onwards {
+                let matchesTime = (pairings[i].flightIndex > flight) || (pairings[i].flightIndex == flight && pairings[i].raceIndex >= race)
+                if matchesTime && pairings[i].teamId == teamId {
+                    pairings[i].boatId = newBoatId
+                }
+            } else {
+                if pairings[i].id == targetPairingId {
+                    pairings[i].boatId = newBoatId
+                }
+            }
+        }
+    }
+    
+    mutating func updateTracker(flight: Int, race: Int, boatId: String, newTrackerId: String?, onwards: Bool) {
+        for i in 0..<pairings.count {
+            if onwards {
+                let matchesTime = (pairings[i].flightIndex > flight) || (pairings[i].flightIndex == flight && pairings[i].raceIndex >= race)
+                if matchesTime && pairings[i].boatId == boatId {
+                    pairings[i].trackerId = newTrackerId
+                }
+            } else {
+                if pairings[i].flightIndex == flight && pairings[i].raceIndex == race && pairings[i].boatId == boatId {
+                    pairings[i].trackerId = newTrackerId
+                }
+            }
+        }
     }
 }
 

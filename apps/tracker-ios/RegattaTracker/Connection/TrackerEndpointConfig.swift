@@ -15,6 +15,7 @@ import Foundation
 enum TrackerNetworkMode: String {
     case localEdge = "localEdge"   // Nokia SNPN — connects to local Rust backend
     case awsCloud  = "awsCloud"    // Standard / Cellular — connects to AWS Fargate
+    case customQR  = "customQR"    // QR Setup — dynamically scanned endpoint
 }
 
 struct TrackerEndpointConfig {
@@ -22,8 +23,8 @@ struct TrackerEndpointConfig {
     // ── Priority 1: UserDefaults (set at runtime from SettingsSheet) ──────────
     
     static var preferredMode: TrackerNetworkMode {
-        let raw = UserDefaults.standard.string(forKey: "trackerNetworkMode") ?? "awsCloud"
-        return TrackerNetworkMode(rawValue: raw) ?? .awsCloud
+        let raw = UserDefaults.standard.string(forKey: "trackerNetworkMode") ?? "localEdge"
+        return TrackerNetworkMode(rawValue: raw) ?? .localEdge
     }
     
     // ── Endpoint resolution ───────────────────────────────────────────────────
@@ -35,13 +36,23 @@ struct TrackerEndpointConfig {
             return localEdgeWebSocketURL
         case .awsCloud:
             return awsCloudWebSocketURL
+        case .customQR:
+            let override = UserDefaults.standard.string(forKey: "customWebSocketURL") ?? ""
+            return URL(string: "\(override)/socket.io/?EIO=4&transport=websocket") ?? localEdgeWebSocketURL
         }
     }
     
     /// Local SNPN edge backend — the Nokia DAC-hosted Rust backend.
     /// Default is the committee boat's LAN IP; overrideable via UserDefaults.
+    /// In simulator builds, defaults to localhost (127.0.0.1) for sidecar development.
     static var localEdgeWebSocketURL: URL {
-        let host = UserDefaults.standard.string(forKey: "localEdgeHost") ?? "192.168.100.1"
+        #if targetEnvironment(simulator)
+        // Simulator connects to the Mac's Rust sidecar directly
+        let host = "127.0.0.1"
+        #else
+        // Real device: natively resolve the host via Bonjour over USB-C or Wi-Fi
+        let host = UserDefaults.standard.string(forKey: "localEdgeHost") ?? "oscars-macbook-pro-2.local"
+        #endif
         let port = UserDefaults.standard.string(forKey: "localEdgePort") ?? "3001"
         return URL(string: "ws://\(host):\(port)/socket.io/?EIO=4&transport=websocket")!
     }
@@ -90,10 +101,17 @@ struct TrackerEndpointConfig {
     static var currentEndpointDisplayName: String {
         switch preferredMode {
         case .localEdge:
-            let host = UserDefaults.standard.string(forKey: "localEdgeHost") ?? "192.168.100.1"
-            return "Local Edge (\(host))"
+            #if targetEnvironment(simulator)
+            return "Local Simulator Core (127.0.0.1)"
+            #else
+            let host = UserDefaults.standard.string(forKey: "localEdgeHost") ?? "192.168.68.105"
+            return "Nokia SNPN Edge (LAN: \(host))"
+            #endif
         case .awsCloud:
-            return "AWS CloudVM (Fargate)"
+            return "AWS Fargate Cloud (api.regatta.app)"
+        case .customQR:
+            let override = UserDefaults.standard.string(forKey: "customWebSocketURL") ?? "Unknown"
+            return "QR Connected (\(override))"
         }
     }
 }

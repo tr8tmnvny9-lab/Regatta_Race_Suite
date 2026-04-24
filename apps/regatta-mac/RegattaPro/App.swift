@@ -27,6 +27,7 @@ struct RegattaProApp: App {
     @StateObject private var udpListener = UDPListener()
     
     @StateObject private var mapInteraction = MapInteractionModel()
+    @StateObject private var presetManager = RacePresetManager()
     
     // Core Engine State
     @StateObject private var raceState = RaceStateModel()
@@ -43,6 +44,7 @@ struct RegattaProApp: App {
                 .environmentObject(raceState)
                 .environmentObject(raceEngine)
                 .environmentObject(mapInteraction)
+                .environmentObject(presetManager)
                 .frame(minWidth: 1200, minHeight: 800)
                 .onAppear {
                     // Hook engine client to the state model and vice versa
@@ -66,14 +68,20 @@ struct RootView: View {
     @EnvironmentObject var connection: ConnectionManager
     @EnvironmentObject var raceEngine: RaceEngineClient
     @EnvironmentObject var udpListener: UDPListener
+    @EnvironmentObject var presetManager: RacePresetManager
 
     var body: some View {
         ZStack {
             if !authManager.isAuthenticated {
+                // Phase 1: Login
                 LoginView()
                     .transition(.opacity)
+            } else if !presetManager.hasSelectedRace {
+                // Phase 2: Race Setup (post-login, pre-workspace)
+                RaceSetupView()
+                    .transition(.opacity)
             } else {
-                // Keep ContentView mounted to preserve Map identities and prevent Metal crashes
+                // Phase 3: Main Workspace
                 ContentView()
                     .transition(.opacity)
                 
@@ -85,6 +93,7 @@ struct RootView: View {
             }
         }
         .animation(.default, value: sidecar.status)
+        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: presetManager.hasSelectedRace)
         .onAppear {
             sidecar.start()
             connection.start()

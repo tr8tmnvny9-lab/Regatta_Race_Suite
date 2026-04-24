@@ -94,7 +94,7 @@ final class SidecarManager: ObservableObject {
         p.environment = [
             "BACKEND_MODE": "local",
             "PORT": "3001",
-            "BINDADDR": "127.0.0.1",   // local only — never expose sidecar externally
+            "BINDADDR": "0.0.0.0",   // Accept connections from Tracker iOS Devices on LAN
             "CORS_ORIGINS": "http://localhost:3000,http://localhost:5173",
             "RUST_LOG": "info,regatta_backend=debug",
             "UWB_UDP_PORT": "5555",

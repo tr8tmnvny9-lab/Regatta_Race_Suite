@@ -170,6 +170,9 @@ struct CourseBuilderView: View {
         raceState.course.marks.removeAll(where: { $0.id == id })
         if mapInteraction.selectedBuoyId == id { mapInteraction.selectedBuoyId = nil }
         mapInteraction.selectedBuoyIds.remove(id)
+        
+        // Sync deletions to backend
+        raceEngine.overrideMarks(marks: raceState.course.marks)
     }
 }
 
@@ -658,11 +661,29 @@ struct SavedTemplatesCard: View {
                 relativeY: dy,
                 color: buoy.color,
                 design: buoy.design,
-                rounding: buoy.rounding
+                rounding: buoy.rounding,
+                showLaylines: buoy.showLaylines,
+                laylineDirection: buoy.laylineDirection
             ))
         }
         
-        let newTemplate = CourseTemplate(id: UUID().uuidString, name: "Course \(templates.count + 1)", marks: templateMarks)
+        var templateBoundary: [CourseTemplate.TemplatePoint] = []
+        if let boundary = raceState.course.courseBoundary {
+            for pt in boundary {
+                let dx = (pt.lon - avgLon) * lonToMeters
+                let dy = (pt.lat - avgLat) * latToMeters
+                templateBoundary.append(CourseTemplate.TemplatePoint(relativeX: dx, relativeY: dy))
+            }
+        }
+        
+        let name = "Course \(templates.count + 1)"
+        let newTemplate = CourseTemplate(
+            id: UUID().uuidString,
+            name: name,
+            marks: templateMarks,
+            boundary: templateBoundary.isEmpty ? nil : templateBoundary
+        )
+        
         templates.append(newTemplate)
         saveTemplates()
     }

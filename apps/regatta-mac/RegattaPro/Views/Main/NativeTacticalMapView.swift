@@ -136,10 +136,23 @@ struct NativeTacticalMap: NSViewRepresentable {
             mapView.addOverlay(tacticalOverlay, level: .aboveLabels)
         }
         
-        // Trigger redraw on the dynamic overlay
+        // Trigger redraw on the dynamic overlay with a fresh Main-Thread snapshot
         if let tacticalOverlay = mapView.overlays.first(where: { $0 is DynamicTacticalOverlay }) {
             if let renderer = mapView.renderer(for: tacticalOverlay) as? DynamicTacticalRenderer {
-                // For NativeTacticalMap, we support dragging
+                // Generate Snapshot (Main Thread)
+                let snapshot = TacticalSnapshot(
+                    marks: raceState.course.marks,
+                    boats: raceState.boats,
+                    courseBoundary: raceState.course.courseBoundary,
+                    restrictionZones: raceState.course.restrictionZones,
+                    twd: raceState.twd,
+                    tws: raceState.tws,
+                    showMarkZones: mapInteraction.showMarkZones,
+                    markZoneMultiplier: mapInteraction.markZoneMultiplier,
+                    showHeightToMark: mapInteraction.showHeightToMark
+                )
+                
+                renderer.snapshot = snapshot
                 renderer.dragMarkId = mapInteraction.draggingMarkId
                 renderer.dragCoordinate = mapInteraction.draggingCoordinate
                 renderer.setNeedsDisplay()
@@ -161,9 +174,12 @@ struct NativeTacticalMap: NSViewRepresentable {
             self.parent = parent
         }
         
-        func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
+        func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
             // Save current region to model to survive tab switching
-            parent.mapInteraction.lastAppliedCourseRegion = mapView.region
+            // Triggers only when animation/drag stops, eliminating the MapKit Main-Thread flood loop
+            DispatchQueue.main.async {
+                self.parent.mapInteraction.lastAppliedCourseRegion = mapView.region
+            }
         }
         
         @objc func handleMapClick(_ gesture: NSClickGestureRecognizer) {

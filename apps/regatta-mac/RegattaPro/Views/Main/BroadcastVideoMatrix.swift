@@ -57,17 +57,26 @@ struct BroadcastVideoFeedNode: View {
         default: return "\(rank)TH"
         }
     }
+    @EnvironmentObject var raceState: RaceStateModel
+    @ObservedObject private var videoSys = LiveVideoSystem.shared
     
     var body: some View {
         ZStack {
-            // Simulated Video Feed (Deep Dark Gradient with subtle scanning artifacts)
-            Rectangle()
-                .fill(
-                    LinearGradient(colors: [
-                        Color(white: 0.05),
-                        Color(white: 0.1)
-                    ], startPoint: .topLeading, endPoint: .bottomTrailing)
-                )
+            // Live Video Feed or Placeholder
+            if let boatId = boat?.id, let frame = videoSys.frames[boatId] {
+                Image(nsImage: frame)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } else {
+                // Simulated Video Feed (Deep Dark Gradient with subtle scanning artifacts)
+                Rectangle()
+                    .fill(
+                        LinearGradient(colors: [
+                            Color(white: 0.05),
+                            Color(white: 0.1)
+                        ], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    )
+            }
             
             // "Camera Feed" Recording Icon Layer
             VStack {

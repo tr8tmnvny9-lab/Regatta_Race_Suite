@@ -11,6 +11,8 @@ struct FleetControlView: View {
     @State private var newTeamClub: String = ""
     @State private var teamToDelete: LeagueTeam?
     @State private var showingDeleteConfirmation = false
+    @State private var showingExportSheet = false
+    @State private var manualOverrideMode = false
     
     var body: some View {
         HStack(spacing: 20) {
@@ -28,10 +30,22 @@ struct FleetControlView: View {
             // RIGHT COLUMN: Scheduling Matrix
             VStack(spacing: 20) {
                 generatorControlsSection
-                scheduleMatrixSection
+                
+                if manualOverrideMode {
+                    ManualPairingMatrix(schedule: Binding(
+                        get: { raceState.leagueSchedule ?? LeagueSchedule(flightCount: 0, boatCount: 0) },
+                        set: { raceState.leagueSchedule = $0 }
+                    ))
+                } else {
+                    scheduleMatrixSection
+                }
             }
         }
         .padding(20)
+        .sheet(isPresented: $showingExportSheet) {
+            PairingExportSheet()
+                .environmentObject(raceState)
+        }
     }
 }
 
@@ -141,7 +155,28 @@ extension FleetControlView {
                     Stepper("\(boatCount)", value: $boatCount, in: 2...12)
                 }
                 
+                Divider().frame(height: 30)
+                
+                Picker("", selection: $manualOverrideMode) {
+                    Text("Auto Matrix").tag(false)
+                    Text("Manual Override").tag(true)
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 200)
+                
                 Spacer()
+                
+                if raceState.leagueSchedule != nil {
+                    Button(action: { showingExportSheet = true }) {
+                        Label("PRINT SCHEDULE", systemImage: "printer.fill")
+                            .font(RegattaDesign.Fonts.label)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .background(AnyShapeStyle(Color.blue.opacity(0.8)))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                    .buttonStyle(.plain)
+                }
                 
                 Button(action: generateSchedule) {
                     HStack {

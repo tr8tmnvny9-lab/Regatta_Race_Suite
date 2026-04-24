@@ -25,6 +25,14 @@ class TrackerConnectionManager: ObservableObject {
     private var motion: MotionManager?
     private var failsafe: FailsafeManager?
     var raceState: RaceStateModel? // Injected from start()
+    @Published var virtualSailingModel: VirtualSailingViewModel?
+    var boatId: String {
+        return "virtual-boat-1"
+    }
+    
+    private func now_ms() -> Int64 {
+        return Int64(Date().timeIntervalSince1970 * 1000)
+    }
     
     init() {
         if let savedSession = UserDefaults.standard.string(forKey: "lastSessionId") {
@@ -59,12 +67,14 @@ class TrackerConnectionManager: ObservableObject {
         monitor.start(queue: queue)
         connect()
         
-        // Start 10Hz telemetry sampling loop
+        // Start 10Hz telemetry sampling loop in .common mode so it doesn't pause when dragging the joystick!
         DispatchQueue.main.async {
             self.telemetryTimer?.invalidate()
-            self.telemetryTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+            let timer = Timer(timeInterval: 0.1, repeats: true) { [weak self] _ in
                 self?.sampleAndTransmitTelemetry()
             }
+            RunLoop.main.add(timer, forMode: .common)
+            self.telemetryTimer = timer
         }
     }
     
@@ -82,7 +92,12 @@ class TrackerConnectionManager: ObservableObject {
         let resolvedURL = TrackerEndpointConfig.webSocketURL
         let resolvedMode = TrackerEndpointConfig.preferredMode
         
-        self.currentMode = (resolvedMode == .localEdge) ? .lan : .cloud
+        self.currentMode = (resolvedMode == .awsCloud) ? .cloud : .lan
+        
+        print("🔌 [DEBUG] Tracker attempting connection...")
+        print("   📍 URL: \(resolvedURL)")
+        print("   🆔 Session: \(sessionId ?? "none")")
+        print("   📡 Mode: \(currentMode)")
         
         let request = URLRequest(url: resolvedURL)
         webSocket?.cancel(with: .goingAway, reason: nil)
@@ -90,6 +105,13 @@ class TrackerConnectionManager: ObservableObject {
         webSocket?.resume()
         
         self.receiveMessage()
+    }
+    
+    func forceReconnect() {
+        print("🔌 [DEBUG] Forcing socket teardown and reconnect (Foregrounding)...")
+        pingTimer?.invalidate()
+        isConnected = false
+        connect()
     }
     
     private func sampleAndTransmitTelemetry() {
@@ -100,12 +122,19 @@ class TrackerConnectionManager: ObservableObject {
             ble?.emulator.ingestRealGPS(lastLocation)
         }
         
-        // Build position
+        // Build position (Override with Virtual Simulator if active)
         var lat = location?.currentPosition?.latitude ?? 0.0
         var lon = location?.currentPosition?.longitude ?? 0.0
         var alt = location?.altitude ?? 0.0
         var course = location?.headingDegrees ?? 0.0
         var speed = location?.speedKnots ?? 0.0
+        
+        if let sim = virtualSailingModel, sim.isActive {
+            lat = sim.latitude
+            lon = sim.longitude
+            course = sim.heading
+            speed = sim.speedKnots
+        }
         
         let isUWB = ble?.isConnected ?? false
         let dtl = ble?.dtlCm
@@ -122,14 +151,31 @@ class TrackerConnectionManager: ObservableObject {
         let thermal = ProcessInfo.processInfo.thermalState
         
         // Mock non-zero values if standing still, for Regatta visualization testing
-        if lat == 0 { lat = 59.3293; lon = 18.0686 }
+        if lat == 0 { lat = 60.1699; lon = 24.9384 }
         
-        let motionDict: [String: Any] = [
+        // Virtual Sailing Override
+        if let virtual = virtualSailingModel, virtual.isActive {
+            lat = virtual.latitude
+            lon = virtual.longitude
+            course = virtual.heading
+            speed = virtual.speedKnots
+        }
+        
+        var motionDict: [String: Any] = [
             "accel": ["x": accel?.x ?? 0, "y": accel?.y ?? 0, "z": accel?.z ?? 0],
             "gyro": ["x": gyro?.x ?? 0, "y": gyro?.y ?? 0, "z": gyro?.z ?? 0],
             "mag": ["x": mag?.x ?? 0, "y": mag?.y ?? 0, "z": mag?.z ?? 0],
             "relAlt": relAlt
         ]
+        
+        // Add Virtual Roll (Heeling) to IMU data if active
+        if let virtual = virtualSailingModel, virtual.isActive {
+            motionDict["imu"] = [
+                "roll": virtual.roll,
+                "pitch": 0.0,
+                "heading": virtual.heading
+            ]
+        }
         
         let deviceDict: [String: Any] = [
             "battery": battery,
@@ -138,17 +184,32 @@ class TrackerConnectionManager: ObservableObject {
         ]
         
         var payloadDict: [String: Any] = [
-            "lat": lat,
-            "lng": lon,
-            "alt": alt,
-            "course": course,
-            "speedKnots": speed,
-            "isUwb": isUWB,
-            "dtlCm": dtl as Any,
-            "role": raceState?.isJuryMode == true ? "JURY" : "SAILBOAT"
+            "boatId": "virtual-boat-1",
+            "pos": [
+                "lat": lat,
+                "lon": lon
+            ],
+            "imu": [
+                "heading": course,
+                "roll": virtualSailingModel?.roll ?? 0.0,
+                "pitch": 0.0
+            ],
+            "velocity": [
+                "speed": speed,
+                "dir": course // Simplified for mock
+            ],
+            "timestamp": now_ms(),
+            "isSimulating": virtualSailingModel?.isActive ?? false
         ]
-        payloadDict["motion"] = motionDict
+        
+        // Safely add optional DTL to avoid silent JSONSerialization crash
+        if let safeDtl = dtl {
+            payloadDict["dtl"] = safeDtl
+        }
+        
+        // Add additional debug/device data
         payloadDict["device"] = deviceDict
+        payloadDict["motion_raw"] = motionDict
         
         if isConnected {
             // Live Push
@@ -173,10 +234,34 @@ class TrackerConnectionManager: ObservableObject {
     }
     
     private func transmit(payload: [String: Any]) {
+        // Diagnostic Log D1: Generation pulse
+        if let boatId = payload["boatId"] as? String, boatId == "virtual-boat-1" {
+            DispatchQueue.main.async {
+                self.raceState?.diagnosticHeartbeats["D1", default: 0] += 1
+            }
+            if let pos = payload["pos"] as? [String: Any] {
+                print("📡 [D1-TRACKER-GEN] Pulse: virtual-boat-1 at lat=\(pos["lat"] ?? 0), lon=\(pos["lon"] ?? 0)")
+            }
+        }
+
         if let jsonData = try? JSONSerialization.data(withJSONObject: payload),
            let jsonString = String(data: jsonData, encoding: .utf8) {
             
+            // Diagnostic Log D2: Transmission pulse
+            if let boatId = payload["boatId"] as? String, boatId == "virtual-boat-1" {
+                print("📤 [D2-TRACKER-TX] Transmitting virtual-boat-1 telemetry: \(jsonString)")
+            }
+
             let ioPayload = "42[\"track-update\", \(jsonString)]"
+            webSocket?.send(.string(ioPayload)) { _ in }
+        }
+    }
+    
+    func transmitEvent(name: String, payload: [String: Any]) {
+        guard isConnected else { return }
+        if let jsonData = try? JSONSerialization.data(withJSONObject: payload),
+           let jsonString = String(data: jsonData, encoding: .utf8) {
+            let ioPayload = "42[\"\(name)\", \(jsonString)]"
             webSocket?.send(.string(ioPayload)) { _ in }
         }
     }
@@ -219,6 +304,9 @@ class TrackerConnectionManager: ObservableObject {
             case .success(let message):
                 switch message {
                 case .string(let text):
+                    if text != "2" && text != "3" { // Skip ping/pong noise
+                        print("📥 [SOCKET-IO-RX] \(text)")
+                    }
                     self.handleSocketIOText(text)
                 default: break
                 }
@@ -257,19 +345,26 @@ class TrackerConnectionManager: ObservableObject {
                 }
             }
         }
+        // Respond to Engine.IO Ping
+        else if text == "2" {
+            webSocket?.send(.string("3")) { _ in }
+        }
         // Socket.IO Connect packet
         else if text.hasPrefix("40") {
             DispatchQueue.main.async {
                 self.isConnected = true
                 self.reconnectAttempts = 0 // Reset backoff on success
                 
-                // Emit register event with the secure JWT
-                if let jwt = self.authManager?.currentJWT {
-                    let payload = "42[\"register\", {\"type\": \"\(jwt)\"}]"
-                    self.webSocket?.send(.string(payload)) { _ in }
+                // Emit register event with the 'tracker' role and boatId so backend routes telemetry
+                let token = self.authManager?.currentJWT ?? "tracker123"
+                let bid = self.boatId
+                let payload = "42[\"register\", {\"role\": \"tracker\", \"boatId\": \"\(bid)\", \"type\": \"\(token)\"}]"
+                self.webSocket?.send(.string(payload)) { _ in } 
+                
+                if self.authManager?.currentJWT != nil {
                     print("Transmitted secure AWS IAM/Cognito JWT payload to backend.")
                 } else {
-                    print("WARNING: No JWT available for authentication.")
+                    print("Transmitted fallback local tracker token.")
                 }
             }
         }
@@ -287,6 +382,48 @@ class TrackerConnectionManager: ObservableObject {
                         // We mock our identity as "boat-1" for development
                         let isFocused = focusBoats.contains("boat-1") 
                         self.liveStreamManager?.setBandwidthThrottling(pauseHighRes: !isFocused)
+                    }
+                } else if eventName == "state-update" || eventName == "init-state" || eventName == "course-updated" {
+                    // For course-updated, the payload might just be the course object or the state payload
+                    // Let's pass the payload to the race state and trigger warp logic if it contains marks
+                    if let payloadDict = array.last as? [String: Any] {
+                        var statePayload = payloadDict
+                        if eventName == "course-updated" {
+                            statePayload = ["course": payloadDict] // Wrap it for universal parsing
+                            DispatchQueue.main.async {
+                                self.raceState?.applyStateUpdate(statePayload)
+                            }
+                        } else {
+                            DispatchQueue.main.async {
+                                self.raceState?.applyStateUpdate(statePayload)
+                            }
+                        }
+                        
+                        DispatchQueue.main.async {
+                            // Warp logic: if we have marks, find the centroid and warp the virtual model
+                            if let courseData = statePayload["course"] as? [String: Any],
+                               let marks = courseData["marks"] as? [[String: Any]], !marks.isEmpty {
+                                var totalLat = 0.0
+                                var totalLon = 0.0
+                                for m in marks {
+                                    if let pos = m["pos"] as? [String: Any],
+                                       let mLat = pos["lat"] as? Double,
+                                       let mLon = pos["lon"] as? Double {
+                                        totalLat += mLat
+                                        totalLon += mLon
+                                    }
+                                }
+                                let avgLat = totalLat / Double(marks.count)
+                                let avgLon = totalLon / Double(marks.count)
+                                self.virtualSailingModel?.warpToLocation(lat: avgLat, lon: avgLon)
+                            }
+                            
+                            // Sync wind to virtual model if it exists
+                            if let wind = statePayload["wind"] as? [String: Any],
+                               let dir = wind["direction"] as? Double {
+                                self.virtualSailingModel?.virtualWindDir = dir
+                            }
+                        }
                     }
                 }
             }

@@ -12,6 +12,7 @@ struct ConfigurationView: View {
     @State private var mode: ConfigurationModeState = .selection
     @State private var raceId: String = ""
     @State private var password: String = ""
+    @State private var expectedScannedPassword: String?
     @State private var isConnecting = false
     @State private var errorMessage: String?
     
@@ -101,14 +102,35 @@ struct ConfigurationView: View {
             
         case .qrScan:
             ZStack {
-                // Future: Scanner view representable
-                Rectangle().fill(Color.white.opacity(0.05))
+                QRScannerView() { code in
+                    // Parse the JSON payload from RegattaPro
+                    if let data = code.data(using: .utf8),
+                       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                       let urls = json["urls"] as? [String],
+                       let id = json["id"] as? String,
+                       let pass = json["pass"] as? String {
+                        
+                        pingAndResolve(urls: urls, id: id, pass: pass)
+                        // End of discovery interception
+                    } else {
+                        // Fallback logic if it's not JSON
+                        DispatchQueue.main.async {
+                            self.raceId = code
+                            withAnimation { mode = .passwordEntry }
+                        }
+                    }
+                }
+                .ignoresSafeArea()
                 
                 VStack {
                     Spacer()
-                    Text("Point camera at the race QR code")
+                    Text("Point camera at RegattaPro QR Code")
                         .font(RegattaFont.bodyRounded(14))
-                        .foregroundColor(.white.opacity(0.6))
+                        .foregroundColor(.white)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 16)
+                        .background(Color.black.opacity(0.6))
+                        .cornerRadius(20)
                         .padding(.bottom, 40)
                 }
                 
@@ -117,17 +139,10 @@ struct ConfigurationView: View {
                     .stroke(Color.cyanAccent, lineWidth: 2)
                     .frame(width: 250, height: 250)
                     .overlay {
-                        // corner accents
                         Image(systemName: "viewfinder")
                             .font(.system(size: 280, weight: .ultraLight))
                             .foregroundColor(.cyanAccent.opacity(0.5))
                     }
-            }
-            .onAppear {
-                // Mock scan success after delay
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    withAnimation { mode = .passwordEntry }
-                }
             }
             
         case .raceIdEntry:
@@ -204,6 +219,10 @@ struct ConfigurationView: View {
                     .tracking(6)
                 
                 Button("JOIN SESSION") {
+                    if let expected = expectedScannedPassword, password != expected {
+                        errorMessage = "Invalid password match against QR."
+                        return
+                    }
                     joinSession()
                 }
                 .buttonStyle(LiquidGlassButtonStyle(isPrimary: true))
@@ -232,8 +251,10 @@ struct ConfigurationView: View {
                 Spacer()
             }
             .onAppear {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    joinSession()
+                if initialMode == .automatic {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        joinSession()
+                    }
                 }
             }
         }
@@ -241,9 +262,57 @@ struct ConfigurationView: View {
     
     private func joinSession() {
         isConnecting = true
-        // Mock success
-        connection.sessionId = "RACE-772"
+        connection.joinSession(id: raceId.isEmpty ? "RACE-772" : raceId)
         dismiss()
+    }
+    
+    private func pingAndResolve(urls: [String], id: String, pass: String) {
+        // Temporarily render auto-loading layer during fast-ping discovery
+        DispatchQueue.main.async {
+            self.raceId = id
+            self.expectedScannedPassword = pass
+            withAnimation { self.mode = .automaticLoading }
+        }
+        
+        let discoveryGroup = DispatchGroup()
+        var fastestURL: String? = nil
+        let lock = NSLock()
+        
+        for urlStr in urls {
+            discoveryGroup.enter()
+            let pingTarget = urlStr.replacingOccurrences(of: "ws://", with: "http://")
+                                   .replacingOccurrences(of: "wss://", with: "https://") + "/health"
+                                   
+            guard let url = URL(string: pingTarget) else {
+                discoveryGroup.leave()
+                continue
+            }
+            
+            var req = URLRequest(url: url)
+            req.timeoutInterval = 1.0 // Rapid termination (USB bridge is instant if available)
+            URLSession.shared.dataTask(with: req) { _, response, _ in
+                if let http = response as? HTTPURLResponse, http.statusCode == 200 {
+                    lock.lock()
+                    if fastestURL == nil {
+                        fastestURL = urlStr
+                    }
+                    lock.unlock()
+                }
+                discoveryGroup.leave()
+            }.resume()
+        }
+        
+        discoveryGroup.notify(queue: .main) {
+            if let valid = fastestURL {
+                UserDefaults.standard.set(valid, forKey: "customWebSocketURL")
+                UserDefaults.standard.set(TrackerNetworkMode.customQR.rawValue, forKey: "trackerNetworkMode")
+                
+                withAnimation { self.mode = .passwordEntry }
+            } else {
+                self.errorMessage = "Tether Drop: No active network bridged to the Regatta Sidecar."
+                withAnimation { self.mode = .selection }
+            }
+        }
     }
 }
 

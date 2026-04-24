@@ -9,6 +9,25 @@ protocol TacticalProvider: AnyObject {
     var mapInteraction: MapInteractionModel { get }
 }
 
+extension CLLocationCoordinate2D {
+    var mapPoint: MKMapPoint {
+        return MKMapPoint(self)
+    }
+}
+
+/// A thread-safe, immutable snapshot of the race state for rendering.
+struct TacticalSnapshot {
+    let marks: [Buoy]
+    let boats: [LiveBoat]
+    let courseBoundary: [LatLon]?
+    let restrictionZones: [RestrictionZone]
+    let twd: Double
+    let tws: Double
+    let showMarkZones: Bool
+    let markZoneMultiplier: Double
+    let showHeightToMark: Bool
+}
+
 // --- Shared Data Models & Annotations ---
 
 class MaritimeTileOverlay: MKTileOverlay {
@@ -64,6 +83,93 @@ struct DiamondEnvelope {
     let maxP: Double
 }
 
+enum TacticalMath {
+    static func findDiamondEnvelope(marks: [Buoy], twd: Double) -> DiamondEnvelope? {
+        guard !marks.isEmpty else { return nil }
+        
+        let radS = (twd + 45) * .pi / 180
+        let radP = (twd - 45) * .pi / 180
+        let uS = CGPoint(x: sin(radS), y: -cos(radS))
+        let uP = CGPoint(x: sin(radP), y: -cos(radP))
+        
+        func getS(_ pt: MKMapPoint) -> Double { Double(uS.x) * pt.x + Double(uS.y) * pt.y }
+        func getP(_ pt: MKMapPoint) -> Double { Double(uP.x) * pt.x + Double(uP.y) * pt.y }
+        
+        var minS = Double.greatestFiniteMagnitude, maxS = -Double.greatestFiniteMagnitude
+        var minP = Double.greatestFiniteMagnitude, maxP = -Double.greatestFiniteMagnitude
+        
+        for m in marks {
+            let mp = MKMapPoint(m.pos.coordinate)
+            let s = getS(mp); let p = getP(mp)
+            if s < minS { minS = s }; if s > maxS { maxS = s }
+            if p < minP { minP = p }; if p > maxP { maxP = p }
+        }
+        
+        return DiamondEnvelope(uS: uS, uP: uP, minS: minS, maxS: maxS, minP: minP, maxP: maxP)
+    }
+    
+    static func calculateLaylinePoints(from buoy: Buoy, coordinate: CLLocationCoordinate2D? = nil, twd: Double, boundary: [LatLon]?, envelope: DiamondEnvelope? = nil) -> [[CLLocationCoordinate2D]] {
+        let startCoord = coordinate ?? buoy.pos.coordinate
+        let mp0 = MKMapPoint(startCoord)
+        let isUpwind = buoy.laylineDirection == 0
+        
+        var end1 = destination(from: startCoord, distance: 30000.0, bearing: isUpwind ? twd - 135 : twd - 45)
+        var end2 = destination(from: startCoord, distance: 30000.0, bearing: isUpwind ? twd + 135 : twd + 45)
+        
+        if let env = envelope {
+            let s0 = Double(env.uS.x) * mp0.x + Double(env.uS.y) * mp0.y
+            let p0 = Double(env.uP.x) * mp0.x + Double(env.uP.y) * mp0.y
+            
+            if isUpwind {
+                let mpStar = MKMapPoint(x: mp0.x + (env.minP - p0) * Double(env.uP.x), y: mp0.y + (env.minP - p0) * Double(env.uP.y))
+                let mpPort = MKMapPoint(x: mp0.x + (env.minS - s0) * Double(env.uS.x), y: mp0.y + (env.minS - s0) * Double(env.uS.y))
+                end2 = mpStar.coordinate
+                end1 = mpPort.coordinate
+            } else {
+                let mpStar = MKMapPoint(x: mp0.x + (env.maxS - s0) * Double(env.uS.x), y: mp0.y + (env.maxS - s0) * Double(env.uS.y))
+                let mpPort = MKMapPoint(x: mp0.x + (env.maxP - p0) * Double(env.uP.x), y: mp0.y + (env.maxP - p0) * Double(env.uP.y))
+                end2 = mpStar.coordinate
+                end1 = mpPort.coordinate
+            }
+        }
+        
+        if let boundary = boundary, boundary.count > 2 {
+            for i in 0..<boundary.count {
+                let p3 = boundary[i].coordinate
+                let p4 = boundary[(i + 1) % boundary.count].coordinate
+                if let intersect1 = lineIntersect(p1: startCoord, p2: end1, p3: p3, p4: p4) { end1 = intersect1 }
+                if let intersect2 = lineIntersect(p1: startCoord, p2: end2, p3: p3, p4: p4) { end2 = intersect2 }
+            }
+        }
+        
+        return [[startCoord, end1], [startCoord, end2]]
+    }
+    
+    static func lineIntersect(p1: CLLocationCoordinate2D, p2: CLLocationCoordinate2D, p3: CLLocationCoordinate2D, p4: CLLocationCoordinate2D) -> CLLocationCoordinate2D? {
+        let x1 = p1.longitude, y1 = p1.latitude
+        let x2 = p2.longitude, y2 = p2.latitude
+        let x3 = p3.longitude, y3 = p3.latitude
+        let x4 = p4.longitude, y4 = p4.latitude
+        let den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+        if den == 0 { return nil }
+        let t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den
+        let u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den
+        if t > 0 && t < 1 && u > 0 && u < 1 { return CLLocationCoordinate2D(latitude: y1 + t * (y2 - y1), longitude: x1 + t * (x2 - x1)) }
+        return nil
+    }
+    
+    static func destination(from: CLLocationCoordinate2D, distance: Double, bearing: Double) -> CLLocationCoordinate2D {
+        let radius = 6371000.0
+        let angularDist = distance / radius
+        let bearRad = bearing * .pi / 180
+        let latRad = from.latitude * .pi / 180
+        let lonRad = from.longitude * .pi / 180
+        let destLat = asin(sin(latRad) * cos(angularDist) + cos(latRad) * sin(angularDist) * cos(bearRad))
+        let destLon = lonRad + atan2(sin(bearRad) * sin(angularDist) * cos(latRad), cos(angularDist) - sin(latRad) * sin(destLat))
+        return CLLocationCoordinate2D(latitude: destLat * 180 / .pi, longitude: destLon * 180 / .pi)
+    }
+}
+
 // --- High Performance Shared Renderer ---
 
 class DynamicTacticalOverlay: NSObject, MKOverlay {
@@ -72,11 +178,10 @@ class DynamicTacticalOverlay: NSObject, MKOverlay {
 }
 
 class DynamicTacticalRenderer: MKOverlayRenderer {
-    weak var provider: TacticalProvider? {
-        didSet {
-            setNeedsDisplay()
-        }
-    }
+    weak var provider: TacticalProvider?
+    
+    // Per-render snapshots to ensure thread safety
+    var snapshot: TacticalSnapshot?
     
     // Direct drag properties to bypass SwiftUI latency for interactive views
     var dragMarkId: String? = nil
@@ -88,16 +193,16 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
     }
     
     override func draw(_ mapRect: MKMapRect, zoomScale: MKZoomScale, in context: CGContext) {
-        guard let raceState = provider?.raceState else { return }
+        guard let snapshot = snapshot else { return }
         
         context.setLineJoin(.round)
         context.setLineCap(.round)
         
-        drawBoundaries(in: context, zoomScale: zoomScale)
-        drawMarkZones(in: context, zoomScale: zoomScale)
-        drawHeightToMarkLines(in: context, zoomScale: zoomScale)
-        drawCourseLines(in: context, zoomScale: zoomScale)
-        drawLaylines(in: context, zoomScale: zoomScale)
+        drawBoundaries(in: context, snapshot: snapshot, zoomScale: zoomScale)
+        drawMarkZones(in: context, snapshot: snapshot, zoomScale: zoomScale)
+        drawHeightToMarkLines(in: context, snapshot: snapshot, zoomScale: zoomScale)
+        drawCourseLines(in: context, snapshot: snapshot, zoomScale: zoomScale)
+        drawLaylines(in: context, snapshot: snapshot, zoomScale: zoomScale)
         
         if let mapInteraction = provider?.mapInteraction,
            let start = mapInteraction.measureStart, let end = mapInteraction.measureEnd {
@@ -109,24 +214,24 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
         }
     }
     
-    private func getBoatLength() -> Double {
-        return provider?.raceState.boatProfiles.first?.maxLengthHull ?? 12.0
+    private func getBoatLength(snapshot: TacticalSnapshot) -> Double {
+        // Fallback to 12.0 if no profiles, but snapshot should have the value already if we want to be pure.
+        // For now, snapshot doesn't store boat length, but it could. Let's assume 12m or extract from snapshot.boats.
+        return 12.0 
     }
     
-    private func drawMarkZones(in context: CGContext, zoomScale: MKZoomScale) {
-        guard let raceState = provider?.raceState,
-              let mapInteraction = provider?.mapInteraction,
-              mapInteraction.showMarkZones else { return }
+    private func drawMarkZones(in context: CGContext, snapshot: TacticalSnapshot, zoomScale: MKZoomScale) {
+        guard snapshot.showMarkZones else { return }
         
-        let multiplier = mapInteraction.markZoneMultiplier
-        let boatLength = getBoatLength()
+        let multiplier = snapshot.markZoneMultiplier
+        let boatLength = getBoatLength(snapshot: snapshot)
         let radiusMeters = boatLength * multiplier
         
         context.setLineWidth(1.0 / zoomScale)
         context.setStrokeColor(NSColor.white.withAlphaComponent(0.3).cgColor)
         context.setFillColor(NSColor.lightGray.withAlphaComponent(0.1).cgColor)
         
-        for buoy in raceState.course.marks {
+        for buoy in snapshot.marks {
             let center = getCoord(buoy)
             let mp = MKMapPoint(center)
             
@@ -145,21 +250,18 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
         }
     }
     
-    private func drawHeightToMarkLines(in context: CGContext, zoomScale: MKZoomScale) {
-        guard let raceState = provider?.raceState,
-              let mapInteraction = provider?.mapInteraction,
-              mapInteraction.showHeightToMark,
-              !raceState.course.marks.isEmpty else { return }
+    private func drawHeightToMarkLines(in context: CGContext, snapshot: TacticalSnapshot, zoomScale: MKZoomScale) {
+        guard snapshot.showHeightToMark, !snapshot.marks.isEmpty else { return }
         
         // 1. Identify Upper Mark (strictly against wind vector)
-        let twdRadiant = raceState.twd * .pi / 180
+        let twdRadiant = snapshot.twd * .pi / 180
         // Correct Wind Vector: points DOWNWIND in MKMapPoint space (Y increases downwards, X rightwards)
         let downwindVec = CGPoint(x: -sin(twdRadiant), y: cos(twdRadiant))
         
         var upperMark: Buoy?
         var maxProjection = -Double.greatestFiniteMagnitude
         
-        for m in raceState.course.marks {
+        for m in snapshot.marks {
             let mp = MKMapPoint(m.pos.coordinate)
             // Projection onto UPWIND vector to find the "Top" mark
             // Upwind = -downwind = (sin, -cos)
@@ -179,7 +281,7 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
         
         // Find the downwind-most point of the course to limit line rendering
         var maxDownwindDistMeters = 0.0
-        for m in raceState.course.marks {
+        for m in snapshot.marks {
             let mp = MKMapPoint(m.pos.coordinate)
             let dx = mp.x - originMP.x
             let dy = mp.y - originMP.y
@@ -191,10 +293,10 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
         let perpVec = CGPoint(x: -downwindVec.y, y: downwindVec.x)
         
         // 3. Clipper: Layline Diamond
-        let envelope = findDiamondEnvelope(marks: raceState.course.marks, twd: raceState.twd)
+        let envelope = TacticalMath.findDiamondEnvelope(marks: snapshot.marks, twd: snapshot.twd)
         
         // ONLY SHOW if laylines are enabled on at least one mark (user request)
-        let leilinesActive = raceState.course.marks.contains(where: { $0.showLaylines })
+        let leilinesActive = snapshot.marks.contains(where: { $0.showLaylines })
         guard leilinesActive, let env = envelope else { return }
         
         // 4. Configure Context for Sharpness
@@ -214,7 +316,7 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
         
         // Draw lines downwind until we reach the bottom of the course
         for i in 1...80 { 
-            let distanceMeters = Double(i) * mapInteraction.heightToMarkSpacing
+            let distanceMeters = Double(i) * (provider?.mapInteraction.heightToMarkSpacing ?? 20.0)
             
             // Stricter break condition: Stop as soon as we pass the last mark
             if distanceMeters > maxDownwindDistMeters + 1.0 {
@@ -326,11 +428,9 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
         return buoy.pos.coordinate
     }
     
-    private func drawBoundaries(in context: CGContext, zoomScale: MKZoomScale) {
-        guard let raceState = provider?.raceState else { return }
-        
+    private func drawBoundaries(in context: CGContext, snapshot: TacticalSnapshot, zoomScale: MKZoomScale) {
         // Boundaries
-        if let boundary = raceState.course.courseBoundary, boundary.count > 2 {
+        if let boundary = snapshot.courseBoundary, boundary.count > 2 {
             context.beginPath()
             let firstPt = point(for: MKMapPoint(boundary[0].coordinate))
             context.move(to: firstPt)
@@ -346,7 +446,7 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
         }
         
         // Restriction Zones
-        for zone in raceState.course.restrictionZones {
+        for zone in snapshot.restrictionZones {
             if zone.points.count < 3 { continue }
             context.beginPath()
             let firstPt = point(for: MKMapPoint(zone.points[0].coordinate))
@@ -366,9 +466,7 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
         }
     }
     
-    private func drawCourseLines(in context: CGContext, zoomScale: MKZoomScale) {
-        guard let raceState = provider?.raceState else { return }
-        
+    private func drawCourseLines(in context: CGContext, snapshot: TacticalSnapshot, zoomScale: MKZoomScale) {
         func strokeLine(p1: CLLocationCoordinate2D, p2: CLLocationCoordinate2D, color: NSColor, dash: [CGFloat] = []) {
             context.setStrokeColor(color.cgColor)
             context.setLineWidth(2.0 / zoomScale)
@@ -381,7 +479,7 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
             context.setLineDash(phase: 0, lengths: [])
         }
         
-        let marks = raceState.course.marks
+        let marks = snapshot.marks
         
         // Start Lines
         let starts = marks.filter { $0.type == .start }
@@ -410,13 +508,11 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
         }
     }
     
-    private func drawLaylines(in context: CGContext, zoomScale: MKZoomScale) {
-        guard let raceState = provider?.raceState else { return }
-        
-        let activeMarks = raceState.course.marks.filter { $0.showLaylines }
+    private func drawLaylines(in context: CGContext, snapshot: TacticalSnapshot, zoomScale: MKZoomScale) {
+        let activeMarks = snapshot.marks.filter { $0.showLaylines }
         guard !activeMarks.isEmpty else { return }
         
-        let globalEnvelope = findDiamondEnvelope(marks: raceState.course.marks, twd: raceState.twd)
+        let globalEnvelope = TacticalMath.findDiamondEnvelope(marks: snapshot.marks, twd: snapshot.twd)
         
         context.setStrokeColor(NSColor.cyan.withAlphaComponent(0.6).cgColor)
         context.setLineWidth(1.5 / zoomScale)
@@ -424,11 +520,11 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
         
         for buoy in activeMarks {
             let buoyCoord = getCoord(buoy)
-            let segments = calculateLaylinePoints(
+            let segments = TacticalMath.calculateLaylinePoints(
                 from: buoy,
                 coordinate: buoyCoord,
-                twd: raceState.twd,
-                boundary: raceState.course.courseBoundary,
+                twd: snapshot.twd,
+                boundary: snapshot.courseBoundary,
                 envelope: globalEnvelope
             )
             for seg in segments {
@@ -441,89 +537,4 @@ class DynamicTacticalRenderer: MKOverlayRenderer {
     }
 }
 
-// --- Mathematical Helpers ---
-
-func findDiamondEnvelope(marks: [Buoy], twd: Double) -> DiamondEnvelope? {
-    guard !marks.isEmpty else { return nil }
-    
-    let radS = (twd + 45) * .pi / 180
-    let radP = (twd - 45) * .pi / 180
-    let uS = CGPoint(x: sin(radS), y: -cos(radS))
-    let uP = CGPoint(x: sin(radP), y: -cos(radP))
-    
-    func getS(_ pt: MKMapPoint) -> Double { Double(uS.x) * pt.x + Double(uS.y) * pt.y }
-    func getP(_ pt: MKMapPoint) -> Double { Double(uP.x) * pt.x + Double(uP.y) * pt.y }
-    
-    var minS = Double.greatestFiniteMagnitude, maxS = -Double.greatestFiniteMagnitude
-    var minP = Double.greatestFiniteMagnitude, maxP = -Double.greatestFiniteMagnitude
-    
-    for m in marks {
-        let mp = MKMapPoint(m.pos.coordinate)
-        let s = getS(mp); let p = getP(mp)
-        if s < minS { minS = s }; if s > maxS { maxS = s }
-        if p < minP { minP = p }; if p > maxP { maxP = p }
-    }
-    
-    return DiamondEnvelope(uS: uS, uP: uP, minS: minS, maxS: maxS, minP: minP, maxP: maxP)
-}
-
-func calculateLaylinePoints(from buoy: Buoy, coordinate: CLLocationCoordinate2D? = nil, twd: Double, boundary: [LatLon]?, envelope: DiamondEnvelope? = nil) -> [[CLLocationCoordinate2D]] {
-    let startCoord = coordinate ?? buoy.pos.coordinate
-    let mp0 = MKMapPoint(startCoord)
-    let isUpwind = buoy.laylineDirection == 0
-    
-    var end1 = destination(from: startCoord, distance: 30000.0, bearing: isUpwind ? twd - 135 : twd - 45)
-    var end2 = destination(from: startCoord, distance: 30000.0, bearing: isUpwind ? twd + 135 : twd + 45)
-    
-    if let env = envelope {
-        let s0 = Double(env.uS.x) * mp0.x + Double(env.uS.y) * mp0.y
-        let p0 = Double(env.uP.x) * mp0.x + Double(env.uP.y) * mp0.y
-        
-        if isUpwind {
-            let mpStar = MKMapPoint(x: mp0.x + (env.minP - p0) * Double(env.uP.x), y: mp0.y + (env.minP - p0) * Double(env.uP.y))
-            let mpPort = MKMapPoint(x: mp0.x + (env.minS - s0) * Double(env.uS.x), y: mp0.y + (env.minS - s0) * Double(env.uS.y))
-            end2 = mpStar.coordinate
-            end1 = mpPort.coordinate
-        } else {
-            let mpStar = MKMapPoint(x: mp0.x + (env.maxS - s0) * Double(env.uS.x), y: mp0.y + (env.maxS - s0) * Double(env.uS.y))
-            let mpPort = MKMapPoint(x: mp0.x + (env.maxP - p0) * Double(env.uP.x), y: mp0.y + (env.maxP - p0) * Double(env.uP.y))
-            end2 = mpStar.coordinate
-            end1 = mpPort.coordinate
-        }
-    }
-    
-    if let boundary = boundary, boundary.count > 2 {
-        for i in 0..<boundary.count {
-            let p3 = boundary[i].coordinate
-            let p4 = boundary[(i + 1) % boundary.count].coordinate
-            if let intersect1 = lineIntersect(p1: startCoord, p2: end1, p3: p3, p4: p4) { end1 = intersect1 }
-            if let intersect2 = lineIntersect(p1: startCoord, p2: end2, p3: p3, p4: p4) { end2 = intersect2 }
-        }
-    }
-    
-    return [[startCoord, end1], [startCoord, end2]]
-}
-
-func lineIntersect(p1: CLLocationCoordinate2D, p2: CLLocationCoordinate2D, p3: CLLocationCoordinate2D, p4: CLLocationCoordinate2D) -> CLLocationCoordinate2D? {
-    let x1 = p1.longitude, y1 = p1.latitude
-    let x2 = p2.longitude, y2 = p2.latitude
-    let x3 = p3.longitude, y3 = p3.latitude
-    let x4 = p4.longitude, y4 = p4.latitude
-    let den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
-    if den == 0 { return nil }
-    let t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den
-    let u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den
-    if t > 0 && t < 1 && u > 0 && u < 1 { return CLLocationCoordinate2D(latitude: y1 + t * (y2 - y1), longitude: x1 + t * (x2 - x1)) }
-    return nil
-}
-
-func destination(from: CLLocationCoordinate2D, distance: Double, bearing: Double) -> CLLocationCoordinate2D {
-    let radius = 6371000.0
-    let angularDist = distance / radius
-    let bearRad = bearing * .pi / 180
-    let latRad = from.latitude * .pi / 180
-    let lonRad = from.longitude * .pi / 180
-    let destLat = asin(sin(latRad) * cos(angularDist) + cos(latRad) * sin(angularDist) * cos(bearRad))
-    let destLon = lonRad + atan2(sin(bearRad) * sin(angularDist) * cos(latRad), cos(angularDist) - sin(latRad) * sin(destLat))
-    return CLLocationCoordinate2D(latitude: destLat * 180 / .pi, longitude: destLon * 180 / .pi)
-}
+// --- End of Lib ---

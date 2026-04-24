@@ -38,6 +38,7 @@ struct RegattaTrackerApp: App {
                 .environmentObject(liveStream)
                 .preferredColorScheme(.dark)
                 .onAppear {
+                    liveStream.connectionManager = connection
                     connection.liveStreamManager = liveStream
                     connection.start(location: location, ble: bleClient, motion: motion, failsafe: failsafe, raceState: race)
                     bleClient.start()
@@ -57,6 +58,7 @@ struct TrackerRootView: View {
     @EnvironmentObject var authManager: SupabaseAuthManager
     @EnvironmentObject var connection: TrackerConnectionManager
     @EnvironmentObject var race: RaceStateModel
+    @Environment(\.scenePhase) var scenePhase
 
     var body: some View {
         Group {
@@ -68,6 +70,13 @@ struct TrackerRootView: View {
                 ConfigurationView(initialMode: .manual)
             } else {
                 MainHUDView()
+            }
+        }
+        .onChange(of: scenePhase) { old, new in
+            if new == .active {
+                if connection.sessionId != nil {
+                    connection.forceReconnect()
+                }
             }
         }
     }

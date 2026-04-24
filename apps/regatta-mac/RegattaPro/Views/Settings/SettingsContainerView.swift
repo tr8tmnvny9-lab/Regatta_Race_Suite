@@ -4,6 +4,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
     case fleet = "Fleet Profiles"
     case map = "Map & Navigation"
     case network = "Network & Cloud"
+    case trackers = "Trackers & Sensors"
     case identity = "Identity"
     case developer = "Developer Tools"
     
@@ -14,6 +15,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .fleet: return "sailboat.fill"
         case .map: return "map.fill"
         case .network: return "network"
+        case .trackers: return "qrcode.viewfinder"
         case .identity: return "person.crop.circle.fill"
         case .developer: return "hammer.fill"
         }
@@ -66,6 +68,9 @@ struct SettingsContainerView: View {
                         .transition(.opacity)
                 case .network:
                     NetworkSettingsView()
+                        .transition(.opacity)
+                case .trackers:
+                    TrackersAndSensorsSettingsView()
                         .transition(.opacity)
                 case .identity:
                     IdentitySettingsView()

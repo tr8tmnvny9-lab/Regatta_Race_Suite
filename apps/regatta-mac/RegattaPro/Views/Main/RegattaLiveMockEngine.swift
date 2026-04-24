@@ -9,6 +9,7 @@ final class RegattaLiveMockEngine: ObservableObject {
     @Published var raceStateString: String = "PRE-START"
     @Published var tws: Double = 12.4
     @Published var twd: Double = 235.0
+    @Published var isActive: Bool = true
     
     @Published var boats: [LiveBoat] = []
     

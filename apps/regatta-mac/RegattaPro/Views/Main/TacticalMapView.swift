@@ -107,6 +107,7 @@ struct TacticalMapView: View {
                     let latDeltaToMeters = 111320.0
                     let lonDeltaToMeters = 111320.0 * cos(location.latitude * .pi / 180.0)
                     
+                    // 1. Restore Marks
                     for tm in template.marks {
                         let newLat = location.latitude + (tm.relativeY / latDeltaToMeters)
                         let newLon = location.longitude + (tm.relativeX / lonDeltaToMeters)
@@ -119,11 +120,22 @@ struct TacticalMapView: View {
                             color: tm.color ?? "Yellow",
                             rounding: tm.rounding ?? "Port",
                             design: tm.design ?? "Cylindrical",
-                            showLaylines: false,
-                            laylineDirection: 0.0
+                            showLaylines: tm.showLaylines ?? false,
+                            laylineDirection: tm.laylineDirection ?? 0.0
                         )
                         raceState.course.marks.append(newBuoy)
                         raceEngine.updateBuoyConfig(buoy: newBuoy)
+                    }
+                    
+                    // 2. Restore Boundary
+                    if let boundary = template.boundary {
+                        let restoredBoundary = boundary.map { pt -> LatLon in
+                            let lat = location.latitude + (pt.relativeY / latDeltaToMeters)
+                            let lon = location.longitude + (pt.relativeX / lonDeltaToMeters)
+                            return LatLon(lat: lat, lon: lon)
+                        }
+                        raceState.course.courseBoundary = restoredBoundary
+                        raceEngine.setBoundary(points: restoredBoundary.map { $0.coordinate })
                     }
                 }
                 mapInteraction.activeTool = .cursor

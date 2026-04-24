@@ -51,6 +51,7 @@ pub struct SupabaseClaims {
 pub struct AuthEngine {
     keys: RwLock<HashMap<String, DecodingKey>>,
     roles: RwLock<HashMap<String, String>>, // socket_id -> role
+    tracker_sockets: RwLock<HashMap<String, String>>, // socket_id -> boat_id
 }
 
 impl AuthEngine {
@@ -58,6 +59,7 @@ impl AuthEngine {
         Arc::new(Self {
             keys: RwLock::new(HashMap::new()),
             roles: RwLock::new(HashMap::new()),
+            tracker_sockets: RwLock::new(HashMap::new()),
         })
     }
     
@@ -74,6 +76,21 @@ impl AuthEngine {
     pub async fn remove_role(&self, socket_id: &str) {
         let mut roles = self.roles.write().await;
         roles.remove(socket_id);
+    }
+    
+    pub async fn set_tracker_boat(&self, socket_id: &str, boat_id: &str) {
+        let mut trackers = self.tracker_sockets.write().await;
+        trackers.insert(socket_id.to_string(), boat_id.to_string());
+    }
+    
+    pub async fn get_tracker_boat(&self, socket_id: &str) -> Option<String> {
+        let trackers = self.tracker_sockets.read().await;
+        trackers.get(socket_id).cloned()
+    }
+    
+    pub async fn remove_tracker_boat(&self, socket_id: &str) -> Option<String> {
+        let mut trackers = self.tracker_sockets.write().await;
+        trackers.remove(socket_id)
     }
 
     pub async fn refresh_apple_keys(&self) {

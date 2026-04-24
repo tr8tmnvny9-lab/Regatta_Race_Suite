@@ -77,3 +77,7 @@ backend-rust/state.json
 *.log
 logs/
 target/
+build_*.txt
+*.txt
+state.json
+

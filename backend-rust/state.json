@@ -2,140 +2,16 @@
   "status": "IDLE",
   "prepFlag": "P",
   "wind": {
-    "direction": 90.0,
+    "direction": 0.0,
     "speed": 12.0
   },
   "course": {
-    "marks": [
-      {
-        "id": "jk8v4zzvs-1",
-        "type": "START",
-        "name": "Start 1 L",
-        "pos": {
-          "lat": 59.32426859164722,
-          "lon": 18.043835891391808
-        },
-        "color": "red",
-        "pairId": "jk8v4zzvs",
-        "design": "POLE",
-        "disableLaylines": false
-      },
-      {
-        "id": "jk8v4zzvs-2",
-        "type": "START",
-        "name": "Start 1 R",
-        "pos": {
-          "lat": 59.32350227574873,
-          "lon": 18.043971063270337
-        },
-        "color": "red",
-        "pairId": "jk8v4zzvs",
-        "design": "POLE",
-        "disableLaylines": false
-      },
-      {
-        "id": "lowngq0bm-1",
-        "type": "FINISH",
-        "name": "Finish 1 L",
-        "pos": {
-          "lat": 59.32495826118314,
-          "lon": 18.058019391590538
-        },
-        "color": "blue",
-        "pairId": "lowngq0bm",
-        "gateDirection": "UPWIND",
-        "design": "POLE",
-        "disableLaylines": false
-      },
-      {
-        "id": "lowngq0bm-2",
-        "type": "FINISH",
-        "name": "Finish 1 R",
-        "pos": {
-          "lat": 59.32415911900527,
-          "lon": 18.058197499807147
-        },
-        "color": "blue",
-        "pairId": "lowngq0bm",
-        "gateDirection": "UPWIND",
-        "design": "POLE",
-        "disableLaylines": false
-      },
-      {
-        "id": "kzlyv07ec-1",
-        "type": "GATE",
-        "name": "Gate 1 L",
-        "pos": {
-          "lat": 59.325012996261165,
-          "lon": 18.055365084780824
-        },
-        "color": "orange",
-        "pairId": "kzlyv07ec",
-        "gateDirection": "UPWIND",
-        "design": "TUBE",
-        "disableLaylines": false
-      },
-      {
-        "id": "kzlyv07ec-2",
-        "type": "GATE",
-        "name": "Gate 1 R",
-        "pos": {
-          "lat": 59.32367743519167,
-          "lon": 18.055751322800795
-        },
-        "color": "orange",
-        "pairId": "kzlyv07ec",
-        "gateDirection": "UPWIND",
-        "design": "TUBE",
-        "disableLaylines": false
-      },
-      {
-        "id": "warie3vx8-1",
-        "type": "GATE",
-        "name": "Gate 2 L",
-        "pos": {
-          "lat": 59.32456416601916,
-          "lon": 18.046288492641096
-        },
-        "color": "yellow",
-        "pairId": "warie3vx8",
-        "gateDirection": "DOWNWIND",
-        "design": "TUBE",
-        "disableLaylines": false
-      },
-      {
-        "id": "warie3vx8-2",
-        "type": "GATE",
-        "name": "Gate 2 R",
-        "pos": {
-          "lat": 59.323305220296376,
-          "lon": 18.0464601543308
-        },
-        "color": "yellow",
-        "pairId": "warie3vx8",
-        "gateDirection": "DOWNWIND",
-        "design": "TUBE",
-        "disableLaylines": false
-      }
-    ],
-    "courseBoundary": [
-      {
-        "lat": 59.32119227614691,
-        "lon": 18.04040930706468
-      },
-      {
-        "lat": 59.3217615797259,
-        "lon": 18.061952770621296
-      },
-      {
-        "lat": 59.32679731152607,
-        "lon": 18.05989283785094
-      },
-      {
-        "lat": 59.32605294599475,
-        "lon": 18.04002291227528
-      }
-    ]
+    "marks": [],
+    "courseBoundary": [],
+    "settings": {
+      "showMarkZones": true,
+      "markZoneMultiplier": 3.0
+    }
   },
   "currentProcedure": {
     "id": "custom-1771923253430",
@@ -286,8 +162,8 @@
     "autoRestart": false
   },
   "defaultLocation": {
-    "lat": 59.323994909381206,
-    "lon": 18.050982356071476,
+    "lat": 60.1699,
+    "lon": 24.9384,
     "zoom": 17.0
   },
   "waitingForTrigger": false,
@@ -570,5 +446,9 @@
       "isActive": false
     }
   ],
-  "fleetHistory": {}
+  "fleetHistory": {},
+  "teams": {},
+  "boatProfiles": [],
+  "flights": {},
+  "pairings": []
 }

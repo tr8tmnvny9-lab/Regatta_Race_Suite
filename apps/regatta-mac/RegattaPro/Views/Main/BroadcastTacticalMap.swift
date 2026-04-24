@@ -32,6 +32,9 @@ struct BroadcastTacticalMap: NSViewRepresentable {
     }
     
     func updateNSView(_ mapView: MKMapView, context: Context) {
+        // PERFORMANCE: Bypass updates if not in broadcast/live mode
+        guard raceState.isBroadcastModeActive else { return }
+        
         // Sync Annotations via Coordinator to avoid locking the UI thread
         context.coordinator.updateAnnotations(on: mapView, realBoats: raceState.boats, courseMarks: raceState.course.marks)
         
@@ -129,12 +132,12 @@ struct BroadcastTacticalMap: NSViewRepresentable {
         func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
             // If the change wasn't triggered by our auto-director/explicit request, it's manual
             if !isProgrammaticChange {
-                if parent.mapInteraction.isLiveMapAutoTracking {
-                    DispatchQueue.main.async {
+                DispatchQueue.main.async {
+                    if self.parent.mapInteraction.isLiveMapAutoTracking {
                         self.parent.mapInteraction.isLiveMapAutoTracking = false
                     }
+                    self.parent.mapInteraction.liveMapRegion = mapView.region
                 }
-                parent.mapInteraction.liveMapRegion = mapView.region
             }
             
             // Reset flag after any change (programmatic or manual)
